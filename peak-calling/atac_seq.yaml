@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: peak-calling-atac-seq-submittable
+  name: peak-calling-atac-seq-v1-submittable
 spec:
   entrypoint: peak-calling-atac-seq
 #  arguments:

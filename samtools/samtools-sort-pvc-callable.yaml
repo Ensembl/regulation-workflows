@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: sort-alignment-by-queryname-pvc-callable-submittable
+  name: sort-alignment-by-queryname-pvc-callable-v1-submittable
 spec:
   entrypoint: sort-alignment-by-queryname-pvc-callable
   imagePullSecrets:
