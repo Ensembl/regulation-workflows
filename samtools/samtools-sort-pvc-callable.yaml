@@ -1,0 +1,231 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: sort-alignment-by-queryname-pvc-callable-submittable
+spec:
+  entrypoint: sort-alignment-by-queryname-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: sort-alignment-by-queryname-pvc-callable
+      inputs:
+        parameters:
+          # Bam file as input
+          - name: basename
+          - name: filename
+          - name: s3_key
+          - name: pvc-size
+          - name: kubeconfig-path
+          # PVC in which to store sorted bam
+          - name: out-pvc-name
+
+      dag:
+        tasks:
+          - name: create-samtools-sort-queryname-pvc
+            templateRef:
+              name: create-pvc-kubectl-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{inputs.parameters.pvc-size}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: load-bam-to-pvc
+            depends: create-samtools-sort-queryname-pvc
+            template: file-to-pvc-boto3
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: s3_key
+                  value: "{{inputs.parameters.s3_key}}"
+
+          - name: execute-samtools-sort-by-queryname-cmd
+            depends: load-bam-to-pvc
+            template: samtools-sort-by-queryname-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: out-pvc-name
+                  value: "{{inputs.parameters.out-pvc-name}}"
+                - name: out-filename
+                  value: "so_queryname_{{inputs.parameters.basename}}.bam"
+                - name: num-threads
+                  value: "7"
+
+          - name: delete-samtools-sort-queryname-pvc
+            depends: execute-samtools-sort-by-queryname-cmd
+            templateRef:
+              name: delete-patch-pvc-kubectl-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: bam-to-pvc
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: s3_key
+        artifacts:
+          - name: alignment-file
+            path: "/mnt/vol/{{inputs.parameters.filename}}"
+            s3:
+              key: "{{inputs.parameters.s3_key}}"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "echo \
+                Loading {{inputs.parameters.filename}} to {{inputs.parameters.pvc-name}} \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+    - name: file-to-pvc-boto3
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: s3_key
+          - name: s3-endpoint
+            value: "https://uk1s3.embassy.ebi.ac.uk"
+          - name: bucket
+            value: "ensembl-regulation-71319003-analysis-pipelines-b1"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: secretKey
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import boto3 as boto3 
+          from botocore.client import Config
+
+          from warnings import warn
+          import sys
+          import os
+
+          def _config_s3_client(endpoint):
+            config = Config(
+                read_timeout=5000,
+                connect_timeout=5000, 
+                retries={"max_attempts": 3}
+            )
+            session = boto3.session.Session()
+
+            s3_client = session.client(
+                service_name="s3",
+                endpoint_url=endpoint,
+            )
+            return s3_client
+
+
+          def main() -> int:
+            s3_endpoint = "{{inputs.parameters.s3-endpoint}}"
+
+            s3_client = _config_s3_client(s3_endpoint)
+
+            bucket_name = "{{inputs.parameters.bucket}}"
+            s3_object_key = "{{inputs.parameters.s3_key}}"
+            out_filename = "{{inputs.parameters.filename}}"
+
+            s3_client.download_file(bucket_name, s3_object_key, out_filename)
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+
+    - name: samtools-sort-by-queryname-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: out-pvc-name
+          - name: out-filename
+          - name: num-threads
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+        - name: outputs
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.out-pvc-name}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && ls -altrh /mnt/out_vol/ \
+                && samtools sort -n \
+                -@ {{inputs.parameters.num-threads}} \
+                -o /mnt/out_vol/{{inputs.parameters.out-filename}} \
+                {{inputs.parameters.filename}} \
+                && ls -altrh \
+                && ls -altrh /mnt/out_vol/" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+          - name: outputs
+            mountPath: /mnt/out_vol
+        resources:
+          limits:
+            cpu: 6500m
+            memory: 58Gi
+          requests:
+            cpu: 5300m
+            memory: 25Gi
+
+
+
