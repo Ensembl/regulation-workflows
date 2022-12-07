@@ -1,0 +1,466 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: peak-calling-atac-seq-submittable
+spec:
+  entrypoint: peak-calling-atac-seq
+#  arguments:
+#    parameters:
+#      - name: peak_calling_tasks
+#      - name: kubeconfig-path
+
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: peak-calling-atac-seq
+      parallelism: "{{inputs.parameters.tasks-parallelism}}"
+      inputs:
+        parameters:
+          - name: peak_calling_tasks
+          - name: kubeconfig-path
+          - name: tasks-parallelism
+            value: "3"
+      dag:
+        tasks:
+          - name: execute-peak-calling-task
+            template: peak-calling-task
+            arguments:
+              parameters:
+                - name: experiment_id
+                  value: "{{item.experiment_id}}"
+                - name: assembly_id
+                  value: "{{item.assembly_id}}"
+                - name: out_basename
+                  value: "{{item.out_basename}}"
+                - name: out_s3_prefix
+                  value: "{{item.out_s3_prefix}}"
+                - name: read_file_sets_files_total_size
+                  value: "{{item.read_file_sets_files_total_size}}"
+                - name: signals
+                  value: "{{item.signals}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.peak_calling_tasks}}"
+
+
+    - name: peak-calling-task
+      parallelism: 2
+      inputs:
+        parameters:
+          - name: experiment_id
+          - name: assembly_id
+          - name: out_basename
+          - name: out_s3_prefix
+          - name: alignment_files_total_size
+          - name: signals
+          - name: kubeconfig-path
+          - name: overwrite-results
+            value: "false"
+
+      dag:
+        tasks:
+#          - name: check-if-bed-file-already-in-s3-bucket
+#            templateRef:
+#              name: check-s3-object-exists-submittable
+#              template: check-s3-object-exists
+#            arguments:
+#              parameters:
+#                - name: s3-key
+#                  value: "{{inputs.parameters.out_basename}}.bed"
+
+#          - name: execute-check-if-is-large-case
+#            when: >-
+#              ( {{tasks.check-if-bed-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
+#                {{inputs.parameters.overwrite-results}} == true )
+#            depends: check-if-bed-file-already-in-s3-bucket
+#            template: check-if-is-large-case
+#            arguments:
+#              parameters:
+#                - name: files_size
+#                  value: "{{inputs.parameters.read_file_sets_files_total_size}}"
+#                - name: size_threshold
+#                  value: "100000000000"
+
+          - name: get-peak-calling-pvc-size
+#            depends: "execute-check-if-is-large-case.Succeeded"
+#            when: "{{tasks.execute-check-if-is-large-case.outputs.parameters.large-case}} == false"
+            template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: file_size
+                  value: "{{inputs.parameters.read_file_sets_files_total_size}}"
+                - name: size_factor
+                  value: "3.5"
+
+          - name: create-peak-calling-pvc
+            depends: get-peak-calling-pvc-size
+            templateRef:
+              name: create-pvc-kubectl-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: execute-sort-alignments-by-queryname
+            depends: create-peak-calling-pvc
+            template: sort-alignments-by-queryname
+            arguments:
+              parameters:
+                - name: sort_alignment_params
+                  value: "{{item}}"
+                # PVC in which to store so_queryname bams
+                - name: out-pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.signals}}"
+
+#          - name: execute-genrich-atac-seq
+#            depends: execute-sort-alignments-by-queryname
+#            template: genrich-atac-seq
+#            arguments:
+#              parameters:
+#                - name: out_bed_filename
+#                  value: "{{inputs.parameters.out_basename}}.bed"
+#                - name: out_pileup_filename
+#                  value: "{{inputs.parameters.out_basename}}_pileup.log"
+#                - name: out_pq_file_filename
+#                  value: "{{inputs.parameters.out_basename}}_pqval.log"
+#                - name: out_s3_prefix
+#                  value: "{{inputs.parameters.out_s3_prefix}}"
+#                - name: signals-pvc
+#                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+#
+#          - name: execute-compute-bed-file-metadata
+#            depends: execute-genrich-atac-seq
+#            template: compute-file-metadata
+#            arguments:
+#              parameters:
+#                - name: pvc-name
+#                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+#                - name: filename
+#                  value: "{{inputs.parameters.out_basename}}.bed"
+#
+#          - name: execute-post-peak-file
+#            depends: execute-compute-bed-file-metadata
+#            template: post-peak-file
+#            arguments:
+#              parameters:
+#                - name: s3-key
+#                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.bed"
+#                - name: basename
+#                  value: "{{inputs.parameters.out_basename}}"
+#                - name: file-size
+#                  value: "{{tasks.execute-compute-bed-file-metadata.outputs.parameters.file-size}}"
+#                - name: md5sum
+#                  value: "{{tasks.execute-compute-bed-file-metadata.outputs.parameters.md5sum}}"
+#                - name: experiment-id
+#                  value: "{{inputs.parameters.experiment_id}}"
+#                - name: assembly-id
+#                  value: "{{inputs.parameters.assembly_id}}"
+#
+#          - name: delete-peak-calling-pvc
+#            depends: execute-compute-bed-file-metadata
+#            templateRef:
+#              name: delete-patch-pvc-kubectl-submittable
+#              template: delete-patch-pvc-kubectl
+#            arguments:
+#              parameters:
+#                - name: pvc-name
+#                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+#                - name: kubeconfig-path
+#                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: sort-alignments-by-queryname
+      inputs:
+        parameters:
+          # Bam file as input
+          - name: sort_alignment_params
+          # PVC in which to store bedgraph
+          - name: out-pvc-name
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-pvc-size
+            template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: file_size
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.file_size')}}"
+                - name: size_factor
+                  value: "1.5"
+
+          - name: execute-sort-alignment-by-queryname
+            depends: get-pvc-size
+            templateRef:
+              name: sort-alignment-by-queryname-pvc-callable-submittable
+              template: sort-alignment-by-queryname-pvc-callable
+            arguments:
+              parameters:
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.basename')}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.filename')}}"
+                - name: s3_key
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.s3_key')}}"
+                - name: pvc-size
+                  value: "{{tasks.get-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: out-pvc-name
+                  value: "{{inputs.parameters.out-pvc-name}}"
+
+
+    - name: check-if-is-large-case
+      inputs:
+        parameters:
+          - name: files_size
+          - name: size_threshold
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+
+          def main() -> int:
+          
+            files_size = float("{{inputs.parameters.files_size}}")
+            size_threshold = float("{{inputs.parameters.size_threshold}}")
+          
+            with open("large_case.txt", 'w') as f:
+              if files_size > size_threshold:
+                f.write('true')
+              else:
+                f.write('false')
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+      outputs:
+        parameters:
+          - name: large-case
+            valueFrom:
+              path: large_case.txt
+
+    - name: compute-pvc-size
+      inputs:
+        parameters:
+          - name: file_size
+          - name: size_factor
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          
+          def sizeof_fmt(num, suffix="B"):
+            for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
+                if abs(num) < 1024.0:
+                    return f"{num:3.1f}{unit}{suffix}"
+                num /= 1024.0
+            return f"{num:.1f}Yi{suffix}"
+          
+          def main() -> int:
+          
+            print("{{inputs.parameters.file_size}}")
+            print("{{inputs.parameters.size_factor}}")
+          
+            plain_file_size = float("{{inputs.parameters.file_size}}")
+            size_factor = float("{{inputs.parameters.size_factor}}")
+          
+          
+          
+            plain_pvc_size = plain_file_size * size_factor
+          
+            pvc_size_formatted = sizeof_fmt(plain_pvc_size, suffix="")
+          
+            with open('pvc_size_formatted.txt', 'w') as f:
+              f.write(pvc_size_formatted)
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+      outputs:
+        parameters:
+          - name: pvc-size-formatted
+            valueFrom:
+              path: pvc_size_formatted.txt
+
+    - name: compute-file-metadata
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            filename = "{{inputs.parameters.filename}}"
+          
+            file_size = os.path.getsize(filename)
+          
+            with open('file_size.txt', 'w') as f:
+              f.write(str(file_size))
+          
+            CHUNK_SIZE = 8192
+            # Reads the file 8192 (or 2¹³) bytes at a time
+            # instead of all at once with f.read() to use less memory.
+            with open(filename, "rb") as f:
+                file_hash = hashlib.md5()
+                chunk = f.read(CHUNK_SIZE)
+                while chunk:
+                    file_hash.update(chunk)
+                    chunk = f.read(CHUNK_SIZE)
+          
+            md5sum = file_hash.hexdigest()
+          
+            with open('md5sum.txt', 'w') as f:
+              f.write(md5sum)
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        parameters:
+          - name: file-size
+            valueFrom:
+              path: file_size.txt
+          - name: md5sum
+            valueFrom:
+              path: md5sum.txt
+
+    - name: post-peak-file
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: basename
+          - name: file-size
+          - name: md5sum
+          - name: experiment-id
+          - name: assembly-id
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            post_data = {
+              "experiment_id": "{{inputs.parameters.experiment-id}}",
+              "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "analysis_type": "peaks",
+              "file": {
+                "file_type": "bed",
+                "basename": "{{inputs.parameters.basename}}",
+                "size": "{{inputs.parameters.file-size}}",
+                "md5sum": "{{inputs.parameters.md5sum}}",
+                "imported": False,
+                "s3_object": {
+                  "key": "{{inputs.parameters.s3-key}}",
+                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
+                }
+              }
+            }
+          
+            print(json.dumps(post_data,  indent=2))
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+
+    - name: genrich-atac-seq
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: out_bed_filename
+          - name: out_pileup_filename
+          - name: out_pq_file_filename
+          - name: out_s3_prefix
+          - name: signals-pvc
+
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c ]
+        args: [ "ls -altrh \
+                && SIGNAL_BAM_FILES=$(ls -m *.bam | xargs echo | sed 's/ //g') \
+                && Genrich \
+                -t ${SIGNAL_BAM_FILES} \
+                -o {{inputs.parameters.out_bed_filename}} \
+                -f {{inputs.parameters.out_pileup_filename}} \
+                -k {{inputs.parameters.out_pq_file_filename}} \
+                -r \
+                -j \
+                -q 0.1 \
+                -e MT \
+                -v \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 4900m
+            memory: 45Gi
+          requests:
+            cpu: 4700m
+            memory: 41Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.signals-pvc}}"
+      outputs:
+        artifacts:
+          - name: final_bed
+            path: /mnt/vol/{{inputs.parameters.out_bed_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_bed_filename}}"
+          - name: pileup
+            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
+          - name: pq_file
+            path: /mnt/vol/{{inputs.parameters.out_pq_file_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_file_filename}}.tgz"
