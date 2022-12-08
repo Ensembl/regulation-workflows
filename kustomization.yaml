@@ -4,3 +4,5 @@ kind: Kustomization
 resources:
   - peak-calling/atac_seq.yaml
   - samtools/samtools-sort-pvc-callable.yaml
+  - helpers/create-pvc-kubectl.yaml
+  - helpers/delete-patch-pvc-kubectl.yaml
