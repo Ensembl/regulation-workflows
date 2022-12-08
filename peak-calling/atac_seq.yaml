@@ -164,7 +164,7 @@ spec:
 #                  value: "{{inputs.parameters.assembly_id}}"
 #
           - name: delete-peak-calling-pvc
-            depends: execute-compute-bed-file-metadata
+            depends: execute-sort-alignments-by-queryname
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
