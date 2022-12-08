@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: create-pvc-kubectl-v1-submittable
+spec:
+  entrypoint: create-pvc-kubectl
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: create-pvc-kubectl
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        artifacts:
+          - name: kubeconfig
+            path: /.kube/
+            git:
+              repo: https://github.com/daugo/kubectl-configs.git
+              revision: main
+              usernameSecret:
+                name: github-creds
+                key: usernameSecret
+              passwordSecret:
+                name: github-creds
+                key: passwordSecret
+        parameters:
+          - name: pvc-size
+          - name: kubeconfig-path
+            value: "/.kube/analysis-pipelines.config"
+      script:
+        env:
+          - name: KUBECONFIG
+            value: "{{inputs.parameters.kubeconfig-path}}"
+        image: ghcr.io/daugo/ensembl-reg-kubectl:latest
+        command: [ bash, -uef, -o, xtrace ]
+        source: |
+          cat <<EOF | kubectl -n argo apply -f -
+          kind: PersistentVolumeClaim
+          apiVersion: v1
+          metadata:
+              name: pvc-{{pod.name}}
+          spec:
+              accessModes: [ "ReadWriteMany" ]
+              resources:
+                requests:
+                  storage: {{inputs.parameters.pvc-size}}
+          EOF
+      outputs:
+        parameters:
+          - name: pvc-name
+            value: "pvc-{{pod.name}}"
+            globalName: pvc-name-global

@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: delete-patch-pvc-kubectl-v1-submittable
+spec:
+  entrypoint: delete-patch-pvc-kubectl
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: delete-patch-pvc-kubectl
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        artifacts:
+          - name: kubeconfig
+            path: /.kube/
+            git:
+              repo: https://github.com/daugo/kubectl-configs.git
+              revision: main
+              usernameSecret:
+                name: github-creds
+                key: usernameSecret
+              passwordSecret:
+                name: github-creds
+                key: passwordSecret
+        parameters:
+          - name: pvc-name
+          - name: kubeconfig-path
+            value: "/.kube/analysis-pipelines.config"
+      script:
+        env:
+          - name: KUBECONFIG
+            value: "{{inputs.parameters.kubeconfig-path}}"
+        image: ghcr.io/daugo/ensembl-reg-kubectl:latest
+        command: [ bash, -uef, -o, xtrace ]
+        source: |
+          kubectl -n argo delete pvc {{inputs.parameters.pvc-name}} &
+          
+          sleep 5
+          
+          kubectl -n argo patch pvc {{inputs.parameters.pvc-name}} \
+          -p '{"metadata":{"finalizers":null}}' \
+          || echo 'PVC finalizers patch failed. Probably PVC was already deleted'
+          
+          if ! $(kubectl -n argo get pvc {{inputs.parameters.pvc-name}} 2> /dev/null)
+          then 
+            echo 'PVC Gone!'
+          fi
+          

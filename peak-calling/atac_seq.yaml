@@ -96,7 +96,7 @@ spec:
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size
             templateRef:
-              name: create-pvc-kubectl-submittable
+              name: create-pvc-kubectl-v1-submittable
               template: create-pvc-kubectl
             arguments:
               parameters:
@@ -163,17 +163,17 @@ spec:
 #                - name: assembly-id
 #                  value: "{{inputs.parameters.assembly_id}}"
 #
-#          - name: delete-peak-calling-pvc
-#            depends: execute-compute-bed-file-metadata
-#            templateRef:
-#              name: delete-patch-pvc-kubectl-submittable
-#              template: delete-patch-pvc-kubectl
-#            arguments:
-#              parameters:
-#                - name: pvc-name
-#                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-#                - name: kubeconfig-path
-#                  value: "{{inputs.parameters.kubeconfig-path}}"
+          - name: delete-peak-calling-pvc
+            depends: execute-compute-bed-file-metadata
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
 
     - name: sort-alignments-by-queryname
@@ -198,7 +198,7 @@ spec:
           - name: execute-sort-alignment-by-queryname
             depends: get-pvc-size
             templateRef:
-              name: sort-alignment-by-queryname-pvc-callable-submittable
+              name: sort-alignment-by-queryname-pvc-callable-v1-submittable
               template: sort-alignment-by-queryname-pvc-callable
             arguments:
               parameters:
