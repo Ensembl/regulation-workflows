@@ -6,3 +6,6 @@ resources:
   - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/delete-patch-pvc-kubectl.yaml
+  - helpers/compute-pvc-size.yaml
+  - helpers/check-s3-object-exists.yaml
+  - helpers/compute-file-metadata-pvc-callable.yaml

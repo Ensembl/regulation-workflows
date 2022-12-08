@@ -63,7 +63,7 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{inputs.parameters.out_basename}}.bed"
+                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.bed"
 
 
           - name: get-peak-calling-pvc-size
@@ -74,7 +74,7 @@ spec:
               template: compute-pvc-size
             arguments:
               parameters:
-                - name: file_size
+                - name: associated_files_size
                   value: "{{inputs.parameters.alignment_files_total_size}}"
                 - name: size_factor
                   value: "3.5"
@@ -125,7 +125,7 @@ spec:
             depends: execute-genrich-atac-seq
             templateRef:
               name: compute-file-metadata-pvc-callable-v1-submittable
-              template: compute-pvc-size
+              template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
                 - name: pvc-name
@@ -175,10 +175,12 @@ spec:
       dag:
         tasks:
           - name: get-pvc-size
-            template: compute-pvc-size
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
             arguments:
               parameters:
-                - name: file_size
+                - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.file_size')}}"
                 - name: size_factor
                   value: "1.5"
