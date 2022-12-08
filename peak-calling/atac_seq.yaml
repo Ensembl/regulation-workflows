@@ -35,8 +35,8 @@ spec:
                   value: "{{item.out_basename}}"
                 - name: out_s3_prefix
                   value: "{{item.out_s3_prefix}}"
-                - name: read_file_sets_files_total_size
-                  value: "{{item.read_file_sets_files_total_size}}"
+                - name: alignment_files_total_size
+                  value: "{{item.alignment_files_total_size}}"
                 - name: signals
                   value: "{{item.signals}}"
                 - name: kubeconfig-path
@@ -78,7 +78,7 @@ spec:
 #            arguments:
 #              parameters:
 #                - name: files_size
-#                  value: "{{inputs.parameters.read_file_sets_files_total_size}}"
+#                  value: "{{inputs.parameters.alignment_files_total_size}}"
 #                - name: size_threshold
 #                  value: "100000000000"
 
@@ -89,7 +89,7 @@ spec:
             arguments:
               parameters:
                 - name: file_size
-                  value: "{{inputs.parameters.read_file_sets_files_total_size}}"
+                  value: "{{inputs.parameters.alignment_files_total_size}}"
                 - name: size_factor
                   value: "3.5"
 
