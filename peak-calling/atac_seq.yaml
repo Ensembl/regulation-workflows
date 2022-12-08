@@ -14,13 +14,13 @@ spec:
 
   templates:
     - name: peak-calling-atac-seq
-      parallelism: "{{inputs.parameters.tasks-parallelism}}"
+      parallelism: 3
       inputs:
         parameters:
           - name: peak_calling_tasks
           - name: kubeconfig-path
-          - name: tasks-parallelism
-            value: "3"
+#          - name: tasks-parallelism
+#            value: "3"
       dag:
         tasks:
           - name: execute-peak-calling-task
