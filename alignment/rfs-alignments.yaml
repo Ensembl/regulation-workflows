@@ -1,0 +1,463 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: muliple-rfs-alignments-v1-submittable
+spec:
+  entrypoint: multiple-rfs-alignments
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: multiple-rfs-alignments
+      parallelism: 5
+      inputs:
+        parameters:
+          - name: read_file_sets_alignment_tasks
+      dag:
+        tasks:
+          - name: execute-rfs-alignment
+            template: rfs-alignment
+            arguments:
+              parameters:
+                - name: assembly_id
+                  value: "{{item.assembly_id}}"
+                - name: read_file_set_id
+                  value: "{{item.read_file_set_id}}"
+                - name: bowtie2_index_key
+                  value: "{{item.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{item.bowtie2_index_basename}}"
+                - name: read_file_set
+                  value: "{{item.read_file_set}}"
+                - name: samtools_stats_output_key
+                  value: "{{item.samtools_stats_output_key}}"
+                - name: output_key
+                  value: "{{item.output_key}}"
+                - name: associated_read_files_size
+                  value: "{{item.associated_read_files_size}}"
+                - name: kubeconfig-path
+                  value: "/.kube/analysis-pipelines.config"
+                - name: overwrite-results
+                  value: "false"
+            withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
+
+    - name: rfs-alignment
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: assembly_id
+          - name: read_file_set_id
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          - name: read_file_set
+          - name: samtools_stats_output_key
+          - name: output_key
+          - name: associated_read_files_size
+          - name: kubeconfig-path
+          - name: overwrite-results
+      dag:
+        tasks:
+          - name: check-if-merged-bam-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.output_key}}"
+
+          - name: execute-runs-alignment
+            depends: check-if-merged-bam-already-in-s3-bucket
+            when: >-
+              ( {{tasks.check-if-merged-bam-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
+                {{inputs.parameters.overwrite-results}} == true )
+            template: run-alignment
+            arguments:
+              parameters:
+                - name: assembly_id
+                  value: "{{inputs.parameters.assembly_id}}"
+                - name: read_file_set_id
+                  value: "{{inputs.parameters.read_file_set_id}}"
+                - name: bowtie2_index_key
+                  value: "{{inputs.parameters.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{inputs.parameters.bowtie2_index_basename}}"
+                - name: run_alignment_params
+                  value: "{{item}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+            withParam: "{{inputs.parameters.read_file_set}}"
+
+          - name: get-rfs-alignment-pvc-size
+            when: >-
+              ( {{tasks.check-if-merged-bam-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
+                {{inputs.parameters.overwrite-results}} == true )
+            depends: execute-runs-alignment
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{inputs.parameters.associated_read_files_size}}"
+                - name: size_factor
+                  value: "9"
+
+          - name: create-rfs-alignment-pvc
+            depends: "get-rfs-alignment-pvc-size.Succeeded"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-rfs-alignment-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: copy-run-alignments-to-rfs-pvc
+            depends: create-rfs-alignment-pvc
+            template: copy-s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                # Warning: Here we assume all rfs run alignments can be found
+                # by themselves under the same prefix in the s3 bucket
+                - name: s3-prefix
+                  value: "{{=jsonpath(inputs.parameters.read_file_set, '$[0].output_prefix')}}"
+
+          - name: execute-samtools-merge
+            depends: copy-run-alignments-to-rfs-pvc
+            template: samtools-merge-cmd
+            arguments:
+              parameters:
+                - name: bams-folder
+                  value: "so_coordinates_runs_bams"
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: output-basename
+                  value: "{{inputs.parameters.read_file_set_id}}"
+                - name: output-key
+                  value: "{{inputs.parameters.output_key}}"
+
+          #          - name: cleanup-runs-bams-from-pvc
+          #            depends: execute-samtools-merge
+          #            template: remove-runs-bams-from-pvc
+          #            arguments:
+          #              parameters:
+          #                - name: bams-folder
+          #                  value: "so_coordinates_runs_bams"
+          #                - name: pvc-name
+          #                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+
+          - name: execute-samtools-stats
+            depends: execute-samtools-merge
+            template: samtools-stats-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: bam-file
+                  value: "{{inputs.parameters.read_file_set_id}}.bam"
+                - name: output-basename
+                  value: "{{inputs.parameters.read_file_set_id}}"
+                - name: output-key
+                  value: "{{inputs.parameters.samtools_stats_output_key}}"
+
+          - name: execute-compute-file-metadata
+            depends: execute-samtools-stats
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.read_file_set_id}}.bam"
+
+          - name: execute-post-rfs-alignment
+            depends: execute-compute-file-metadata
+            template: post-rfs-alignment
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.output_key}}"
+                - name: filename
+                  value: "{{inputs.parameters.read_file_set_id}}.bam"
+                - name: file-size
+                  value: "{{tasks.execute-compute-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.execute-compute-file-metadata.outputs.parameters.md5sum}}"
+                - name: read-file-set-id
+                  value: "{{inputs.parameters.read_file_set_id}}"
+                - name: assembly-id
+                  value: "{{inputs.parameters.assembly_id}}"
+
+          - name: delete-run-alignment-pvc
+            depends: execute-compute-file-metadata
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: run-alignment
+      inputs:
+        parameters:
+          - name: assembly_id
+          - name: read_file_set_id
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          - name: run_alignment_params
+          - name: overwrite-results
+      dag:
+        tasks:
+          - name: execute-ngmerge-bwt2-alignment
+            templateRef:
+              name: run-alignment-v1-submittable
+              template: run-alignment
+            arguments:
+              parameters:
+                # Input file
+                - name: first_read_file_key
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_key')}}"
+                - name: second_read_file_key
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_key')}}"
+                - name: first_read_file_name
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_name')}}"
+                - name: second_read_file_name
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_name')}}"
+                - name: first_read_file_basename
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_basename')}}"
+                - name: second_read_file_basename
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_basename')}}"
+                - name: bowtie2_index_key
+                  value: "{{inputs.parameters.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{inputs.parameters.bowtie2_index_basename}}"
+                # Output related
+                - name: total_read_files_size
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.total_read_files_size')}}"
+                - name: read_files_output_prefix
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.read_files_output_prefix')}}"
+                - name: fastqc_outdir
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_outdir')}}"
+                - name: fastqc_output_prefix
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_output_prefix')}}"
+                - name: output_prefix
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_prefix')}}"
+                - name: output_filename
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+
+    - name: copy-s3-object-to-pvc
+      retryStrategy:
+        limit: "6"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          # S3 object location (Source)
+          - name: s3-prefix
+          #          - name: s3-filename
+          # Destination
+          - name: pvc-name
+        artifacts:
+          - name: run-alignments
+            path: /mnt/vol/so_coordinates_runs_bams/
+            s3:
+              key: "{{inputs.parameters.s3-prefix}}"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        imagePullPolicy: Always
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh so_coordinates_runs_bams" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+
+    - name: samtools-merge-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: bams-folder
+          # Destination
+          - name: pvc-name
+          - name: output-basename
+          - name: output-key
+          - name: num-threads
+            value: "14"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh {{inputs.parameters.bams-folder}}/*.bam \
+                && for f in so_coordinates_runs_bams/*bam; do samtools quickcheck ${f}; done \
+                && samtools merge \
+                -@ {{inputs.parameters.num-threads}} \
+                -o - \
+                {{inputs.parameters.bams-folder}}/*.bam \
+                | samtools view \
+                -@ {{inputs.parameters.num-threads}} \ 
+                -b \
+                -o {{inputs.parameters.output-basename}}.bam \
+                && samtools quickcheck {{inputs.parameters.output-basename}}.bam \
+                && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 13900m
+            memory: 30Gi
+          requests:
+            cpu: 13500m
+            memory: 25Gi
+      outputs:
+        artifacts:
+          - name: output_bam
+            path: "/mnt/vol/{{inputs.parameters.output-basename}}.bam"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.output-key}}"
+
+
+    #    - name: remove-runs-bams-from-pvc
+    #      retryStrategy:
+    #        limit: "5"
+    #        retryPolicy: "OnError"
+    #      inputs:
+    #        parameters:
+    #          - name: bams-folder
+    #          - name: pvc-name
+    #      volumes:
+    #        - name: workdir
+    #          persistentVolumeClaim:
+    #            claimName: '{{inputs.parameters.pvc-name}}'
+    #      container:
+    #        workingDir: /mnt/vol
+    #        image: ghcr.io/daugo/ensembl-reg-bash:latest
+    #        command: [ bash, -c, -uef, -o, xtrace ]
+    #        args: [ "ls -altrh {{inputs.parameters.bams-folder}}/ \
+    #                && ls -altrh \
+    #                && rm -r {{inputs.parameters.bams-folder}} \
+    #                && ls -altrh" ]
+    #        volumeMounts:
+    #          - name: workdir
+    #            mountPath: /mnt/vol
+
+    - name: samtools-stats-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: bam-file
+          # Destination
+          - name: output-basename
+          - name: output-key
+          - name: num-threads
+            value: "2"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh {{inputs.parameters.bam-file}} \
+                && samtools stats \
+                -@ {{inputs.parameters.num-threads}} \
+                {{inputs.parameters.bam-file}} \
+                > {{inputs.parameters.output-basename}}.txt \
+                && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 1800m
+            memory: 5Gi
+          requests:
+            cpu: 900m
+            memory: 2Gi
+      outputs:
+        artifacts:
+          - name: output-bam-stats
+            path: "/mnt/vol/{{inputs.parameters.output-basename}}.txt"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.output-key}}"
+
+
+    - name: post-rfs-alignment
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: filename
+          - name: file-size
+          - name: md5sum
+          - name: read-file-set-id
+          - name: assembly-id
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            post_data = {
+              "read_file_set_id": "{{inputs.parameters.read-file-set-id}}",
+              "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "file": {
+                "file_type": "bam",
+                "basename": "{{inputs.parameters.read-file-set-id}}",
+                "size": "{{inputs.parameters.file-size}}",
+                "md5sum": "{{inputs.parameters.md5sum}}",
+                "imported": False,
+                "s3_object": {
+                  "key": "{{inputs.parameters.s3-key}}",
+                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
+                }
+              }
+            }
+          
+            print(json.dumps(post_data,  indent=2))
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
