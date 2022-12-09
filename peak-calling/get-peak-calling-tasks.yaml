@@ -1,0 +1,106 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  generateName: get-peak-calling-tasks-
+#  name: experiments-bams-to-coverage-bigwig-submittable
+spec:
+  entrypoint: get-peak-calling-tasks-dag
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: get-peak-calling-tasks-dag
+      inputs:
+        parameters:
+          - name: assembly_ensembl_accession
+          - name: experiment_type
+          - name: species_name
+          - name: skip
+          - name: limit
+          - name: kubeconfig-path
+            value: "/.kube/high-memory-pipelines.config"
+      dag:
+        tasks:
+          - name: get-peak-calling-tasks-url
+            template: compute-get-peak-calling-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+          - name: execute-get-peak-calling-tasks
+            depends: "get-peak-calling-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-peak-calling-tasks-url.outputs.result}}"
+
+          - name: submit-peak-calling-tasks
+            depends: "execute-get-peak-calling-tasks"
+            templateRef:
+              name: peak-calling-atac-seq-v1-submittable
+              template: peak-calling-atac-seq
+            arguments:
+              parameters:
+                - name: peak_calling_tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+    - name: compute-get-peak-calling-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: assembly_ensembl_accession
+          - name: experiment_type
+          - name: species_name
+          - name: skip
+          - name: limit
+
+#          - name: epigenome_group_id
+      script:
+        image:  ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/peak_calling_tasks"
+                  f"?assembly_ensembl_accession={{inputs.parameters.assembly_ensembl_accession}}"
+                  f"&experiment_type={{inputs.parameters.experiment_type}}"
+                  f"&species_name={{inputs.parameters.species_name}}"
+                  f"&skip={{inputs.parameters.skip}}"
+                  f"&limit={{inputs.parameters.limit}}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+            
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
