@@ -1,0 +1,105 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: get-rfs-alignments-tasks-
+spec:
+  entrypoint: get-rfs-alignments-tasks-dag
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: get-rfs-alignments-tasks-dag
+      inputs:
+        parameters:
+          - name: assembly_ensembl_accession
+          - name: experiment_type
+          - name: species_name
+          - name: skip
+          - name: limit
+          - name: kubeconfig-path
+            value: "/.kube/high-memory-pipelines.config"
+      dag:
+        tasks:
+          - name: get-rfs-alignments-tasks-url
+            template: compute-rfs-alignments-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+          - name: execute-rfs-alignments-tasks
+            depends: "get-rfs-alignments-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-rfs-alignments-tasks-url.outputs.result}}"
+
+
+          - name: submit-rfs-alignments-tasks
+            depends: "execute-rfs-alignments-tasks"
+            templateRef:
+              name: muliple-rfs-alignments-v1-submittable
+              template: multiple-rfs-alignments
+            arguments:
+              parameters:
+                - name: read_file_sets_alignment_tasks
+                  value: "{{tasks.execute-rfs-alignments-tasks.outputs.result}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+    - name: compute-rfs-alignments-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: assembly_ensembl_accession
+          - name: experiment_type
+          - name: species_name
+          - name: skip
+          - name: limit
+      script:
+        image:  ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/rfs_alignment_tasks"
+                  f"?assembly_ensembl_accession={{inputs.parameters.assembly_ensembl_accession}}"
+                  f"&experiment_type={{inputs.parameters.experiment_type}}"
+                  f"&species_name={{inputs.parameters.species_name}}"
+                  f"&skip={{inputs.parameters.skip}}"
+                  f"&limit={{inputs.parameters.limit}}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+            
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+
+
