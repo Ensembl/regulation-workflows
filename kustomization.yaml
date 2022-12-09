@@ -2,6 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - fastqc/fastqc-cmd-pvc-callable.yaml
+  - ngmerge/ngmerge-cmd-pvc-callable.yaml
+  - bowtie2/bowtie2-cmd-pvc-callable.yaml
+  - alignment/run-alignment.yaml
+  - alignment/rfs-alignments.yaml
   - peak-calling/atac_seq.yaml
   - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
@@ -9,3 +14,4 @@ resources:
   - helpers/compute-pvc-size.yaml
   - helpers/check-s3-object-exists.yaml
   - helpers/compute-file-metadata-pvc-callable.yaml
+  - helpers/get-request-from-reg-pipelines-api.yaml
