@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ngmerge-cmd-pvc-callable-v1-submittable
+spec:
+  entrypoint: ngmerge-cmd-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: ngmerge-cmd-pvc-callable
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_name
+          - name: second_read_file_name
+          # Output files
+          - name: out_prefix
+          # Other Parameters
+          - name: num_threads
+            value: "14"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-ngmerge:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && NGmerge -a \
+                -n {{inputs.parameters.num_threads}} \
+                -1 {{inputs.parameters.first_read_file_name}} \
+                -2 {{inputs.parameters.second_read_file_name}} \
+                -o {{inputs.parameters.out_prefix}} \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            memory: 30Gi
+            cpu: 14000m
+          requests:
+            memory: 25Gi
+            cpu: 13500m
