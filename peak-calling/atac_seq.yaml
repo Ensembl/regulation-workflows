@@ -15,8 +15,6 @@ spec:
         parameters:
           - name: peak_calling_tasks
           - name: kubeconfig-path
-#          - name: tasks-parallelism
-#            value: "3"
       dag:
         tasks:
           - name: execute-peak-calling-task
