@@ -1,0 +1,15 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-request-from-reg-pipelines-api-v1-submittable
+spec:
+  entrypoint: get-request-from-reg-pipelines-api
+
+  templates:
+    - name: get-request-from-reg-pipelines-api
+      inputs:
+        parameters:
+          - name: url
+      http:
+       method: GET
+       url: "{{inputs.parameters.url}}"
