@@ -19,6 +19,8 @@ spec:
             template: rfs-alignment
             arguments:
               parameters:
+                - name: task-payload
+                  value: "{{item}}"
                 - name: assembly_id
                   value: "{{item.assembly_id}}"
                 - name: read_file_set_id
@@ -41,22 +43,13 @@ spec:
                   value: "false"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
-          - name: compute-rfs-alignment-task-marker-name
-            templateRef:
-              name: compute-task-marker-name-v1-submittable
-              template: compute-task-marker-name
-            arguments:
-              parameters:
-                - name: task-payload
-                  value: "{{item}}"
-                - name: task-type
-                  value: "rfs-alignment"
-            withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
+
 
     - name: rfs-alignment
       parallelism: 1
       inputs:
         parameters:
+          - name: task-payload
           - name: assembly_id
           - name: read_file_set_id
           - name: bowtie2_index_key
@@ -69,6 +62,17 @@ spec:
           - name: overwrite-results
       dag:
         tasks:
+          - name: compute-rfs-alignment-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: task-type
+                  value: "rfs-alignment"
+
           - name: check-if-merged-bam-already-in-s3-bucket
             templateRef:
               name: check-s3-object-exists-v1-submittable
