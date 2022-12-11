@@ -41,6 +41,16 @@ spec:
                   value: "false"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
+          - name: compute-rfs-alignment-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+            withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
+
     - name: rfs-alignment
       parallelism: 1
       inputs:
