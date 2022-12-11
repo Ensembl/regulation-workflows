@@ -12,6 +12,7 @@ spec:
       inputs:
         parameters:
           - name: task-payload
+          - name: task-type
 
       script:
         image: ghcr.io/daugo/ensembl-reg-python:all_workflows
@@ -35,14 +36,13 @@ spec:
           def main() -> int:
 
             input_text = """{{inputs.parameters.task-payload}}"""
-            print(input_text)
+            task_type = """{{inputs.parameters.task-type}}"""
             input_data = json.loads(input_text)
             input_parameters_hash = dict_hash(input_data)
 
             task_marker_path = (
               'task-markers/'
-              'bwa_alignment/'
-              f'{input_data["output_information_filename"]}_'
+              f'{task_type}/'
               f'{input_parameters_hash}'
               '.marker'
             )
