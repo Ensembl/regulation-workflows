@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compute-task-marker-name-v1-submittable
+spec:
+  entrypoint: compute-task-marker-name
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: compute-task-marker-name
+      inputs:
+        parameters:
+          - name: task-payload
+
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:all_workflows
+        command: [ python ]
+        source: |
+          from typing import Dict, Any
+          import hashlib
+          import json
+          import sys
+
+          def dict_hash(dict: Dict[str, Any]) -> str:
+              """MD5 hash of a dictionary."""
+              dict_hash = hashlib.md5()
+
+              # We need to sort arguments so {'a': 1, 'b': 2} is
+              # the same as {'b': 2, 'a': 1}
+              encoded = json.dumps(dict, sort_keys=True).encode()
+              dict_hash.update(encoded)
+              return dict_hash.hexdigest()
+
+          def main() -> int:
+
+            input_text = """{{inputs.parameters.task-payload}}"""
+            print(input_text)
+            input_data = json.loads(input_text)
+            input_parameters_hash = dict_hash(input_data)
+
+            task_marker_path = (
+              'task-markers/'
+              'bwa_alignment/'
+              f'{input_data["output_information_filename"]}_'
+              f'{input_parameters_hash}'
+              '.marker'
+            )
+
+            print(task_marker_path)
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
