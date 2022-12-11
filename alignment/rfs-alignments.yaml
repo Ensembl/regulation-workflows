@@ -73,6 +73,16 @@ spec:
                 - name: task-type
                   value: "rfs-alignment"
 
+          - name: check-if-task-marker-exists
+            depends: compute-rfs-alignment-task-marker-name
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
+
           - name: check-if-merged-bam-already-in-s3-bucket
             templateRef:
               name: check-s3-object-exists-v1-submittable
