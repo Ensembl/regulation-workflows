@@ -49,6 +49,8 @@ spec:
               parameters:
                 - name: task-payload
                   value: "{{item}}"
+                - name: task-type
+                  value: "rfs-alignment"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
     - name: rfs-alignment
