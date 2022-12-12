@@ -7,6 +7,9 @@ spec:
 
   templates:
     - name: get-request-from-reg-pipelines-api
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: url
