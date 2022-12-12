@@ -92,11 +92,23 @@ spec:
                 - name: s3-key
                   value: "{{inputs.parameters.output_key}}"
 
+          - name: check-work-avoidance-consistency
+            depends: "check-if-task-marker-exists && check-if-merged-bam-already-in-s3-bucket"
+            templateRef:
+              name: resolve-work-avoidance-v1-submittable
+              template: resolve-work-avoidance
+            arguments:
+              parameters:
+                - name: marker-exists
+                  value: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}}"
+                - name: output-artifact-exists
+                  value: "{{tasks.check-if-merged-bam-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+
           - name: execute-runs-alignment
-            depends: check-if-merged-bam-already-in-s3-bucket
-            when: >-
-              ( {{tasks.check-if-merged-bam-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
-                {{inputs.parameters.overwrite-results}} == true )
+            depends: check-work-avoidance-consistency
+            when: "{{check-work-avoidance-consistency.outputs.parameters.avoid-work}}"
             template: run-alignment
             arguments:
               parameters:
