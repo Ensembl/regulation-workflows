@@ -16,4 +16,4 @@ resources:
   - helpers/compute-file-metadata-pvc-callable.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml
   - helpers/compute-task-marker-name.yaml
-
+  - helpers/resolve-work-avoidance.yaml
