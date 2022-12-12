@@ -1,0 +1,68 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: resolve-work-avoidance-v1-submittable
+spec:
+  entrypoint: resolve-work-avoidance
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: resolve-work-avoidance
+      inputs:
+        parameters:
+          - name: marker-exists
+          - name: output-artifact-exists
+          - name: overwrite-results
+
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          from pydantic import BaseModel
+          import sys
+          
+          class WorkAvoidanceResolver(BaseModel):
+            marker_exists: bool
+            output_artifact_exists: bool
+            overwrite_results: bool
+          
+            @property
+            def avoid_work(self):
+              if self.marker_exists and self.output_artifact_exists:
+                return True
+          
+              elif self.marker_exists and not self.output_artifact_exists:
+                raise ValueError("A marker file exists but no output artifact found."
+                                  "Either remove marker and run again or check you are pointing to the right bucket")
+          
+              elif (not self.marker_exists and self.output_artifact_exists)  and not self.overwrite_results:
+                raise ValueError("No marker file found for this task set of parameters"
+                                  "However, a output-artifact with the same name exists."
+                                  "Avoiding overwriting (check overwrite-results parameter)")
+          
+              elif (not self.marker_exists and self.output-artifact_exists) and self.overwrite_results:
+                return True
+          
+              else:
+                return False
+
+          def main() -> int:
+            
+            wa_resolver = WorkAvoidanceResolver(
+              marker_exists = "{{inputs.parameters.marker-exists}}",
+              output_artifact_exists = "{{inputs.parameters.output-artifact-exists}}",
+              overwrite_results = "{{inputs.parameters.overwrite-results}}",
+            )
+
+            with open('avoid_work.txt', 'w') as f:
+              f.write(wa_resolver.avoid_work)
+
+          if __name__ == '__main__':
+              sys.exit(main())
+
+      outputs:
+        parameters:
+          - name: avoid-work
+            valueFrom:
+              path: avoid_work.txt
