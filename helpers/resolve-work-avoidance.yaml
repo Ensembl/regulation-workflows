@@ -17,6 +17,7 @@ spec:
 
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
+        imagePullPolicy: Always
         command: [ python ]
         source: |
           from pydantic import BaseModel
