@@ -233,6 +233,18 @@ spec:
                 - name: assembly-id
                   value: "{{inputs.parameters.assembly_id}}"
 
+          - name: update-rfs-alignment-task-marker
+            depends: execute-post-rfs-alignment
+            templateRef:
+              name: update-task-marker-v1-submittable
+              template: update-task-marker
+            arguments:
+              parameters:
+                - name: task-marker-s3-key
+                  value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+
           - name: delete-run-alignment-pvc
             depends: execute-compute-file-metadata
             templateRef:
