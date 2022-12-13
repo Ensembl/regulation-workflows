@@ -41,6 +41,8 @@ spec:
                   value: "/.kube/analysis-pipelines.config"
                 - name: overwrite-results
                   value: "false"
+                - name: force-update-rfs-alignment-task-markers
+                  value: "true"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
 
@@ -60,6 +62,7 @@ spec:
           - name: associated_read_files_size
           - name: kubeconfig-path
           - name: overwrite-results
+          - name: force-update-rfs-alignment-task-markers
       dag:
         tasks:
           - name: compute-rfs-alignment-task-marker-name
@@ -108,7 +111,7 @@ spec:
 
           - name: execute-runs-alignment
             depends: check-work-avoidance-consistency
-            when: "{{check-work-avoidance-consistency.outputs.parameters.avoid-work}}"
+            when: "{{check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             template: run-alignment
             arguments:
               parameters:
@@ -234,7 +237,11 @@ spec:
                   value: "{{inputs.parameters.assembly_id}}"
 
           - name: update-rfs-alignment-task-marker
-            depends: execute-post-rfs-alignment
+            depends: "execute-post-rfs-alignment || check-work-avoidance-consistency.Failed"
+            when: >-
+              ( ( {{inputs.parameters.force-update-rfs-alignment-task-markers}} == true 
+              && {{tasks.check-work-avoidance-consistency.status}} == Failed ) 
+              || {{tasks.execute-post-rfs-alignment.status}} == Succeeded )
             templateRef:
               name: update-task-marker-v1-submittable
               template: update-task-marker
