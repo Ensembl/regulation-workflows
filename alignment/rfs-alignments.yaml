@@ -110,8 +110,8 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
 
           - name: execute-runs-alignment
-            depends: check-work-avoidance-consistency
-            when: "{{check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+            depends: check-work-avoidance-consistency.Succeeded
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             template: run-alignment
             arguments:
               parameters:
