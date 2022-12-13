@@ -29,24 +29,24 @@ spec:
             overwrite_results: bool
           
             @property
-            def avoid_work(self):
+            def avoid_work(self) -> str:
               if self.marker_exists and self.output_artifact_exists:
-                return True
+                return "true"
           
               elif self.marker_exists and not self.output_artifact_exists:
-                raise ValueError("A marker file exists but no output artifact found."
+                raise ValueError("A marker file exists but no output artifact found.\n"
                                   "Either remove marker and run again or check you are pointing to the right bucket")
           
               elif (not self.marker_exists and self.output_artifact_exists)  and not self.overwrite_results:
-                raise ValueError("No marker file found for this task set of parameters"
-                                  "However, a output-artifact with the same name exists."
+                raise ValueError("No marker file found for this task set of parameters\n"
+                                  "However, a output-artifact with the same name exists.\n"
                                   "Avoiding overwriting (check overwrite-results parameter)")
           
               elif (not self.marker_exists and self.output-artifact_exists) and self.overwrite_results:
-                return True
+                return "true"
           
               else:
-                return False
+                return "false"
 
           def main() -> int:
             
@@ -58,6 +58,8 @@ spec:
 
             with open('avoid_work.txt', 'w') as f:
               f.write(wa_resolver.avoid_work)
+          
+            return 0
 
           if __name__ == '__main__':
               sys.exit(main())
