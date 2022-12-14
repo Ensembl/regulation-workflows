@@ -36,7 +36,7 @@ spec:
           def main() -> int:
 
             input_text = """{{inputs.parameters.task-payload}}"""
-            task_type = """{{inputs.parameters.task-type}}"""
+            task_type = "{{inputs.parameters.task-type}}"
             input_data = json.loads(input_text)
             input_parameters_hash = dict_hash(input_data)
 
