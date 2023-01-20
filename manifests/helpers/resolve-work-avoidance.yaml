@@ -42,14 +42,14 @@ spec:
                                   "However, a output-artifact with the same name exists.\n"
                                   "Avoiding overwriting (check overwrite-results parameter)")
           
-              elif (not self.marker_exists and self.output-artifact_exists) and self.overwrite_results:
+              elif (not self.marker_exists and self.output_artifact_exists) and self.overwrite_results:
                 return "true"
           
               else:
                 return "false"
 
           def main() -> int:
-            
+          
             wa_resolver = WorkAvoidanceResolver(
               marker_exists = "{{inputs.parameters.marker-exists}}",
               output_artifact_exists = "{{inputs.parameters.output-artifact-exists}}",
