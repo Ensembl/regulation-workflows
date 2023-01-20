@@ -22,10 +22,10 @@ spec:
               repo: https://github.com/daugo/kubectl-configs.git
               revision: main
               usernameSecret:
-                name: github-creds
+                name: kubectl-configs-repo-creds
                 key: usernameSecret
               passwordSecret:
-                name: github-creds
+                name: kubectl-configs-repo-creds
                 key: passwordSecret
         parameters:
           - name: pvc-name
