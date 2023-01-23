@@ -14,10 +14,11 @@ spec:
           - name: assembly_ensembl_accession
           - name: experiment_type
           - name: species_name
+          - name: epigenome_group_id
           - name: skip
           - name: limit
           - name: kubeconfig-path
-            value: "/.kube/high-memory-pipelines.config"
+            value: "/.kube/analysis-pipelines.config"
       dag:
         tasks:
           - name: get-rfs-alignments-tasks-url
@@ -34,6 +35,8 @@ spec:
                   value: "{{inputs.parameters.experiment_type}}"
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
                 - name: skip
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
@@ -70,10 +73,11 @@ spec:
           - name: assembly_ensembl_accession
           - name: experiment_type
           - name: species_name
+          - name: epigenome_group_id
           - name: skip
           - name: limit
       script:
-        image:  ghcr.io/daugo/ensembl-reg-python:latest
+        image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
         source: |
           import sys
@@ -91,12 +95,13 @@ spec:
                   f"?assembly_ensembl_accession={{inputs.parameters.assembly_ensembl_accession}}"
                   f"&experiment_type={{inputs.parameters.experiment_type}}"
                   f"&species_name={{inputs.parameters.species_name}}"
+                  f"&epigenome_group_id={{inputs.parameters.epigenome_group_id}}"
                   f"&skip={{inputs.parameters.skip}}"
                   f"&limit={{inputs.parameters.limit}}"         
             )
           
             print(urllib.parse.quote(url_str, safe=":/?=&"))
-            
+          
             return 0
 
           if __name__ == '__main__':
