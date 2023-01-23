@@ -19,7 +19,7 @@ spec:
           - name: kubeconfig
             path: /.kube/
             git:
-              repo: https://github.com/daugo/kubectl-configs.git
+              repo: https://gitlab.ebi.ac.uk/ensreg/admin/kubectl-configs.git
               revision: main
               usernameSecret:
                 name: kubectl-configs-repo-creds
