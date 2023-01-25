@@ -158,11 +158,15 @@ spec:
 
           - name: copy-run-alignments-to-rfs-pvc
             depends: create-rfs-alignment-pvc
-            template: copy-s3-object-to-pvc
+            templateRef:
+              name: s3-objects-to-pvc-v1-submittable
+              template: s3-objects-to-pvc
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: pvc-dir
+                  value: "so_coordinates_runs_bams"
                 # Warning: Here we assume all rfs run alignments can be found
                 # by themselves under the same prefix in the s3 bucket
                 - name: s3-prefix
@@ -314,39 +318,6 @@ spec:
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-
-    - name: copy-s3-object-to-pvc
-      retryStrategy:
-        limit: "6"
-        backoff:
-          duration: "10s"
-          factor: "2"
-        retryPolicy: "OnError"
-      inputs:
-        parameters:
-          # S3 object location (Source)
-          - name: s3-prefix
-          #          - name: s3-filename
-          # Destination
-          - name: pvc-name
-        artifacts:
-          - name: run-alignments
-            path: /mnt/vol/so_coordinates_runs_bams/
-            s3:
-              key: "{{inputs.parameters.s3-prefix}}"
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: '{{inputs.parameters.pvc-name}}'
-      container:
-        workingDir: /mnt/vol
-        imagePullPolicy: Always
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
-        command: [ bash, -c, -ue, -o, xtrace ]
-        args: [ "ls -altrh so_coordinates_runs_bams" ]
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
 
 
     - name: samtools-merge-cmd
