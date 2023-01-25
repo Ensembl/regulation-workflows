@@ -140,9 +140,9 @@ spec:
 
             for obj_k in object_keys:
               filename = Path(obj_k).name
-              out_dir = Path(f'/mnt/vol{pvc_dir}')
+              out_dir = Path('/mnt/vol') / f'{pvc_dir}'
+              out_dir.mkdir(parents=True, exist_ok=True)
               print(f"Files in {out_dir} before transfer: {list(out_dir.iterdir())}")
-              out_dir.mkdir(parents=True, exist_ok=True)  
               out_filepath = out_dir / filename
               s3_client.download_file(bucket_name, obj_k, str(out_filepath))
               print(f"Files in {out_dir} after transfer: {list(out_dir.iterdir())}")
