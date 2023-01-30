@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: fastqc-cmd-pvc-callable-v1-submittable
+  name: fastqc-pe-cmd-pvc-callable-v1-submittable
 spec:
   entrypoint: fastqc-cmd-pvc-callable
   imagePullSecrets:

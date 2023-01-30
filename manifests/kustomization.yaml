@@ -2,7 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - fastqc/fastqc-cmd-pvc-callable.yaml
+  - fastqc/fastqc-pe-cmd-pvc-callable.yaml
   - ngmerge/ngmerge-cmd-pvc-callable.yaml
   - bowtie2/bowtie2-cmd-pvc-callable.yaml
   - alignment/run-alignment-pe.yaml

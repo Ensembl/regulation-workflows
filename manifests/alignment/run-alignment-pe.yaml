@@ -100,7 +100,7 @@ spec:
           - name: execute-fastqc-cmd-for-original-read-files
             depends: load-read-files-to-pvc
             templateRef:
-              name: fastqc-cmd-pvc-callable-v1-submittable
+              name: fastqc-pe-cmd-pvc-callable-v1-submittable
               template: fastqc-cmd-pvc-callable
             arguments:
               parameters:
@@ -150,7 +150,7 @@ spec:
           - name: execute-fastqc-cmd-for-noAdapt-read-files
             depends: clean-up-original-rf-from-pvc
             templateRef:
-              name: fastqc-cmd-pvc-callable-v1-submittable
+              name: fastqc-pe-cmd-pvc-callable-v1-submittable
               template: fastqc-cmd-pvc-callable
             arguments:
               parameters:
