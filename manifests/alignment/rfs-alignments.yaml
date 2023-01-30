@@ -282,7 +282,7 @@ spec:
         tasks:
           - name: execute-ngmerge-bwt2-alignment
             templateRef:
-              name: run-alignment-v1-submittable
+              name: run-alignment-pe-v1-submittable
               template: run-alignment
             arguments:
               parameters:

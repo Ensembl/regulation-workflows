@@ -3,7 +3,7 @@ kind: WorkflowTemplate
 #kind: Workflow
 metadata:
   #  generateName: run-alignment-
-  name: run-alignment-v1-submittable
+  name: run-alignment-pe-v1-submittable
 spec:
   entrypoint: run-alignment
   #  hooks:
