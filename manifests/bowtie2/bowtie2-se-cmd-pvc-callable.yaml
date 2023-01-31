@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: bowtie2-se-cmd-pvc-callable-v1-submittable
+spec:
+  entrypoint: bowtie2-cmd-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: bowtie2-cmd-pvc-callable
+      retryStrategy:
+        limit: "6"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_name
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          # Output prefix
+          - name: output_prefix
+          - name: output_filename
+          # Other Parameters
+          - name: num_threads
+            value: "14"
+        artifacts:
+          - name: bowtie2_index
+            path: /results/bwt2_idx
+            s3:
+              key: "{{inputs.parameters.bowtie2_index_key}}"
+
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bowtie2_samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+              && ls -altrh /results/bwt2_idx \
+              && bowtie2 \
+              --threads {{inputs.parameters.num_threads}} \
+              --very-sensitive \
+              -k 10 \
+              --mm \
+              -x /results/bwt2_idx/{{inputs.parameters.bowtie2_index_basename}} \
+              -U {{inputs.parameters.first_read_file_name}} \
+              | samtools sort \
+              -o {{inputs.parameters.output_filename}} \
+              -@ {{inputs.parameters.num_threads}} \
+              && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            memory: 30Gi
+            cpu: 14000m
+          requests:
+            memory: 25Gi
+            cpu: 13500m
+      outputs:
+        artifacts:
+          - name: output_bam
+            path: "/mnt/vol/{{inputs.parameters.output_filename}}"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.output_prefix}}{{inputs.parameters.output_filename}}"

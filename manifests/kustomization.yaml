@@ -7,6 +7,7 @@ resources:
   - ngmerge/ngmerge-cmd-pvc-callable.yaml
   - fastp/fastp-se-cmd-pvc-callable.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable.yaml
+  - bowtie2/bowtie2-se-cmd-pvc-callable.yaml
   - alignment/run-alignment-pe.yaml
   - alignment/rfs-alignments.yaml
   - peak-calling/atac_seq.yaml
