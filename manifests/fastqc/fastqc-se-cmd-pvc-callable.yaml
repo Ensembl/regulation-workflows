@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: fastqc-se-cmd-pvc-callablev1-submittable
+spec:
+  entrypoint: fastqc-cmd-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: fastqc-cmd-pvc-callable
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_name
+          # Output files
+          - name: outdir
+          - name: outdir_s3_prefix
+          # Others
+          - name: num-threads
+            value: "2"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-fastqc:latest
+        command: [ sh, -c , -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && mkdir -p {{inputs.parameters.outdir}} \
+                && fastqc \
+                --threads {{inputs.parameters.num-threads}} \
+                --format fastq \
+                --outdir {{inputs.parameters.outdir}} \
+                {{inputs.parameters.first_read_file_name}} \
+                && ls -altrh {{inputs.parameters.outdir}}" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            memory: 8Gi
+            cpu: 3900m
+          requests:
+            memory: 6Gi
+            cpu: 2100m
+      outputs:
+        artifacts:
+          - name: first_read_file
+            path: "/mnt/vol/{{inputs.parameters.outdir}}/"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.outdir_s3_prefix}}"
