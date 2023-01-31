@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - fastqc/fastqc-pe-cmd-pvc-callable.yaml
   - ngmerge/ngmerge-cmd-pvc-callable.yaml
-  - bowtie2/bowtie2-cmd-pvc-callable.yaml
+  - bowtie2/bowtie2-pe-cmd-pvc-callable.yaml
   - alignment/run-alignment-pe.yaml
   - alignment/rfs-alignments.yaml
   - peak-calling/atac_seq.yaml

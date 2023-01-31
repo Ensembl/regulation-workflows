@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bowtie2-cmd-pvc-callable-v1-submittable
+  name: bowtie2-pe-cmd-pvc-callable-v1-submittable
 spec:
   entrypoint: bowtie2-cmd-pvc-callable
   imagePullSecrets:
