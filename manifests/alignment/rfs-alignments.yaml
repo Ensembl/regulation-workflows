@@ -13,6 +13,7 @@ spec:
       inputs:
         parameters:
           - name: read_file_sets_alignment_tasks
+          - name: kubeconfig-path
       dag:
         tasks:
           - name: execute-rfs-alignment
@@ -38,7 +39,7 @@ spec:
                 - name: associated_read_files_size
                   value: "{{item.associated_read_files_size}}"
                 - name: kubeconfig-path
-                  value: "/.kube/analysis-pipelines.config"
+                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: overwrite-results
                   value: "false"
                 - name: force-update-rfs-alignment-task-markers

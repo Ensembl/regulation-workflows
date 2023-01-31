@@ -18,7 +18,6 @@ spec:
           - name: skip
           - name: limit
           - name: kubeconfig-path
-            value: "/.kube/analysis-pipelines.config"
       dag:
         tasks:
           - name: get-rfs-alignments-tasks-url
