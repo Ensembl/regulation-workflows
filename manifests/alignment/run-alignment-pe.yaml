@@ -273,7 +273,7 @@ spec:
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "echo \
                 Loading {{inputs.parameters.first_read_file_name}} \
-                and {{inputs.parameters.first_read_file_name}} to \
+                and {{inputs.parameters.second_read_file_name}} to \
                 {{inputs.parameters.pvc-name}} \
                 && ls -altrh /mnt/vol/" ]
         volumeMounts:
