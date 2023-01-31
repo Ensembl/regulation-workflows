@@ -1,0 +1,256 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: run-alignment-se-v1-submittable
+spec:
+  entrypoint: run-alignment
+  podGC:
+    strategy: OnPodSuccess
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: run-alignment
+      inputs:
+        parameters:
+          # Input file
+          - name: first_read_file_key
+          - name: first_read_file_name
+          - name: first_read_file_basename
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          # Output related
+          - name: total_read_files_size
+          - name: read_files_output_prefix
+          - name: fastqc_outdir
+          - name: fastqc_output_prefix
+          - name: output_prefix
+          - name: output_filename
+          # Others
+          - name: overwrite-results
+            value: "true"
+
+      dag:
+        tasks:
+          - name: check-if-run-alignment-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.output_prefix}}{{inputs.parameters.output_filename}}"
+
+          - name: get-run-alignment-pvc-size
+            when: >-
+              ( {{tasks.check-if-run-alignment-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
+                {{inputs.parameters.overwrite-results}} == true )
+            depends: check-if-run-alignment-already-in-s3-bucket
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{inputs.parameters.total_read_files_size}}"
+                - name: size_factor
+                  value: "12"
+
+          - name: create-run-alignment-pvc
+            depends: "get-run-alignment-pvc-size.Succeeded"
+            when: "{{tasks.check-if-run-alignment-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-run-alignment-pvc-size.outputs.parameters.pvc-size-formatted}}"
+
+          - name: load-read-file-to-pvc
+            depends: create-run-alignment-pvc
+            template: read-file-to-pvc
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                # Input file
+                - name: first_read_file_key
+                  value: "{{inputs.parameters.first_read_file_key}}"
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.first_read_file_name}}"
+
+          - name: execute-fastqc-cmd-for-original-read-file
+            depends: load-read-file-to-pvc
+            templateRef:
+              name: fastqc-se-cmd-pvc-callablev1-submittable
+              template: fastqc-cmd-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                # Input file
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.first_read_file_name}}"
+                # Output files
+                - name: outdir
+                  value: "{{inputs.parameters.fastqc_outdir}}"
+                - name: outdir_s3_prefix
+                  value: "{{inputs.parameters.fastqc_output_prefix}}"
+
+          - name: execute-fastp-cmd
+            depends: execute-fastqc-cmd-for-original-read-file
+            templateRef:
+              name: fastp-se-cmd-pvc-callable-v1-submittable
+              template: fastp-cmd-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                # Input file
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.first_read_file_name}}"
+                # Output files
+                - name: out_prefix
+                  value: "{{inputs.parameters.read_files_output_prefix}}"
+
+          - name: clean-up-original-rf-from-pvc
+            depends: execute-fastp-cmd
+            template: remove-rf-from-pvc
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.first_read_file_name}}"
+
+          - name: execute-fastqc-cmd-for-noAdapt-read-files
+            depends: clean-up-original-rf-from-pvc
+            templateRef:
+              name: fastqc-se-cmd-pvc-callablev1-submittable
+              template: fastqc-cmd-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                # Input file
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.read_files_output_prefix}}.fastq.gz"
+                # Output files
+                - name: outdir
+                  value: "{{inputs.parameters.fastqc_outdir}}"
+                - name: outdir_s3_prefix
+                  value: "{{inputs.parameters.fastqc_output_prefix}}"
+
+          - name: execute-bowtie2-cmd
+            depends: execute-fastqc-cmd-for-noAdapt-read-files
+            templateRef:
+              name: bowtie2-se-cmd-pvc-callable-v1-submittable
+              template: bowtie2-cmd-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                # Input file
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.read_files_output_prefix}}.fastq.gz"
+                - name: bowtie2_index_key
+                  value: "{{inputs.parameters.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{inputs.parameters.bowtie2_index_basename}}"
+                # Output prefix
+                - name: output_prefix
+                  value: "{{inputs.parameters.output_prefix}}"
+                - name: output_filename
+                  value: "{{inputs.parameters.output_filename}}"
+
+          - name: delete-run-alignment-pvc
+            depends: execute-bowtie2-cmd
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+
+          - name: print-output-info
+            depends: (delete-run-alignment-pvc.Succeeded || get-run-alignment-pvc-size.Skipped)
+            template: output-info
+            arguments:
+              parameters:
+                - name: alignment-name
+                  value: "{{inputs.parameters.output_prefix}}{{inputs.parameters.output_filename}}"
+
+
+    - name: output-info
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: alignment-name
+      container:
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "echo \
+                'Alignment file: {{inputs.parameters.alignment-name}} archived and available for downstream analysis'" ]
+
+    - name: read-file-to-pvc
+      retryStrategy:
+        limit: "12"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_key
+          - name: first_read_file_name
+        artifacts:
+          - name: first_read_file
+            path: "/mnt/vol/{{inputs.parameters.first_read_file_name}}"
+            http:
+              url: "https://hh.fire.sdo.ebi.ac.uk/fire/public/era/{{inputs.parameters.first_read_file_key}}"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "echo \
+                Loading {{inputs.parameters.first_read_file_name}} to \
+                {{inputs.parameters.pvc-name}} \
+                && ls -altrh /mnt/vol/" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+    - name: remove-rf-from-pvc
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Read files to delete
+          - name: first_read_file_name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && rm \
+                {{inputs.parameters.first_read_file_name}} \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
