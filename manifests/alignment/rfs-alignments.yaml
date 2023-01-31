@@ -280,7 +280,8 @@ spec:
           - name: overwrite-results
       dag:
         tasks:
-          - name: execute-ngmerge-bwt2-alignment
+          - name: execute-pe-alignment
+            when: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.paired')}} == 'true'"
             templateRef:
               name: run-alignment-pe-v1-submittable
               template: run-alignment
@@ -299,6 +300,39 @@ spec:
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_basename')}}"
                 - name: second_read_file_basename
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_basename')}}"
+                - name: bowtie2_index_key
+                  value: "{{inputs.parameters.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{inputs.parameters.bowtie2_index_basename}}"
+                # Output related
+                - name: total_read_files_size
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.total_read_files_size')}}"
+                - name: read_files_output_prefix
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.read_files_output_prefix')}}"
+                - name: fastqc_outdir
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_outdir')}}"
+                - name: fastqc_output_prefix
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_output_prefix')}}"
+                - name: output_prefix
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_prefix')}}"
+                - name: output_filename
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+          - name: execute-se-alignment
+            when: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.paired')}} == 'false'"
+            templateRef:
+              name: run-alignment-se-v1-submittable
+              template: run-alignment
+            arguments:
+              parameters:
+                # Input file
+                - name: first_read_file_key
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_key')}}"
+                - name: first_read_file_name
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_name')}}"
+                - name: first_read_file_basename
+                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_basename')}}"
                 - name: bowtie2_index_key
                   value: "{{inputs.parameters.bowtie2_index_key}}"
                 - name: bowtie2_index_basename
