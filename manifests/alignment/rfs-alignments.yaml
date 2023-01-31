@@ -281,7 +281,8 @@ spec:
       dag:
         tasks:
           - name: execute-pe-alignment
-            when: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.paired')}} == 'true'"
+            # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
+            when: "true == {{=jsonpath(inputs.parameters.run_alignment_params, '$.paired') == true}}"
             templateRef:
               name: run-alignment-pe-v1-submittable
               template: run-alignment
@@ -320,7 +321,8 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
           - name: execute-se-alignment
-            when: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.paired')}} == 'false'"
+            # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
+            when: "true == {{=jsonpath(inputs.parameters.run_alignment_params, '$.paired') == false}}"
             templateRef:
               name: run-alignment-se-v1-submittable
               template: run-alignment
