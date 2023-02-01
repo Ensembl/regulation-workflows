@@ -30,7 +30,6 @@ spec:
         parameters:
           - name: pvc-name
           - name: kubeconfig-path
-            value: "/.kube/analysis-pipelines.config"
       script:
         env:
           - name: KUBECONFIG

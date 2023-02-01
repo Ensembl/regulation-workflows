@@ -128,6 +128,8 @@ spec:
                   value: "{{item}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.read_file_set}}"
 
           - name: get-rfs-alignment-pvc-size
@@ -279,6 +281,7 @@ spec:
           - name: bowtie2_index_basename
           - name: run_alignment_params
           - name: overwrite-results
+          - name: kubeconfig-path
       dag:
         tasks:
           - name: execute-pe-alignment
@@ -321,6 +324,8 @@ spec:
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
           - name: execute-se-alignment
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
             when: "true == {{=jsonpath(inputs.parameters.run_alignment_params, '$.paired') == false}}"
@@ -355,6 +360,8 @@ spec:
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
 
     - name: samtools-merge-cmd

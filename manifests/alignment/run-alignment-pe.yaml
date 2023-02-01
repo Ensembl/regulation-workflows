@@ -42,6 +42,7 @@ spec:
           # Others
           - name: overwrite-results
             value: "true"
+          - name: kubeconfig-path
 
       dag:
         tasks:
@@ -79,6 +80,8 @@ spec:
               parameters:
                 - name: pvc-size
                   value: "{{tasks.get-run-alignment-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: load-read-files-to-pvc
             depends: create-run-alignment-pvc
@@ -200,6 +203,8 @@ spec:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-run-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: print-output-info
             depends: (delete-run-alignment-pvc.Succeeded || get-run-alignment-pvc-size.Skipped)
