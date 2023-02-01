@@ -11,6 +11,7 @@ resources:
   - alignment/run-alignment-pe.yaml
   - alignment/run-alignment-se.yaml
   - alignment/rfs-alignments.yaml
+  - alignment/get-rfs-alignments-tasks.yaml
   - peak-calling/atac_seq.yaml
   - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
