@@ -9,7 +9,7 @@ spec:
 
   templates:
     - name: multiple-rfs-alignments
-      parallelism: 7
+      parallelism: 9
       inputs:
         parameters:
           - name: read_file_sets_alignment_tasks
