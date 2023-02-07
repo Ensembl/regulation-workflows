@@ -43,7 +43,7 @@ spec:
                 - name: overwrite-results
                   value: "false"
                 - name: force-update-rfs-alignment-task-markers
-                  value: "true"
+                  value: "false"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
 
