@@ -6,6 +6,8 @@ spec:
   entrypoint: get-rfs-alignments-tasks-dag
   imagePullSecrets:
     - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
 
   templates:
     - name: get-rfs-alignments-tasks-dag
