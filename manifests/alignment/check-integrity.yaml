@@ -110,7 +110,7 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
-          - name: copy-rfs-alignments-to-pvc
+          - name: copy-rfs-alignment-to-pvc
             depends: create-rfs-alignment-pvc
             templateRef:
               name: s3-object-to-pvc-v1-submittable
@@ -121,5 +121,17 @@ spec:
                   value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
                 - name: s3-key
                   value: "{{inputs.parameters.output_key}}"
+                - name: filename
+                  value: "{{inputs.parameters.read_file_set_id}}.bam"
+
+          - name: execute-samtools-quick-check
+            depends: copy-rfs-alignment-to-pvc
+            templateRef:
+              name: samtools-quickcheck-cmd-pvc-callable-v1-submittable
+              template: samtools-quickcheck-cmd-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
                 - name: filename
                   value: "{{inputs.parameters.read_file_set_id}}.bam"
