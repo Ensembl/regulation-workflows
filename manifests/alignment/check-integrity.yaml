@@ -40,10 +40,6 @@ spec:
                   value: "{{item.associated_read_files_size}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-                - name: overwrite-results
-                  value: "false"
-                - name: force-update-rfs-alignment-task-markers
-                  value: "false"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
 
@@ -61,8 +57,6 @@ spec:
           - name: output_key
           - name: associated_read_files_size
           - name: kubeconfig-path
-          - name: overwrite-results
-          - name: force-update-rfs-alignment-task-markers
       dag:
         tasks:
           - name: compute-rfs-alignment-task-marker-name
