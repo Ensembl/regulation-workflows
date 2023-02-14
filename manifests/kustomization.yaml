@@ -15,6 +15,7 @@ resources:
   - alignment/check-integrity.yaml
   - peak-calling/atac_seq.yaml
   - samtools/samtools-sort-pvc-callable.yaml
+  - samtools/samtools-quickcheck-cmd-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/delete-patch-pvc-kubectl.yaml
   - helpers/compute-pvc-size.yaml

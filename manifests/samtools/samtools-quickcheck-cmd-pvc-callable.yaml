@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: samtools-quickcheck-cmd-pvc-callable-v1-submittable
+spec:
+  entrypoint: samtools-quickcheck-cmd-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: samtools-quickcheck-cmd-pvc-callable
+      retryStrategy:
+        limit: "6"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: pvc-dir
+            value: ""
+          # Input file
+          - name: filename
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bowtie2_samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+              && samtools quickcheck {{inputs.parameters.pvc-dir}}{{inputs.parameters.filename}}" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
