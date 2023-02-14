@@ -19,7 +19,7 @@ spec:
       dag:
         tasks:
           - name: s3-object-to-pvc
-            template: copy-s3-objects-to-pvc
+            template: copy-s3-object-to-pvc
             arguments:
               parameters:
                 - name: s3-key
@@ -31,7 +31,7 @@ spec:
                 - name: pvc-dir
                   value: "{{inputs.parameters.pvc-dir}}"
 
-    - name: copy-s3-objects-to-pvc
+    - name: copy-s3-object-to-pvc
       retryStrategy:
         limit: "6"
         backoff:
@@ -48,7 +48,7 @@ spec:
           - name: filename
         artifacts:
           - name: run-alignments
-            path: "/mnt/vol/"
+            path: "/mnt/vol/{{inputs.parameters.filename}}"
             s3:
               key: "{{inputs.parameters.s3-key}}"
       volumes:
