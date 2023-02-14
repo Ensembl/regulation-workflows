@@ -9,7 +9,7 @@ spec:
 
   templates:
     - name: check-rfs-alignments
-      parallelism: 20
+      parallelism: 10
       inputs:
         parameters:
           - name: read_file_sets_alignment_tasks
