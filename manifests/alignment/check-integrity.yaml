@@ -1,0 +1,125 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: check-integrity-rfs-alignments-v1-submittable
+spec:
+  entrypoint: check-rfs-alignments
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: check-rfs-alignments
+      parallelism: 9
+      inputs:
+        parameters:
+          - name: read_file_sets_alignment_tasks
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: check-rfs-alignment
+            template: rfs-alignment-integrity
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: assembly_id
+                  value: "{{item.assembly_id}}"
+                - name: read_file_set_id
+                  value: "{{item.read_file_set_id}}"
+                - name: bowtie2_index_key
+                  value: "{{item.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{item.bowtie2_index_basename}}"
+                - name: read_file_set
+                  value: "{{item.read_file_set}}"
+                - name: samtools_stats_output_key
+                  value: "{{item.samtools_stats_output_key}}"
+                - name: output_key
+                  value: "{{item.output_key}}"
+                - name: associated_read_files_size
+                  value: "{{item.associated_read_files_size}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: overwrite-results
+                  value: "false"
+                - name: force-update-rfs-alignment-task-markers
+                  value: "false"
+            withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
+
+
+    - name: rfs-alignment-integrity
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: assembly_id
+          - name: read_file_set_id
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          - name: read_file_set
+          - name: samtools_stats_output_key
+          - name: output_key
+          - name: associated_read_files_size
+          - name: kubeconfig-path
+          - name: overwrite-results
+          - name: force-update-rfs-alignment-task-markers
+      dag:
+        tasks:
+          - name: compute-rfs-alignment-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: task-type
+                  value: "rfs-alignment"
+
+          - name: check-if-task-marker-exists
+            depends: compute-rfs-alignment-task-marker-name
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
+
+          - name: get-rfs-alignment-pvc-size
+            depends: check-if-task-marker-exists
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{inputs.parameters.associated_read_files_size}}"
+                - name: size_factor
+                  value: "9"
+
+          - name: create-rfs-alignment-pvc
+            depends: "get-rfs-alignment-pvc-size.Succeeded"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-rfs-alignment-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: copy-rfs-alignments-to-pvc
+            depends: create-rfs-alignment-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: s3-key
+                  value: "{{inputs.parameters.output_key}}"
+                - name: filename
+                  value: "{{inputs.parameters.read_file_set_id}}.bam"
