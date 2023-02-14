@@ -12,6 +12,7 @@ resources:
   - alignment/run-alignment-se.yaml
   - alignment/rfs-alignments.yaml
   - alignment/get-rfs-alignments-tasks.yaml
+  - alignment/check-integrity.yaml
   - peak-calling/atac_seq.yaml
   - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
@@ -24,3 +25,4 @@ resources:
   - helpers/resolve-work-avoidance.yaml
   - helpers/update-task-marker.yaml
   - helpers/copy-s3-objects-to-pvc.yaml
+  - helpers/copy-s3-object-to-pvc.yaml
