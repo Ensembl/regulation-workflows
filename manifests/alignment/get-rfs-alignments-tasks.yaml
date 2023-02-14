@@ -18,6 +18,10 @@ spec:
           - name: skip
           - name: limit
           - name: kubeconfig-path
+          - name: skip-execution
+            value: "false"
+          - name: check-integrity
+            value: "false"
       dag:
         tasks:
           - name: get-rfs-alignments-tasks-url
@@ -53,6 +57,7 @@ spec:
 
 
           - name: submit-rfs-alignments-tasks
+            when: "{{inputs.parameters.skip-execution}} == false"
             depends: "execute-rfs-alignments-tasks"
             templateRef:
               name: muliple-rfs-alignments-v1-submittable
@@ -63,6 +68,20 @@ spec:
                   value: "{{tasks.execute-rfs-alignments-tasks.outputs.result}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: check-integrity-rfs-alignments-integrity
+            when: "{{inputs.parameters.check-integrity}} == true"
+            depends: "execute-rfs-alignments-tasks && (submit-rfs-alignments-tasks.Succeeded || submit-rfs-alignments-tasks.Skipped)"
+            templateRef:
+              name: check-integrity-rfs-alignments-v1-submittable
+              template: check-rfs-alignments
+            arguments:
+              parameters:
+                - name: read_file_sets_alignment_tasks
+                  value: "{{tasks.execute-rfs-alignments-tasks.outputs.result}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
 
     - name: compute-rfs-alignments-tasks-url
       inputs:
