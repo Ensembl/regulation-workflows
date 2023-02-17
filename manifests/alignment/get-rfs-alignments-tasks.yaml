@@ -1,5 +1,5 @@
 apiVersion: argoproj.io/v1alpha1
-kind: WorkflowTemplate
+kind: Workflow
 metadata:
   name: get-rfs-alignments-tasks-v1-submittable
 spec:
@@ -14,16 +14,24 @@ spec:
       inputs:
         parameters:
           - name: assembly_ensembl_accession
+            value: ""
           - name: experiment_type
+            value: ""
           - name: species_name
+            value: ""
           - name: epigenome_group_id
+            value: ""
           - name: skip
+            value: "0"
           - name: limit
-          - name: kubeconfig-path
+            value: "20"
           - name: skip-execution
             value: "false"
           - name: check-integrity
             value: "false"
+          - name: exclude_tasks_with_registered_results
+            value: "false"
+          - name: kubeconfig-path
       dag:
         tasks:
           - name: get-rfs-alignments-tasks-url
@@ -46,6 +54,8 @@ spec:
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
                   value: "{{inputs.parameters.limit}}"
+                - name: exclude_tasks_with_registered_results
+                  value: "{{inputs.parameters.exclude_tasks_with_registered_results}}"
 
           - name: execute-rfs-alignments-tasks
             depends: "get-rfs-alignments-tasks-url"
@@ -96,6 +106,7 @@ spec:
           - name: epigenome_group_id
           - name: skip
           - name: limit
+          - name: exclude_tasks_with_registered_results
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
@@ -104,7 +115,25 @@ spec:
           import os
           import urllib.parse
 
+
           def main() -> int:
+
+            query_params = {
+              "limit": f"{{inputs.parameters.limit}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "exclude_tasks_with_registered_results": f"{{inputs.parameters.exclude_tasks_with_registered_results}}"
+            }
+
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
           
             url_str = (f"http://{{inputs.parameters.svc-name}}."
                   f"{{inputs.parameters.namespace}}."
@@ -112,13 +141,8 @@ spec:
                   ":80"
                   "/api/v1"
                   "/rfs_alignment_tasks"
-                  f"?assembly_ensembl_accession={{inputs.parameters.assembly_ensembl_accession}}"
-                  f"&experiment_type={{inputs.parameters.experiment_type}}"
-                  f"&species_name={{inputs.parameters.species_name}}"
-                  f"&epigenome_group_id={{inputs.parameters.epigenome_group_id}}"
-                  f"&skip={{inputs.parameters.skip}}"
-                  f"&limit={{inputs.parameters.limit}}"         
-            )
+                  f"?{parsed_query_params[1:]}"
+            )  
           
             print(urllib.parse.quote(url_str, safe=":/?=&"))
           
