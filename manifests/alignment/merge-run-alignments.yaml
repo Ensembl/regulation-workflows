@@ -262,7 +262,7 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-samtools:latest
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh {{inputs.parameters.bams-folder}}/*.bam \
-                && for f in so_coordinates_runs_bams/*bam; do samtools quickcheck ${f}; done \
+                && for f in so_coordinates_runs_bams/*bam; do tar -xOzf ${f} > ${f}.tmp && mv ${f}.tmp ${f} && samtools quickcheck ${f}; done \
                 && samtools merge \
                 -@ {{inputs.parameters.num-threads}} \
                 -o - \
