@@ -14,10 +14,21 @@ spec:
       inputs:
         parameters:
           - name: assembly_ensembl_accession
+            value: ""
           - name: experiment_type
+            value: ""
           - name: species_name
+            value: ""
+          - name: epigenome_group_id
+            value: ""
           - name: skip
+            value: "0"
           - name: limit
+            value: "20"
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
+          - name: overwrite-results
+            value: "false"
           - name: kubeconfig-path
             value: "/.kube/high-memory-pipelines.config"
       dag:
@@ -36,6 +47,8 @@ spec:
                   value: "{{inputs.parameters.experiment_type}}"
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
                 - name: skip
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
@@ -60,6 +73,12 @@ spec:
               parameters:
                 - name: peak_calling_tasks
                   value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
@@ -71,12 +90,11 @@ spec:
           - name: assembly_ensembl_accession
           - name: experiment_type
           - name: species_name
+          - name: epigenome_group_id
           - name: skip
           - name: limit
-
-#          - name: epigenome_group_id
       script:
-        image:  ghcr.io/daugo/ensembl-reg-python:latest
+        image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
         source: |
           import sys
@@ -85,21 +103,33 @@ spec:
 
           def main() -> int:
           
+            query_params = {
+              "limit": f"{{inputs.parameters.limit}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+            }
+          
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+          
             url_str = (f"http://{{inputs.parameters.svc-name}}."
                   f"{{inputs.parameters.namespace}}."
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
                   "/peak_calling_tasks"
-                  f"?assembly_ensembl_accession={{inputs.parameters.assembly_ensembl_accession}}"
-                  f"&experiment_type={{inputs.parameters.experiment_type}}"
-                  f"&species_name={{inputs.parameters.species_name}}"
-                  f"&skip={{inputs.parameters.skip}}"
-                  f"&limit={{inputs.parameters.limit}}"         
+                  f"?{parsed_query_params}"         
             )
           
             print(urllib.parse.quote(url_str, safe=":/?=&"))
-            
+          
             return 0
 
           if __name__ == '__main__':
