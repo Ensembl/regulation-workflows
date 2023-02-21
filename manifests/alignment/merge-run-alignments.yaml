@@ -154,8 +154,18 @@ spec:
                 - name: s3-prefix
                   value: "{{=jsonpath(inputs.parameters.read_file_set, '$[0].output_prefix')}}"
 
-          - name: execute-samtools-merge
+          - name: execute-decompress-run-alignments
             depends: copy-run-alignments-to-rfs-pvc
+            template: decompress-run-alignments-cmd
+            arguments:
+              parameters:
+                - name: bams-folder
+                  value: "so_coordinates_runs_bams"
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+
+          - name: execute-samtools-merge
+            depends: execute-decompress-run-alignments
             template: samtools-merge-cmd
             arguments:
               parameters:
@@ -240,6 +250,37 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
+    - name: decompress-run-alignments-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: bams-folder
+          # Destination
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh {{inputs.parameters.bams-folder}}/*.bam \
+                && for f in so_coordinates_runs_bams/*bam; do tar -xOzf ${f} > ${f}.tmp && mv ${f}.tmp ${f} ; done \
+                && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 10Gi
+          requests:
+            cpu: 2500m
+            memory: 5Gi
+
     - name: samtools-merge-cmd
       retryStrategy:
         limit: "5"
@@ -262,7 +303,7 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-samtools:latest
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh {{inputs.parameters.bams-folder}}/*.bam \
-                && for f in so_coordinates_runs_bams/*bam; do tar -xOzf ${f} > ${f}.tmp && mv ${f}.tmp ${f} && samtools quickcheck ${f}; done \
+                && for f in so_coordinates_runs_bams/*bam; do samtools quickcheck ${f}; done \
                 && samtools merge \
                 -@ {{inputs.parameters.num-threads}} \
                 -o - \
