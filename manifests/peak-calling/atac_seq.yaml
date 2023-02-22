@@ -14,6 +14,9 @@ spec:
       inputs:
         parameters:
           - name: peak_calling_tasks
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
+          - name: overwrite-results
           - name: kubeconfig-path
       dag:
         tasks:
@@ -33,6 +36,12 @@ spec:
                   value: "{{item.alignment_files_total_size}}"
                 - name: signals
                   value: "{{item.signals}}"
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.peak_calling_tasks}}"
@@ -48,6 +57,8 @@ spec:
           - name: out_s3_prefix
           - name: alignment_files_total_size
           - name: signals
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
           - name: kubeconfig-path
           - name: overwrite-results
             value: "false"
@@ -108,12 +119,18 @@ spec:
             template: genrich-atac-seq
             arguments:
               parameters:
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
                 - name: out_bed_filename
                   value: "{{inputs.parameters.out_basename}}.bed"
                 - name: out_pileup_filename
                   value: "{{inputs.parameters.out_basename}}_pileup.log"
                 - name: out_pq_file_filename
                   value: "{{inputs.parameters.out_basename}}_pqval.log"
+                - name: out_log_filename
+                  value: "{{inputs.parameters.out_basename}}_run.log"
                 - name: out_s3_prefix
                   value: "{{inputs.parameters.out_s3_prefix}}"
                 - name: signals-pvc
@@ -258,12 +275,19 @@ spec:
         retryPolicy: "OnError"
       inputs:
         parameters:
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
           - name: out_bed_filename
           - name: out_pileup_filename
           - name: out_pq_file_filename
+          - name: out_log_filename
           - name: out_s3_prefix
           - name: signals-pvc
-
+        artifacts:
+          - name: masked-regions-file
+            path: /mnt/vol/{{inputs.parameters.masked_regions_filename}}
+            s3:
+              key: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
@@ -278,8 +302,11 @@ spec:
                 -r \
                 -j \
                 -q 0.1 \
+                -s 20 \
                 -e MT \
+                -E {{inputs.parameters.masked_regions_filename}} \
                 -v \
+                | tee {{inputs.parameters.out_log_filename}} \
                 && ls -altrh" ]
         resources:
           limits:
@@ -311,3 +338,9 @@ spec:
             path: /mnt/vol/{{inputs.parameters.out_pq_file_filename}}
             s3:
               key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_file_filename}}.tgz"
+          - name: log_file
+            path: /mnt/vol/{{inputs.parameters.out_log_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_log_filename}}"
