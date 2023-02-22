@@ -21,6 +21,8 @@ spec:
             value: ""
           - name: epigenome_group_id
             value: ""
+          - name: output_prefix_label
+            value: ""
           - name: skip
             value: "0"
           - name: limit
@@ -49,6 +51,8 @@ spec:
                   value: "{{inputs.parameters.species_name}}"
                 - name: epigenome_group_id
                   value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
                 - name: skip
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
@@ -91,6 +95,7 @@ spec:
           - name: experiment_type
           - name: species_name
           - name: epigenome_group_id
+          - name: output_prefix_label
           - name: skip
           - name: limit
       script:
@@ -110,6 +115,7 @@ spec:
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "species_name": f"{{inputs.parameters.species_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
             }
           
             parsed_query_params = "".join(
