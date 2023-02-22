@@ -43,7 +43,7 @@ spec:
                                   "Avoiding overwriting (check overwrite-results parameter)")
           
               elif (not self.marker_exists and self.output_artifact_exists) and self.overwrite_results:
-                return "true"
+                return "false"
           
               else:
                 return "false"
