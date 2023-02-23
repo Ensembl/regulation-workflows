@@ -74,10 +74,10 @@ spec:
             when: "{{inputs.parameters.skip-execution}} == false"
             depends: "execute-rfs-alignments-tasks"
             templateRef:
-              name: multiple-merge-run-alignments-v1-submittable
-              template: multiple-merge-run-alignments
-            #              name: muliple-rfs-alignments-v1-submittable
-            #              template: multiple-rfs-alignments
+              #              name: multiple-merge-run-alignments-v1-submittable
+              #              template: multiple-merge-run-alignments
+              name: muliple-rfs-alignments-v1-submittable
+              template: multiple-rfs-alignments
             arguments:
               parameters:
                 - name: read_file_sets_alignment_tasks
