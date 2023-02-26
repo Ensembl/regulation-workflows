@@ -8,6 +8,8 @@ spec:
   entrypoint: get-peak-calling-tasks-dag
   imagePullSecrets:
     - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
 
   templates:
     - name: get-peak-calling-tasks-dag
@@ -32,7 +34,6 @@ spec:
           - name: overwrite-results
             value: "false"
           - name: kubeconfig-path
-            value: "/.kube/high-memory-pipelines.config"
       dag:
         tasks:
           - name: get-peak-calling-tasks-url
