@@ -1,0 +1,256 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: bam-to-coverage-bedgraph-pvc-callable-v1-submittable
+spec:
+  entrypoint: bam-to-coverage-bedgraph-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: bam-to-coverage-bedgraph-pvc-callable
+      inputs:
+        parameters:
+          # Bam file as input
+          - name: basename
+          - name: filename
+          - name: s3_key
+          - name: pvc-size
+          # PVC in which to store bedgraph
+          - name: out-pvc-name
+          - name: kubeconfig-path
+
+      dag:
+        tasks:
+          - name: create-bam-to-coverage-bedgraph-pvc
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{inputs.parameters.pvc-size}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: load-bam-to-pvc
+            depends: create-bam-to-coverage-bedgraph-pvc
+            template: bam-to-pvc
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: s3_key
+                  value: "{{inputs.parameters.s3_key}}"
+
+          - name: execute-samtools-index
+            depends: load-bam-to-pvc
+            template: samtools-index-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: index-filename
+                  value: "{{inputs.parameters.basename}}.bai"
+                - name: num-threads
+                  value: "7"
+
+          - name: execute-compute-coverage-scale-factor
+            depends: execute-samtools-index
+            template: compute-coverage-scale-factor
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+
+          - name: execute-wiggletools-coverage-bedgraph
+            depends: execute-compute-coverage-scale-factor
+            template: wiggletools-coverage-bedgraph
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: coverage-scale-factor
+                  value: "{{tasks.execute-compute-coverage-scale-factor.outputs.parameters.coverage-scale-factor}}"
+                - name: out-pvc-name
+                  value: "{{inputs.parameters.out-pvc-name}}"
+                - name: out-filename
+                  value: "{{inputs.parameters.basename}}.bg"
+
+          - name: delete-bam-to-coverage-bedgraph-pvc
+            depends: execute-wiggletools-coverage-bedgraph
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: bam-to-pvc
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: s3_key
+        artifacts:
+          - name: first_read_file
+            path: "/mnt/vol/{{inputs.parameters.filename}}"
+            s3:
+              key: "{{inputs.parameters.s3_key}}"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "echo \
+                Loading {{inputs.parameters.filename}} to {{inputs.parameters.pvc-name}} \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+    - name: samtools-index-cmd
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: index-filename
+          - name: num-threads
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && samtools index \
+                -@ {{inputs.parameters.num-threads}} \
+                -b {{inputs.parameters.filename}} \
+                {{inputs.parameters.index-filename}} \
+                && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 6900m
+            memory: 12Gi
+          requests:
+            cpu: 6700m
+            memory: 5Gi
+
+
+    - name: compute-coverage-scale-factor
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && BAM_FILE_PATH=/mnt/vol/so_coordinates_merged_file_F1548_AS50.bam \
+                && TOTAL_MAPPED=$(samtools idxstats {{inputs.parameters.filename}} | \
+                awk '{total = total + $3} END { print total }') \
+                && Gbp_FACTOR=$((10**9)) \
+                && SCALE_FACTOR=$(awk \
+                -v total_mapped=$TOTAL_MAPPED \
+                -v Gbp_factor=$Gbp_FACTOR \
+                'BEGIN { print  ( Gbp_factor / total_mapped ) }') \
+                && echo $SCALE_FACTOR > coverage_scale_factor.txt \
+                && echo $SCALE_FACTOR \
+                && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 0.5Gi
+      outputs:
+        parameters:
+          - name: coverage-scale-factor
+            valueFrom:
+              path: /mnt/vol/coverage_scale_factor.txt
+
+
+    - name: wiggletools-coverage-bedgraph
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: coverage-scale-factor
+          - name: out-pvc-name
+          - name: out-filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+        - name: outputs
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.out-pvc-name}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-wiggletools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && ls -altrh /mnt/out_vol/ \
+                && COVERAGE_SCALE_FACTOR={{inputs.parameters.coverage-scale-factor}} \
+                && wiggletools \
+                write_bg /mnt/out_vol/{{inputs.parameters.out-filename}} \
+                mean scale $COVERAGE_SCALE_FACTOR \
+                {{inputs.parameters.filename}} \
+                && ls -altrh \
+                && ls -altrh /mnt/out_vol/" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+          - name: outputs
+            mountPath: /mnt/out_vol
+        resources:
+          limits:
+            cpu: 5900m
+            memory: 5Gi
+          requests:
+            cpu: 3700m
+            memory: 1.5Gi
+

@@ -1,0 +1,415 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: experiment-alignments-to-coverage-bigwig-v1-submittable
+spec:
+  entrypoint: experiment-alignments-to-coverage-bigwig
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: experiment-alignments-to-coverage-bigwig
+      parallelism: 10
+      inputs:
+        parameters:
+          - name: coverage_tasks
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: execute-experiment-coverage-task
+            template: bams-to-coverage-bigwig
+            arguments:
+              parameters:
+                - name: experiment_id
+                  value: "{{item.experiment_id}}"
+                - name: assembly_id
+                  value: "{{item.assembly_id}}"
+                - name: chrom_sizes_s3_key
+                  value: "{{item.chrom_sizes_s3_key}}"
+                - name: out_basename
+                  value: "{{item.out_basename}}"
+                - name: out_s3_key
+                  value: "{{item.out_s3_key}}"
+                - name: read_file_sets_files_total_size
+                  value: "{{item.read_file_sets_files_total_size}}"
+                - name: read_file_sets_alignments
+                  value: "{{item.read_file_sets_alignments}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.coverage_tasks}}"
+
+
+    - name: bams-to-coverage-bigwig
+      inputs:
+        parameters:
+          - name: experiment_id
+          - name: assembly_id
+          - name: chrom_sizes_s3_key
+          - name: out_basename
+          - name: out_s3_key
+          - name: read_file_sets_files_total_size
+          - name: read_file_sets_alignments
+          - name: kubeconfig-path
+          - name: overwrite-results
+            value: "false"
+      dag:
+        tasks:
+          - name: check-if-bigwig-file-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out_s3_key}}"
+
+          - name: get-bigwig-pvc-size
+            when: >-
+              ( {{tasks.check-if-bigwig-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
+                {{inputs.parameters.overwrite-results}} == true )
+            depends: check-if-bigwig-file-already-in-s3-bucket
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{inputs.parameters.read_file_sets_files_total_size}}"
+                - name: size_factor
+                  value: "1.4"
+
+          - name: create-bigwig-pvc
+            depends: "get-bigwig-pvc-size.Succeeded"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-bigwig-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: execute-bam-to-coverage-bedgraphs
+            depends: create-bigwig-pvc
+            template: bam-to-coverage-bedgraph
+            arguments:
+              parameters:
+                - name: bam_to_coverage_bedgraph_params
+                  value: "{{item}}"
+                # PVC in which to store bedgraph
+                - name: out-pvc-name
+                  value: "{{tasks.create-bigwig-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.read_file_sets_alignments}}"
+
+          - name: execute-scaled-bedgraphs-mean
+            depends: execute-bam-to-coverage-bedgraphs
+            template: scaled-bedgraphs-mean-cmd
+            arguments:
+              parameters:
+                - name: out_filename
+                  value: "{{inputs.parameters.out_basename}}.bg"
+                - name: out-pvc-name
+                  value: "{{tasks.create-bigwig-pvc.outputs.parameters.pvc-name}}"
+
+          - name: execute-bedgraph-to-bigwig
+            depends: execute-scaled-bedgraphs-mean
+            template: bedgraph-to-bigwig-cmd
+            arguments:
+              parameters:
+                - name: chrom_sizes_s3_key
+                  value: "{{inputs.parameters.chrom_sizes_s3_key}}"
+                - name: bedgraph_filename
+                  value: "{{inputs.parameters.out_basename}}.bg"
+                - name: out_filename
+                  value: "{{inputs.parameters.out_basename}}.bw"
+                - name: out_s3_key
+                  value: "{{inputs.parameters.out_s3_key}}"
+                - name: pvc-name
+                  value: "{{tasks.create-bigwig-pvc.outputs.parameters.pvc-name}}"
+
+          - name: execute-compute-bigwig-file-metadata
+            depends: execute-bedgraph-to-bigwig
+            template: compute-file-metadata
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bigwig-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.out_basename}}.bw"
+
+          - name: execute-post-coverage-file
+            depends: execute-compute-bigwig-file-metadata
+            template: post-coverage-file
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out_s3_key}}"
+                - name: basename
+                  value: "{{inputs.parameters.out_basename}}"
+                - name: file-size
+                  value: "{{tasks.execute-compute-bigwig-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.execute-compute-bigwig-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{inputs.parameters.experiment_id}}"
+                - name: assembly-id
+                  value: "{{inputs.parameters.assembly_id}}"
+
+
+          - name: delete-bigwig-pvc
+            depends: execute-compute-bigwig-file-metadata
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-bigwig-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: bam-to-coverage-bedgraph
+      inputs:
+        parameters:
+          # Bam file as input
+          - name: bam_to_coverage_bedgraph_params
+          # PVC in which to store bedgraph
+          - name: out-pvc-name
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-pvc-size
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{=jsonpath(inputs.parameters.bam_to_coverage_bedgraph_params, '$.file_size')}}"
+                - name: size_factor
+                  value: "1.2"
+
+          - name: execute-bam-to-coverage-bedgraph
+            depends: get-pvc-size
+            templateRef:
+              name: bam-to-coverage-bedgraph-pvc-callable-v1-submittable
+              template: bam-to-coverage-bedgraph-pvc-callable
+            arguments:
+              parameters:
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters.bam_to_coverage_bedgraph_params, '$.basename')}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters.bam_to_coverage_bedgraph_params, '$.filename')}}"
+                - name: s3_key
+                  value: "{{=jsonpath(inputs.parameters.bam_to_coverage_bedgraph_params, '$.s3_key')}}"
+                - name: pvc-size
+                  value: "{{tasks.get-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: out-pvc-name
+                  value: "{{inputs.parameters.out-pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: scaled-bedgraphs-mean-cmd
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: out_filename
+          - name: out-pvc-name
+
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-wiggletools:latest
+        command: [ bash, -c ]
+        args: [ "ls -altrh \
+                && wiggletools \
+                write_bg {{inputs.parameters.out_filename}} mean *.bg \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 3900m
+            memory: 2.5Gi
+          requests:
+            cpu: 3700m
+            memory: 1.5Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.out-pvc-name}}"
+
+    - name: bedgraph-to-bigwig-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          # chrom_sizes from faSize
+          - name: chrom_sizes_s3_key
+          # Bedgraph file
+          - name: bedgraph_filename
+          # Out Bigwig
+          - name: out_filename
+          - name: out_s3_key
+          - name: pvc-name
+
+        artifacts:
+          # Chromosome sizes file
+          - name: chrom_sizes_file
+            path: /mnt/vol/chrom.sizes
+            s3:
+              key: "{{inputs.parameters.chrom_sizes_s3_key}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedgraphtobigwig:latest
+        command: [ bash, -c ]
+        args: [ "ls -altrh \
+                && bedGraphToBigWig \
+                {{inputs.parameters.bedgraph_filename}} \
+                chrom.sizes \
+                {{inputs.parameters.out_filename}} \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 5900m
+            memory: 10.5Gi
+          requests:
+            cpu: 3700m
+            memory: 1.5Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+      outputs:
+        artifacts:
+          - name: final_bigwig
+            path: /mnt/vol/{{inputs.parameters.out_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_key}}"
+
+
+    - name: compute-file-metadata
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            filename = "{{inputs.parameters.filename}}"
+          
+            file_size = os.path.getsize(filename)
+          
+            with open('file_size.txt', 'w') as f:
+              f.write(str(file_size))
+          
+            CHUNK_SIZE = 8192
+            # Reads the file 8192 (or 2¹³) bytes at a time
+            # instead of all at once with f.read() to use less memory.
+            with open(filename, "rb") as f:
+                file_hash = hashlib.md5()
+                chunk = f.read(CHUNK_SIZE)
+                while chunk:
+                    file_hash.update(chunk)
+                    chunk = f.read(CHUNK_SIZE)
+          
+            md5sum = file_hash.hexdigest()
+          
+            with open('md5sum.txt', 'w') as f:
+              f.write(md5sum)
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        parameters:
+          - name: file-size
+            valueFrom:
+              path: file_size.txt
+          - name: md5sum
+            valueFrom:
+              path: md5sum.txt
+
+    - name: post-coverage-file
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: basename
+          - name: file-size
+          - name: md5sum
+          - name: experiment-id
+          - name: assembly-id
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            post_data = {
+              "experiment_id": "{{inputs.parameters.experiment-id}}",
+              "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "file": {
+                "file_type": "bigwig",
+                "basename": "{{inputs.parameters.basename}}",
+                "size": "{{inputs.parameters.file-size}}",
+                "md5sum": "{{inputs.parameters.md5sum}}",
+                "imported": False,
+                "s3_object": {
+                  "key": "{{inputs.parameters.s3-key}}",
+                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
+                }
+              }
+            }
+          
+            print(json.dumps(post_data,  indent=2))
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
