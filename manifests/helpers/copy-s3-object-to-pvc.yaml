@@ -17,7 +17,7 @@ spec:
       dag:
         tasks:
           - name: s3-object-to-pvc
-            template: copy-s3-object-to-pvc
+            template: copy-s3-object-to-pvc-boto3
             arguments:
               parameters:
                 - name: s3-key
