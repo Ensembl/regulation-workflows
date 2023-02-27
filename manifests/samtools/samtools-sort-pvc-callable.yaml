@@ -37,15 +37,18 @@ spec:
 
           - name: load-bam-to-pvc
             depends: create-samtools-sort-queryname-pvc
-            template: file-to-pvc-boto3
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
             arguments:
               parameters:
-                - name: pvc-name
-                  value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
+                - name: s3-key
+                  value: "{{inputs.parameters.s3_key}}"
                 - name: filename
                   value: "{{inputs.parameters.filename}}"
-                - name: s3_key
-                  value: "{{inputs.parameters.s3_key}}"
+                - name: pvc-name
+                  value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
+
 
           - name: execute-samtools-sort-by-queryname-cmd
             depends: load-bam-to-pvc
@@ -74,115 +77,6 @@ spec:
                   value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-
-
-    - name: bam-to-pvc
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "Always"
-      inputs:
-        parameters:
-          - name: pvc-name
-          - name: filename
-          - name: s3_key
-        artifacts:
-          - name: alignment-file
-            path: "/mnt/vol/{{inputs.parameters.filename}}"
-            s3:
-              key: "{{inputs.parameters.s3_key}}"
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: '{{inputs.parameters.pvc-name}}'
-      container:
-        workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
-        command: [ bash, -c, -uef, -o, xtrace ]
-        args: [ "echo \
-                Loading {{inputs.parameters.filename}} to {{inputs.parameters.pvc-name}} \
-                && ls -altrh" ]
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
-
-    - name: file-to-pvc-boto3
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "Always"
-        backoff:
-          duration: "10s"
-          factor: "2"
-          maxDuration: "12h"
-      inputs:
-        parameters:
-          - name: pvc-name
-          - name: filename
-          - name: s3_key
-          - name: s3-endpoint
-            value: "https://uk1s3.embassy.ebi.ac.uk"
-          - name: bucket
-            value: "ensembl-regulation-71319003-analysis-pipelines-b1"
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: '{{inputs.parameters.pvc-name}}'
-      script:
-        env:
-          - name: AWS_ACCESS_KEY_ID
-            valueFrom:
-              secretKeyRef:
-                name: ensembl-regulation-s3embassy-credentials
-                key: accessKey
-          - name: AWS_SECRET_ACCESS_KEY
-            valueFrom:
-              secretKeyRef:
-                name: ensembl-regulation-s3embassy-credentials
-                key: secretKey
-        workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import boto3 as boto3 
-          from botocore.client import Config
-
-          from warnings import warn
-          import sys
-          import os
-
-          def _config_s3_client(endpoint):
-            config = Config(
-                read_timeout=5000,
-                connect_timeout=5000, 
-                retries={"max_attempts": 3}
-            )
-            session = boto3.session.Session()
-
-            s3_client = session.client(
-                service_name="s3",
-                endpoint_url=endpoint,
-            )
-            return s3_client
-
-
-          def main() -> int:
-            s3_endpoint = "{{inputs.parameters.s3-endpoint}}"
-
-            s3_client = _config_s3_client(s3_endpoint)
-
-            bucket_name = "{{inputs.parameters.bucket}}"
-            s3_object_key = "{{inputs.parameters.s3_key}}"
-            out_filename = "{{inputs.parameters.filename}}"
-
-            s3_client.download_file(bucket_name, s3_object_key, out_filename)
-
-            return 0
-
-          if __name__ == '__main__':
-              sys.exit(main())
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
-
 
     - name: samtools-sort-by-queryname-cmd
       retryStrategy:
