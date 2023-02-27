@@ -9,10 +9,13 @@ spec:
     - name: get-request-from-reg-pipelines-api
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
         retryPolicy: "OnError"
       inputs:
         parameters:
           - name: url
       http:
-       method: GET
-       url: "{{inputs.parameters.url}}"
+        method: GET
+        url: "{{inputs.parameters.url}}"

@@ -31,7 +31,7 @@ spec:
     # TODO: Add pvc-dir parameter
     - name: copy-s3-objects-to-pvc
       retryStrategy:
-        limit: "6"
+        limit: "5"
         backoff:
           duration: "10s"
           factor: "2"

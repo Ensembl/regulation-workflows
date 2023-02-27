@@ -13,6 +13,9 @@ spec:
     - name: create-pvc-kubectl
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
         retryPolicy: "Always"
       inputs:
         artifacts:

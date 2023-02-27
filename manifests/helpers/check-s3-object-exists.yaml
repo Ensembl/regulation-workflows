@@ -10,12 +10,11 @@ spec:
   templates:
     - name: check-s3-object-exists
       retryStrategy:
-        limit: "10"
-        retryPolicy: "Always"
+        limit: "5"
         backoff:
           duration: "10s"
           factor: "2"
-          maxDuration: "12h"
+        retryPolicy: "Always"
       inputs:
         parameters:
           - name: s3-endpoint
