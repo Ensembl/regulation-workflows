@@ -9,7 +9,7 @@ spec:
 
   templates:
     - name: experiment-alignments-to-coverage-bigwig
-      parallelism: 10
+      parallelism: 8
       inputs:
         parameters:
           - name: coverage_tasks

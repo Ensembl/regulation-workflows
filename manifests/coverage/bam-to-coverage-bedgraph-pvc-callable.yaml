@@ -59,7 +59,7 @@ spec:
                 - name: index-filename
                   value: "{{inputs.parameters.basename}}.bai"
                 - name: num-threads
-                  value: "7"
+                  value: "13"
 
           - name: execute-compute-coverage-scale-factor
             depends: execute-samtools-index
@@ -158,11 +158,11 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 6900m
-            memory: 12Gi
+            cpu: 12900m
+            memory: 14Gi
           requests:
-            cpu: 6700m
-            memory: 5Gi
+            cpu: 12700m
+            memory: 6Gi
 
 
     - name: compute-coverage-scale-factor
