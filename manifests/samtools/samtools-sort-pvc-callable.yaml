@@ -119,7 +119,7 @@ spec:
             memory: 58Gi
           requests:
             cpu: 9500m
-            memory: 550Gi
+            memory: 55Gi
 
 
 
