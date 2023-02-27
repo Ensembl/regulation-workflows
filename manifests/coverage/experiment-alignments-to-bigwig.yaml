@@ -174,7 +174,9 @@ spec:
 
           - name: execute-compute-bigwig-file-metadata
             depends: execute-bedgraph-to-bigwig
-            template: compute-file-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
                 - name: pvc-name
@@ -359,69 +361,6 @@ spec:
             s3:
               key: "{{inputs.parameters.out_s3_key}}"
 
-
-    - name: compute-file-metadata
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "OnError"
-      inputs:
-        parameters:
-          - name: pvc-name
-          - name: filename
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: '{{inputs.parameters.pvc-name}}'
-      script:
-        workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import sys
-          import os
-          import hashlib
-          import json
-          
-          def main() -> int:
-          
-            filename = "{{inputs.parameters.filename}}"
-          
-            file_size = os.path.getsize(filename)
-          
-            with open('file_size.txt', 'w') as f:
-              f.write(str(file_size))
-          
-            CHUNK_SIZE = 8192
-            # Reads the file 8192 (or 2¹³) bytes at a time
-            # instead of all at once with f.read() to use less memory.
-            with open(filename, "rb") as f:
-                file_hash = hashlib.md5()
-                chunk = f.read(CHUNK_SIZE)
-                while chunk:
-                    file_hash.update(chunk)
-                    chunk = f.read(CHUNK_SIZE)
-          
-            md5sum = file_hash.hexdigest()
-          
-            with open('md5sum.txt', 'w') as f:
-              f.write(md5sum)
-          
-            return 0
-          
-          if __name__ == '__main__':
-              sys.exit(main())
-
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
-      outputs:
-        parameters:
-          - name: file-size
-            valueFrom:
-              path: file_size.txt
-          - name: md5sum
-            valueFrom:
-              path: md5sum.txt
 
     - name: post-coverage-file
       retryStrategy:
