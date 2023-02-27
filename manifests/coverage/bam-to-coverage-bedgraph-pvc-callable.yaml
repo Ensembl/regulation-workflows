@@ -37,15 +37,17 @@ spec:
 
           - name: load-bam-to-pvc
             depends: create-bam-to-coverage-bedgraph-pvc
-            template: bam-to-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
             arguments:
               parameters:
-                - name: pvc-name
-                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
                 - name: filename
                   value: "{{inputs.parameters.filename}}"
-                - name: s3_key
+                - name: s3-key
                   value: "{{inputs.parameters.s3_key}}"
+                - name: pvc-name
+                  value: "{{tasks.create-bam-to-coverage-bedgraph-pvc.outputs.parameters.pvc-name}}"
 
           - name: execute-samtools-index
             depends: load-bam-to-pvc
@@ -99,35 +101,6 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
-
-    - name: bam-to-pvc
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "Always"
-      inputs:
-        parameters:
-          - name: pvc-name
-          - name: filename
-          - name: s3_key
-        artifacts:
-          - name: first_read_file
-            path: "/mnt/vol/{{inputs.parameters.filename}}"
-            s3:
-              key: "{{inputs.parameters.s3_key}}"
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: '{{inputs.parameters.pvc-name}}'
-      container:
-        workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
-        command: [ bash, -c, -uef, -o, xtrace ]
-        args: [ "echo \
-                Loading {{inputs.parameters.filename}} to {{inputs.parameters.pvc-name}} \
-                && ls -altrh" ]
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
 
     - name: samtools-index-cmd
       retryStrategy:
