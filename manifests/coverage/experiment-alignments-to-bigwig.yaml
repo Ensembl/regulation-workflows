@@ -287,7 +287,10 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-wiggletools:latest
         command: [ bash, -c ]
+        # Make sure file is not in PVC from previously failed attempts (rm part).
+        # write_bg will fail with File <output filename>, please delete it if you want to overwrite it.
         args: [ "ls -altrh \
+                && rm -f {{inputs.parameters.out_filename}} \
                 && wiggletools \
                 write_bg {{inputs.parameters.out_filename}} mean *.bg \
                 && ls -altrh" ]
