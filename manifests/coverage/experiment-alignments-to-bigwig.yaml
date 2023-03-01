@@ -332,7 +332,10 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bedgraphtobigwig:latest
         command: [ bash, -c ]
+        # Make sure output bg is not in PVC from previously failed attempts (rm part).
+        # bedGraphToBigWig will fail with File <output filename>, please delete it if you want to overwrite it.
         args: [ "ls -altrh \
+                && rm -f {{inputs.parameters.out_filename}}
                 && bedGraphToBigWig \
                 {{inputs.parameters.bedgraph_filename}} \
                 chrom.sizes \
