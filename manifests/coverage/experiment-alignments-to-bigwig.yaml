@@ -394,6 +394,7 @@ spec:
             post_data = {
               "experiment_id": "{{inputs.parameters.experiment-id}}",
               "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "analysis_type": "coverage",
               "file": {
                 "file_type": "bigwig",
                 "basename": "{{inputs.parameters.basename}}",
