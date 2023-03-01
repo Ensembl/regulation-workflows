@@ -87,23 +87,24 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
-    #          - name: submit-dnase-seq-peak-calling-tasks
-    #            depends: "execute-get-peak-calling-tasks"
-    #            templateRef:
-    #              name: peak-calling-dnase-v1-submittable
-    #              template: peak-calling-dnase-seq
-    #            arguments:
-    #              parameters:
-    #                - name: peak_calling_tasks
-    #                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-    #                - name: masked_regions_prefix
-    #                  value: "{{inputs.parameters.masked_regions_prefix}}"
-    #                - name: masked_regions_filename
-    #                  value: "{{inputs.parameters.masked_regions_filename}}"
-    #                - name: overwrite-results
-    #                  value: "{{inputs.parameters.overwrite-results}}"
-    #                - name: kubeconfig-path
-    #                  value: "{{inputs.parameters.kubeconfig-path}}"
+          - name: submit-dnase-seq-peak-calling-tasks
+            depends: "execute-get-peak-calling-tasks"
+            when: "{{inputs.parameters.experiment_type}} == 'dnase_seq'"
+            templateRef:
+              name: peak-calling-dnase-v1-submittable
+              template: peak-calling-dnase-seq
+            arguments:
+              parameters:
+                - name: peak_calling_tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
     #
     #          - name: submit-chip-seq-peak-calling-tasks
     #            depends: "execute-get-peak-calling-tasks"
