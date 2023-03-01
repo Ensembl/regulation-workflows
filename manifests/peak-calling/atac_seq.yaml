@@ -67,7 +67,6 @@ spec:
           - name: kubeconfig-path
           - name: overwrite-results
           - name: force-update-task-markers
-            value: "false"
 
       dag:
         tasks:
