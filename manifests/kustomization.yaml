@@ -14,7 +14,7 @@ resources:
   - alignment/merge-run-alignments.yaml
   - alignment/get-rfs-alignments-tasks.yaml
   - alignment/check-integrity.yaml
-  - peak-calling/atac_seq.yaml
+  - peak-calling/atac-seq.yaml
   - peak-calling/dnase-seq.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
   - coverage/bam-to-coverage-bedgraph-pvc-callable.yaml
