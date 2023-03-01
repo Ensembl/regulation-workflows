@@ -3,7 +3,6 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: get-peak-calling-tasks-
-#  name: experiments-bams-to-coverage-bigwig-submittable
 spec:
   entrypoint: get-peak-calling-tasks-dag
   imagePullSecrets:
@@ -69,8 +68,9 @@ spec:
                 - name: url
                   value: "{{tasks.get-peak-calling-tasks-url.outputs.result}}"
 
-          - name: submit-peak-calling-tasks
+          - name: submit-atac-seq-peak-calling-tasks
             depends: "execute-get-peak-calling-tasks"
+            when: "{{inputs.parameters.experiment_type}} == 'atac_seq'"
             templateRef:
               name: peak-calling-atac-seq-v1-submittable
               template: peak-calling-atac-seq
@@ -86,6 +86,42 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+
+    #          - name: submit-dnase-seq-peak-calling-tasks
+    #            depends: "execute-get-peak-calling-tasks"
+    #            templateRef:
+    #              name: peak-calling-dnase-v1-submittable
+    #              template: peak-calling-dnase-seq
+    #            arguments:
+    #              parameters:
+    #                - name: peak_calling_tasks
+    #                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+    #                - name: masked_regions_prefix
+    #                  value: "{{inputs.parameters.masked_regions_prefix}}"
+    #                - name: masked_regions_filename
+    #                  value: "{{inputs.parameters.masked_regions_filename}}"
+    #                - name: overwrite-results
+    #                  value: "{{inputs.parameters.overwrite-results}}"
+    #                - name: kubeconfig-path
+    #                  value: "{{inputs.parameters.kubeconfig-path}}"
+    #
+    #          - name: submit-chip-seq-peak-calling-tasks
+    #            depends: "execute-get-peak-calling-tasks"
+    #            templateRef:
+    #              name: peak-calling-chip-seq-v1-submittable
+    #              template: peak-calling-chip-seq
+    #            arguments:
+    #              parameters:
+    #                - name: peak_calling_tasks
+    #                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+    #                - name: masked_regions_prefix
+    #                  value: "{{inputs.parameters.masked_regions_prefix}}"
+    #                - name: masked_regions_filename
+    #                  value: "{{inputs.parameters.masked_regions_filename}}"
+    #                - name: overwrite-results
+    #                  value: "{{inputs.parameters.overwrite-results}}"
+    #                - name: kubeconfig-path
+    #                  value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: compute-get-peak-calling-tasks-url
       inputs:
