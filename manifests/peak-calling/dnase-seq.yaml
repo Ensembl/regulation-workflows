@@ -360,6 +360,7 @@ spec:
                 -j \
                 -D \
                 -q 0.1 \
+                -s 20 \
                 -e MT \
                 -E {{inputs.parameters.masked_regions_filename}} \
                 -v \
