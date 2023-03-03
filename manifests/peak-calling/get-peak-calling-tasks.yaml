@@ -91,7 +91,7 @@ spec:
             depends: "execute-get-peak-calling-tasks"
             when: "{{inputs.parameters.experiment_type}} == 'dnase_seq'"
             templateRef:
-              name: peak-calling-dnase-v1-submittable
+              name: peak-calling-dnase-seq-v1-submittable
               template: peak-calling-dnase-seq
             arguments:
               parameters:
