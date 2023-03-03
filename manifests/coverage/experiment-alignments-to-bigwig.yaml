@@ -118,7 +118,7 @@ spec:
                 - name: associated_files_size
                   value: "{{inputs.parameters.read_file_sets_files_total_size}}"
                 - name: size_factor
-                  value: "1.4"
+                  value: "2.5"
 
           - name: create-bigwig-pvc
             depends: "get-bigwig-pvc-size.Succeeded"
