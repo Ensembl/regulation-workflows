@@ -251,7 +251,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters.bam_to_coverage_bedgraph_params, '$.file_size')}}"
                 - name: size_factor
-                  value: "1.2"
+                  value: "2.5"
 
           - name: execute-bam-to-coverage-bedgraph
             depends: get-pvc-size
