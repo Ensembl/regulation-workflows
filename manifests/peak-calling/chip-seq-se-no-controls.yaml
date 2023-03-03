@@ -163,7 +163,7 @@ spec:
                   value: "{{inputs.parameters.signals}}"
 
           - name: execute-genrich-chip-seq
-            depends: "get-genrich-input-filenames-formatted && execute-sort-control-alignments-by-queryname"
+            depends: "get-genrich-input-filenames-formatted && execute-sort-signal-alignments-by-queryname"
             template: genrich-chip-seq
             arguments:
               parameters:
