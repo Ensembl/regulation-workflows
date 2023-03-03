@@ -58,7 +58,7 @@ spec:
           - name: signals
           - name: overwrite-results
           - name: kubeconfig-path
-          - name: overwrite-results
+          - name: force-update-task-markers
 
       dag:
         tasks:
