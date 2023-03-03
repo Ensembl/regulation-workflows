@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: peak-calling-chip-seq-v1-submittable
+  name: peak-calling-chip-seq-se-no-controls-v1-submittable
 spec:
-  entrypoint: peak-calling-chip-seq
+  entrypoint: peak-calling-chip-seq-se-no-controls
   imagePullSecrets:
     - name: ghcr-pull-token
 
   templates:
-    - name: peak-calling-chip-seq
+    - name: peak-calling-chip-seq-se-no-controls
       parallelism: 8
       inputs:
         parameters:
