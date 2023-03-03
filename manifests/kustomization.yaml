@@ -15,6 +15,7 @@ resources:
   - alignment/get-rfs-alignments-tasks.yaml
   - alignment/check-integrity.yaml
   - peak-calling/atac-seq.yaml
+  - peak-calling/chip-seq-pe-with-controls.yaml
   - peak-calling/dnase-seq.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
   - coverage/bam-to-coverage-bedgraph-pvc-callable.yaml
