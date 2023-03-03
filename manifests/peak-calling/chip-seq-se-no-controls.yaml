@@ -95,7 +95,7 @@ spec:
 
           - name: check-if-bed-file-already-in-s3-bucket
             templateRef:
-              name: check-s3-object-exists-submittable
+              name: check-s3-object-exists-v1-submittable
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -119,10 +119,12 @@ spec:
           - name: get-peak-calling-pvc-size
             depends: check-work-avoidance-consistency.Succeeded
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
-            template: compute-pvc-size
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
             arguments:
               parameters:
-                - name: file_size
+                - name: associated_files_size
                   value: "{{inputs.parameters.alignment_files_total_size}}"
                 - name: size_factor
                   value: "3"
@@ -130,7 +132,7 @@ spec:
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
             templateRef:
-              name: create-pvc-kubectl-submittable
+              name: create-pvc-kubectl-v1-submittable
               template: create-pvc-kubectl
             arguments:
               parameters:
@@ -186,7 +188,9 @@ spec:
 
           - name: execute-compute-bed-file-metadata
             depends: execute-genrich-chip-seq
-            template: compute-file-in-pvc-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
                 - name: pvc-name
@@ -239,7 +243,9 @@ spec:
 
           - name: execute-compute-narrow-bed-file-metadata
             depends: "execute-genrich-chip-seq-broad-peaks.Succeeded"
-            template: compute-file-from-s3-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
                 - name: s3_prefix
@@ -269,7 +275,9 @@ spec:
 
           - name: execute-compute-broad-bed-file-metadata
             depends: "execute-genrich-chip-seq-broad-peaks.Succeeded"
-            template: compute-file-from-s3-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
                 - name: s3_prefix
@@ -317,7 +325,9 @@ spec:
 
           - name: execute-compute-gapped-bed-file-metadata
             depends: "execute-write-gapped-peaks"
-            template: compute-file-from-s3-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
                 - name: s3_prefix
@@ -367,7 +377,7 @@ spec:
           - name: delete-peak-calling-pvc
             depends: execute-compute-bed-file-metadata
             templateRef:
-              name: delete-patch-pvc-kubectl-submittable
+              name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
             arguments:
               parameters:
@@ -388,10 +398,12 @@ spec:
       dag:
         tasks:
           - name: get-pvc-size
-            template: compute-pvc-size
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
             arguments:
               parameters:
-                - name: file_size
+                - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.file_size')}}"
                 - name: size_factor
                   value: "1.25"
@@ -399,7 +411,7 @@ spec:
           - name: execute-sort-alignment-by-queryname
             depends: get-pvc-size
             templateRef:
-              name: sort-alignment-by-queryname-pvc-callable-submittable
+              name: sort-alignment-by-queryname-pvc-callable-v1-submittable
               template: sort-alignment-by-queryname-pvc-callable
             arguments:
               parameters:
@@ -415,179 +427,6 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: out-pvc-name
                   value: "{{inputs.parameters.out-pvc-name}}"
-
-
-    - name: compute-pvc-size
-      inputs:
-        parameters:
-          - name: file_size
-          - name: size_factor
-      script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import sys
-          
-          def sizeof_fmt(num, suffix="B"):
-            for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
-                if abs(num) < 1024.0:
-                    return f"{num:3.1f}{unit}{suffix}"
-                num /= 1024.0
-            return f"{num:.1f}Yi{suffix}"
-          
-          def main() -> int:
-          
-            print("{{inputs.parameters.file_size}}")
-            print("{{inputs.parameters.size_factor}}")
-          
-            plain_file_size = float("{{inputs.parameters.file_size}}")
-            size_factor = float("{{inputs.parameters.size_factor}}")
-          
-          
-          
-            plain_pvc_size = plain_file_size * size_factor
-          
-            pvc_size_formatted = sizeof_fmt(plain_pvc_size, suffix="")
-          
-            with open('pvc_size_formatted.txt', 'w') as f:
-              f.write(pvc_size_formatted)
-          
-            return 0
-
-          if __name__ == '__main__':
-              sys.exit(main())
-      outputs:
-        parameters:
-          - name: pvc-size-formatted
-            valueFrom:
-              path: pvc_size_formatted.txt
-
-    - name: compute-file-in-pvc-metadata
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "OnError"
-      inputs:
-        parameters:
-          - name: pvc-name
-          - name: filename
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: '{{inputs.parameters.pvc-name}}'
-      script:
-        workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import sys
-          import os
-          import hashlib
-          import json
-          
-          def main() -> int:
-          
-            filename = "{{inputs.parameters.filename}}"
-          
-            file_size = os.path.getsize(filename)
-          
-            with open('file_size.txt', 'w') as f:
-              f.write(str(file_size))
-          
-            CHUNK_SIZE = 8192
-            # Reads the file 8192 (or 2¹³) bytes at a time
-            # instead of all at once with f.read() to use less memory.
-            with open(filename, "rb") as f:
-                file_hash = hashlib.md5()
-                chunk = f.read(CHUNK_SIZE)
-                while chunk:
-                    file_hash.update(chunk)
-                    chunk = f.read(CHUNK_SIZE)
-          
-            md5sum = file_hash.hexdigest()
-          
-            with open('md5sum.txt', 'w') as f:
-              f.write(md5sum)
-          
-            return 0
-          
-          if __name__ == '__main__':
-              sys.exit(main())
-
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
-      outputs:
-        parameters:
-          - name: file-size
-            valueFrom:
-              path: file_size.txt
-          - name: md5sum
-            valueFrom:
-              path: md5sum.txt
-
-
-    - name: compute-file-from-s3-metadata
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "OnError"
-      inputs:
-        parameters:
-          - name: s3_prefix
-          - name: filename
-        artifacts:
-          - name: file
-            path: "/results/{{inputs.parameters.filename}}"
-            s3:
-              key: "{{inputs.parameters.s3_prefix}}{{inputs.parameters.filename}}"
-      script:
-        workingDir: /results
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import sys
-          import os
-          import hashlib
-          import json
-          
-          def main() -> int:
-          
-            filename = "{{inputs.parameters.filename}}"
-          
-            file_size = os.path.getsize(filename)
-          
-            with open('file_size.txt', 'w') as f:
-              f.write(str(file_size))
-          
-            CHUNK_SIZE = 8192
-            # Reads the file 8192 (or 2¹³) bytes at a time
-            # instead of all at once with f.read() to use less memory.
-            with open(filename, "rb") as f:
-                file_hash = hashlib.md5()
-                chunk = f.read(CHUNK_SIZE)
-                while chunk:
-                    file_hash.update(chunk)
-                    chunk = f.read(CHUNK_SIZE)
-          
-            md5sum = file_hash.hexdigest()
-          
-            with open('md5sum.txt', 'w') as f:
-              f.write(md5sum)
-          
-            return 0
-          
-          if __name__ == '__main__':
-              sys.exit(main())
-
-      outputs:
-        parameters:
-          - name: file-size
-            valueFrom:
-              path: file_size.txt
-          - name: md5sum
-            valueFrom:
-              path: md5sum.txt
-
-
 
 
     - name: post-analysis-file
