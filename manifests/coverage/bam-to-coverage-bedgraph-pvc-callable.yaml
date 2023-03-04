@@ -205,9 +205,12 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-wiggletools:latest
         command: [ bash, -c, -uef, -o, xtrace ]
+        # Make sure file is not in PVC from previously failed attempts (rm part).
+        # write_bg will fail with File <output filename>, please delete it if you want to overwrite it.
         args: [ "ls -altrh \
                 && ls -altrh /mnt/out_vol/ \
                 && COVERAGE_SCALE_FACTOR={{inputs.parameters.coverage-scale-factor}} \
+                && rm -f {{inputs.parameters.out-filename}} \
                 && wiggletools \
                 write_bg /mnt/out_vol/{{inputs.parameters.out-filename}} \
                 mean scale $COVERAGE_SCALE_FACTOR \
