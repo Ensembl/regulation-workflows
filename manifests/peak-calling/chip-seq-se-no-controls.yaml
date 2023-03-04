@@ -356,13 +356,13 @@ spec:
                   value: "gapped_peaks"
 
           - name: update-peak-calling-task-marker
-            depends: "( (execute-post-broad-peaks-file.Skipped || execute-post-gapped-peaks-file) || check-work-avoidance-consistency.Failed)"
+            depends: "((execute-genrich-chip-seq-broad-peaks.Skipped || execute-post-gapped-peaks-file) || check-work-avoidance-consistency.Failed)"
             when: >-
               ( 
               ( {{inputs.parameters.force-update-task-markers}} == true 
-              && {{tasks.check-work-avoidance-consistency.status}} == Failed ) 
-              || ( {{tasks.execute-post-broad-peaks-file.status}} == Skipped 
-              || {{tasks.execute-post-gapped-peaks-file.status}} == Succeeded )
+                && {{tasks.check-work-avoidance-consistency.status}} == Failed ) 
+              || ( {{tasks.execute-genrich-chip-seq-broad-peaks.status}} == Skipped 
+                || {{tasks.execute-post-gapped-peaks-file.status}} == Succeeded )
               )
             templateRef:
               name: update-task-marker-v1-submittable
