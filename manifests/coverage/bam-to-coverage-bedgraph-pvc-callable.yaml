@@ -210,7 +210,7 @@ spec:
         args: [ "ls -altrh \
                 && ls -altrh /mnt/out_vol/ \
                 && COVERAGE_SCALE_FACTOR={{inputs.parameters.coverage-scale-factor}} \
-                && rm -f {{inputs.parameters.out-filename}} \
+                && rm -f /mnt/out_vol/{{inputs.parameters.out-filename}} \
                 && wiggletools \
                 write_bg /mnt/out_vol/{{inputs.parameters.out-filename}} \
                 mean scale $COVERAGE_SCALE_FACTOR \
