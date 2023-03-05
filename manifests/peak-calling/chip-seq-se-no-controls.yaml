@@ -248,8 +248,8 @@ spec:
               template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
-                - name: s3_prefix
-                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: filename
                   value: "narrow-{{inputs.parameters.out_basename}}.bed"
 
@@ -280,8 +280,8 @@ spec:
               template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
-                - name: s3_prefix
-                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: filename
                   value: "broad-{{inputs.parameters.out_basename}}.bed"
 
@@ -330,8 +330,8 @@ spec:
               template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
-                - name: s3_prefix
-                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: filename
                   value: "gapped-{{inputs.parameters.out_basename}}.bed"
 
