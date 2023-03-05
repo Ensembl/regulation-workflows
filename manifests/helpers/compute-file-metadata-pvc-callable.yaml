@@ -69,6 +69,8 @@ spec:
             mountPath: /mnt/vol
       outputs:
         parameters:
+          # TODO: change where this files get written
+          # Don't write this info in PVC mounted directory
           - name: file-size
             valueFrom:
               path: file_size.txt
