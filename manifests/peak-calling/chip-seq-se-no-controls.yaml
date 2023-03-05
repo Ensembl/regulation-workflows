@@ -375,7 +375,7 @@ spec:
                   value: "{{inputs.parameters.task-payload}}"
 
           - name: delete-peak-calling-pvc
-            depends: execute-compute-bed-file-metadata
+            depends: "execute-compute-bed-file-metadata && (execute-genrich-chip-seq-broad-peaks.Skipped || execute-compute-gapped-bed-file-metadata )"
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
