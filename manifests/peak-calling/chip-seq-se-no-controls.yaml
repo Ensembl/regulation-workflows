@@ -531,8 +531,12 @@ spec:
 
     - name: genrich-chip-seq
       retryStrategy:
-        limit: "3"
-        retryPolicy: "OnError"
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "Always"
       inputs:
         parameters:
           - name: masked_regions_prefix
@@ -601,8 +605,12 @@ spec:
 
     - name: genrich-chip-seq-broad-peaks
       retryStrategy:
-        limit: "3"
-        retryPolicy: "OnError"
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "Always"
       inputs:
         parameters:
           - name: masked_regions_prefix
