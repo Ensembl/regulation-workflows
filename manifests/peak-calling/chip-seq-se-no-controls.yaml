@@ -127,7 +127,7 @@ spec:
                 - name: associated_files_size
                   value: "{{inputs.parameters.alignment_files_total_size}}"
                 - name: size_factor
-                  value: "3"
+                  value: "3.5"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
@@ -228,10 +228,10 @@ spec:
                   value: "{{inputs.parameters.masked_regions_prefix}}"
                 - name: masked_regions_filename
                   value: "{{inputs.parameters.masked_regions_filename}}"
-                - name: in_s3_prefix
-                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: pileup-pvc
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: pileup_filename
-                  value: "{{inputs.parameters.out_basename}}_pileup.log.tgz"
+                  value: "{{inputs.parameters.out_basename}}_pileup.log"
                 - name: out_narrow_s3_prefix
                   value: "{{inputs.parameters.out_s3_prefix}}"
                 - name: out_narrow_bed_filename
@@ -607,7 +607,7 @@ spec:
         parameters:
           - name: masked_regions_prefix
           - name: masked_regions_filename
-          - name: in_s3_prefix
+          - name: pileup-pvc
           - name: pileup_filename
           - name: out_narrow_s3_prefix
           - name: out_narrow_bed_filename
@@ -618,12 +618,8 @@ spec:
             path: "/results/{{inputs.parameters.masked_regions_filename}}"
             s3:
               key: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
-          - name: pileup_file
-            path: "/results/{{inputs.parameters.pileup_filename}}"
-            s3:
-              key: "{{inputs.parameters.in_s3_prefix}}{{inputs.parameters.pileup_filename}}"
       container:
-        workingDir: /results
+        workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
@@ -661,16 +657,23 @@ spec:
           requests:
             cpu: 900m
             memory: 1Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pileup-pvc}}"
       outputs:
         artifacts:
           - name: narrow_bed
-            path: /results/{{inputs.parameters.out_narrow_bed_filename}}
+            path: /mnt/vol/{{inputs.parameters.out_narrow_bed_filename}}
             archive:
               none: { }
             s3:
               key: "{{inputs.parameters.out_narrow_s3_prefix}}{{inputs.parameters.out_narrow_bed_filename}}"
           - name: broad_bed
-            path: /results/{{inputs.parameters.out_broad_bed_filename}}
+            path: /mnt/vol/{{inputs.parameters.out_broad_bed_filename}}
             archive:
               none: { }
             s3:
