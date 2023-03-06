@@ -1,0 +1,75 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compute-file-metadata-v1-submittable
+spec:
+  entrypoint: compute-file-metadata
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: compute-file-metadata
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: filename
+        artifacts:
+          - name: input-file
+            path: results/{{inputs.parameters.filename}}
+            s3:
+              key: "{{inputs.parameters.s3-key}}"
+      script:
+        workingDir: /results
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            filename = "{{inputs.parameters.filename}}"
+          
+            file_size = os.path.getsize(filename)
+          
+            with open('file_size.txt', 'w') as f:
+              f.write(str(file_size))
+          
+            CHUNK_SIZE = 8192
+            # Reads the file 8192 (or 2¹³) bytes at a time
+            # instead of all at once with f.read() to use less memory.
+            with open(filename, "rb") as f:
+                file_hash = hashlib.md5()
+                chunk = f.read(CHUNK_SIZE)
+                while chunk:
+                    file_hash.update(chunk)
+                    chunk = f.read(CHUNK_SIZE)
+          
+            md5sum = file_hash.hexdigest()
+          
+            with open('md5sum.txt', 'w') as f:
+              f.write(md5sum)
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+      outputs:
+        parameters:
+          - name: file-size
+            valueFrom:
+              path: file_size.txt
+          - name: md5sum
+            valueFrom:
+              path: md5sum.txt
