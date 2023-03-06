@@ -326,12 +326,12 @@ spec:
           - name: execute-compute-gapped-bed-file-metadata
             depends: "execute-write-gapped-peaks"
             templateRef:
-              name: compute-file-metadata-pvc-callable-v1-submittable
-              template: compute-file-metadata-pvc-callable
+              name: compute-file-metadata-v1-submittable
+              template: compute-file-metadata
             arguments:
               parameters:
-                - name: pvc-name
-                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: s3-key
+                  value: "{{inputs.parameters.out_s3_prefix}}gapped-{{inputs.parameters.out_basename}}.bed"
                 - name: filename
                   value: "gapped-{{inputs.parameters.out_basename}}.bed"
 
