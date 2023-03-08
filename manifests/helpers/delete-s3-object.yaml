@@ -1,0 +1,91 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: delete-s3-object-v1-submittable
+spec:
+  entrypoint: delete-s3-object
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: delete-s3-object
+      inputs:
+        parameters:
+          - name: s3-key
+      dag:
+        tasks:
+          - name: dag-delete-s3-object
+            template: delete-s3-object-boto3
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.s3-key}}"
+
+    - name: delete-s3-object-boto3
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-endpoint
+            value: "https://uk1s3.embassy.ebi.ac.uk"
+          - name: bucket
+            value: "ensembl-regulation-71319003-analysis-pipelines-b1"
+          - name: s3-key
+      script:
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: secretKey
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import boto3 as boto3 
+          from botocore.client import Config
+
+          from warnings import warn
+          import sys
+          import os
+
+          def _config_s3_client(endpoint):
+            config = Config(
+                read_timeout=5000,
+                connect_timeout=5000, 
+                retries={"max_attempts": 3}
+            )
+            session = boto3.session.Session()
+
+            s3_client = session.client(
+                service_name="s3",
+                endpoint_url=endpoint,
+            )
+            return s3_client
+
+
+          def main() -> int:
+            s3_endpoint = "{{inputs.parameters.s3-endpoint}}"
+
+            s3_client = _config_s3_client(s3_endpoint)
+
+            bucket_name = "{{inputs.parameters.bucket}}"
+            s3_object_key = "{{inputs.parameters.s3-key}}"
+
+            s3_client.delete_object(bucket_name, s3_object_key)
+            print(f"{s3_object_key} deleted from {bucket_name}")
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+

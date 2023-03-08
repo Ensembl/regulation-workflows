@@ -1,0 +1,181 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  generateName: delete-peak-calling-tasks-markers-
+spec:
+  entrypoint: delete-peak-calling-tasks-markers
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: delete-peak-calling-tasks-markers
+      inputs:
+        parameters:
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: experiment_type
+            value: ""
+          - name: species_name
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+          - name: output_prefix_label
+            value: ""
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+      dag:
+        tasks:
+          - name: get-peak-calling-tasks-url
+            template: compute-get-peak-calling-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+          - name: execute-get-peak-calling-tasks
+            depends: "get-peak-calling-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-peak-calling-tasks-url.outputs.result}}"
+
+          - name: execute-delete-peak-calling-markers
+            depends: "execute-get-peak-calling-tasks"
+            template: delete-peak-calling-markers
+            arguments:
+              parameters:
+                - name: peak-calling-tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+
+
+    - name: delete-peak-calling-markers
+      inputs:
+        parameters:
+          - name: peak-calling-tasks
+      dag:
+        tasks:
+          - name: execute-delete-peak-calling-marker
+            template: delete-peak-calling-task-marker
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+            withParam: "{{inputs.parameters.peak-calling-tasks}}"
+
+    - name: delete-peak-calling-task-marker
+      inputs:
+        parameters:
+          - name: task-payload
+      dag:
+        tasks:
+          - name: compute-peak-calling-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: task-type
+                  value: "peak-calling"
+
+          - name: check-if-task-marker-exists
+            depends: compute-peak-calling-task-marker-name
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
+
+          - name: delete-peak-calling-marker
+            depends: check-if-task-marker-exists
+            when: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}} == true"
+            templateRef:
+              name: delete-s3-object-v1-submittable
+              template: delete-s3-object
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
+
+
+    - name: compute-get-peak-calling-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: assembly_ensembl_accession
+          - name: experiment_type
+          - name: species_name
+          - name: epigenome_group_id
+          - name: output_prefix_label
+          - name: skip
+          - name: limit
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            query_params = {
+              "limit": f"{{inputs.parameters.limit}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+            }
+          
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/peak_calling_tasks"
+                  f"?{parsed_query_params}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
