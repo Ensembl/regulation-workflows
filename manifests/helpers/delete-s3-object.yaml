@@ -81,7 +81,7 @@ spec:
             bucket_name = "{{inputs.parameters.bucket}}"
             s3_object_key = "{{inputs.parameters.s3-key}}"
 
-            s3_client.delete_object(bucket_name, s3_object_key)
+            s3_client.delete_object(Bucket=bucket_name, Key=s3_object_key)
             print(f"{s3_object_key} deleted from {bucket_name}")
 
             return 0
