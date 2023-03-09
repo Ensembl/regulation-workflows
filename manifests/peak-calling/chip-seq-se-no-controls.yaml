@@ -127,7 +127,7 @@ spec:
                 - name: associated_files_size
                   value: "{{inputs.parameters.alignment_files_total_size}}"
                 - name: size_factor
-                  value: "3.5"
+                  value: "4.5"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
