@@ -135,10 +135,8 @@ spec:
             withParam: "{{inputs.parameters.read_file_set}}"
 
           - name: get-rfs-alignment-pvc-size
-            when: >-
-              ( {{tasks.check-if-merged-bam-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false||
-                {{inputs.parameters.overwrite-results}} == true )
             depends: execute-runs-alignment
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size

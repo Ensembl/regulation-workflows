@@ -28,7 +28,6 @@ spec:
           - name: output_filename
           # Others
           - name: overwrite-results
-            value: "true"
           - name: kubeconfig-path
 
       dag:
@@ -59,7 +58,6 @@ spec:
 
           - name: create-run-alignment-pvc
             depends: "get-run-alignment-pvc-size.Succeeded"
-            when: "{{tasks.check-if-run-alignment-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false"
             templateRef:
               name: create-pvc-kubectl-v1-submittable
               template: create-pvc-kubectl
