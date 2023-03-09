@@ -13,6 +13,8 @@ spec:
       inputs:
         parameters:
           - name: read_file_sets_alignment_tasks
+          - name: overwrite-results
+            value: "false"
           - name: kubeconfig-path
       dag:
         tasks:
@@ -41,7 +43,7 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: overwrite-results
-                  value: "false"
+                  value: "{{inputs.parameters.overwrite-results}}"
                 - name: force-update-rfs-alignment-task-markers
                   value: "false"
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
