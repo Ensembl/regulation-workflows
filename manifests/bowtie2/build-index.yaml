@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: bowtie2-build-index-v1-submittable
+spec:
+  entrypoint: build-index
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  templates:
+    - name: build-index
+      inputs:
+        parameters:
+          - name: prefix
+          - name: filename
+          - name: bt2_index_base
+          - name: threads
+            value: "14"
+        artifacts:
+          - name: my-reference-genome-fasta
+            path: /results/{{inputs.parameters.filename}}
+            s3:
+              key: "{{inputs.parameters.prefix}}{{inputs.parameters.filename}}"
+      container:
+        image: ghcr.io/daugo/ensembl-reg-bowtie2:latest
+        workingDir: /results/
+        command: [ bash, -c ]
+        args: [ "bowtie2-build --threads {{inputs.parameters.threads}} \
+        {{inputs.parameters.filename}} \
+        {{inputs.parameters.bt2_index_base}}" ]
+        resources:
+          requests:
+            cpu: 13500m
+            memory: 28Gi
+          limits:
+            cpu: 13900m
+            memory: 30Gi
+      outputs:
+        artifacts:
+          - name: reference-genome-fasta
+            path: /results/
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.prefix}}"

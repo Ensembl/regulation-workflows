@@ -6,6 +6,7 @@ resources:
   - fastqc/fastqc-se-cmd-pvc-callable.yaml
   - ngmerge/ngmerge-cmd-pvc-callable.yaml
   - fastp/fastp-se-cmd-pvc-callable.yaml
+  - bowtie2/build-index.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable.yaml
   - alignment/run-alignment-pe.yaml
