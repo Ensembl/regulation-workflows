@@ -28,8 +28,7 @@ spec:
           import hashlib
           import json
           import sys
-          from pprint import pprint
-          
+
           def dict_hash(dict: Dict[str, Any]) -> str:
               """MD5 hash of a dictionary."""
               dict_hash = hashlib.md5()
@@ -44,10 +43,7 @@ spec:
 
             input_text = """{{inputs.parameters.task-payload}}"""
             task_type = "{{inputs.parameters.task-type}}"
-          
-            pprint(input_text)
             input_data = json.loads(input_text)
-            pprint(input_data)
             input_parameters_hash = dict_hash(input_data)
 
             task_marker_path = (
