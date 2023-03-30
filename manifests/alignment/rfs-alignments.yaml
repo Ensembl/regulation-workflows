@@ -292,6 +292,8 @@ spec:
               template: run-alignment
             arguments:
               parameters:
+                - name: task-payload
+                  value: "{{=toJson(inputs.parameters)}}"
                 # Input file
                 - name: first_read_file_key
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_key')}}"
@@ -334,6 +336,8 @@ spec:
               template: run-alignment
             arguments:
               parameters:
+                - name: task-payload
+                  value: "{{=toJson(inputs.parameters)}}"
                 # Input file
                 - name: first_read_file_key
                   value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_key')}}"
