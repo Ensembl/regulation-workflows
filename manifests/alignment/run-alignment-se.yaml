@@ -264,7 +264,7 @@ spec:
           - name: first_read_file
             path: "/mnt/vol/{{inputs.parameters.first_read_file_name}}"
             http:
-              url: "https://hh.fire.sdo.ebi.ac.uk/fire/public/era/{{inputs.parameters.first_read_file_key}}"
+              url: "{{inputs.parameters.first_read_file_key}}"
       volumes:
         - name: workdir
           persistentVolumeClaim:
