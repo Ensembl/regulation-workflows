@@ -73,13 +73,13 @@ spec:
                 - name: marker-exists
                   value: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}}"
                 - name: output-artifact-exists
-                  value: "{{tasks.check-if-merged-bam-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
+                  value: "{{tasks.check-if-run-alignment-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
           - name: get-run-alignment-pvc-size
+            depends: check-work-avoidance-consistency.Succeeded
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
-            depends: check-if-run-alignment-already-in-s3-bucket
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size
