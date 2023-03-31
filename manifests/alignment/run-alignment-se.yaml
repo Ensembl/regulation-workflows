@@ -33,7 +33,7 @@ spec:
 
       dag:
         tasks:
-          - name: compute-tr-alignment-task-marker-name
+          - name: compute-run-alignment-task-marker-name
             templateRef:
               name: compute-task-marker-name-v1-submittable
               template: compute-task-marker-name
@@ -45,14 +45,14 @@ spec:
                   value: "tr-alignment"
 
           - name: check-if-task-marker-exists
-            depends: compute-tr-alignment-task-marker-name
+            depends: compute-run-alignment-task-marker-name
             templateRef:
               name: check-s3-object-exists-v1-submittable
               template: check-s3-object-exists
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
+                  value: "{{tasks.compute-run-alignment-task-marker-name.outputs.result}}"
 
           - name: check-if-run-alignment-already-in-s3-bucket
             templateRef:
@@ -199,7 +199,7 @@ spec:
                 - name: output_filename
                   value: "{{inputs.parameters.output_filename}}"
 
-          - name: update-rfs-alignment-task-marker
+          - name: update-run-alignment-task-marker
             depends: "execute-bowtie2-cmd || check-work-avoidance-consistency.Failed"
             when: "{{tasks.execute-bowtie2-cmd.status}} == Succeeded"
             templateRef:
@@ -208,7 +208,7 @@ spec:
             arguments:
               parameters:
                 - name: task-marker-s3-key
-                  value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
+                  value: "{{tasks.compute-run-alignment-task-marker-name.outputs.result}}"
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
 
