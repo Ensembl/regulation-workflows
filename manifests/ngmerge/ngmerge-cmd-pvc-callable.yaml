@@ -35,6 +35,8 @@ spec:
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
                 && NGmerge -a \
+                -u 41 \
+                -t '/' \
                 -n {{inputs.parameters.num_threads}} \
                 -1 {{inputs.parameters.first_read_file_name}} \
                 -2 {{inputs.parameters.second_read_file_name}} \
