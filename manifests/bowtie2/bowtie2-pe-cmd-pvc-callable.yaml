@@ -59,7 +59,7 @@ spec:
               -1 {{inputs.parameters.first_read_file_name}} \
               -2 {{inputs.parameters.second_read_file_name}} \
               | samtools sort \
-              -o /results/{{inputs.parameters.output_filename}} \
+              -o {{inputs.parameters.output_filename}} \
               -@ {{inputs.parameters.num_threads}} \
               && ls -altrh " ]
         volumeMounts:
@@ -75,7 +75,7 @@ spec:
       outputs:
         artifacts:
           - name: output_bam
-            path: "/results/{{inputs.parameters.output_filename}}"
+            path: "/mnt/vol/{{inputs.parameters.output_filename}}"
             archive:
               none: { }
             s3:
