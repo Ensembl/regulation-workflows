@@ -9,7 +9,7 @@ spec:
 
   templates:
     - name: multiple-rfs-alignments
-      parallelism: 20
+      parallelism: 30
       inputs:
         parameters:
           - name: read_file_sets_alignment_tasks
@@ -380,7 +380,7 @@ spec:
           - name: output-basename
           - name: output-key
           - name: num-threads
-            value: "14"
+            value: "7"
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -406,10 +406,10 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 13900m
+            cpu: 7900m
             memory: 30Gi
           requests:
-            cpu: 13500m
+            cpu: 7000m
             memory: 25Gi
       outputs:
         artifacts:

@@ -34,7 +34,7 @@ spec:
           - name: output_filename
           # Other Parameters
           - name: num_threads
-            value: "13"
+            value: "7"
         artifacts:
           - name: bowtie2_index
             path: /results/bwt2_idx
@@ -68,10 +68,10 @@ spec:
         resources:
           limits:
             memory: 58Gi
-            cpu: 14000m
+            cpu: 7900m
           requests:
             memory: 40Gi
-            cpu: 13000m
+            cpu: 7000m
       outputs:
         artifacts:
           - name: output_bam
