@@ -3,13 +3,75 @@ kind: WorkflowTemplate
 metadata:
   name: bowtie2-se-cmd-pvc-callable-v1-submittable
 spec:
-  entrypoint: bowtie2-cmd-pvc-callable
+  entrypoint: dag-bowtie2-cmd-pvc-callable
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
     strategy: OnPodSuccess
 
+  # TODO: Refactor this to use the same template as bowtie2-pe-cmd-pvc-callable.yaml
   templates:
+    - name: dag-bowtie2-cmd-pvc-callable
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_name
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          # Output prefix
+          - name: output_prefix
+          - name: output_filename
+          # Other Parameters
+          - name: num_threads
+            value: "7"
+      dag:
+        tasks:
+          - name: execute-bowtie2-cmd-pvc-callable
+            template: bowtie2-cmd-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                # Input file
+                - name: first_read_file_name
+                  value: "{{inputs.parameters.first_read_file_name}}"
+                - name: bowtie2_index_key
+                  value: "{{inputs.parameters.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{inputs.parameters.bowtie2_index_basename}}"
+                # Output prefix
+                - name: output_prefix
+                  value: "{{inputs.parameters.output_prefix}}"
+                - name: output_filename
+                  value: "{{inputs.parameters.output_filename}}"
+                # Other Parameters
+                - name: num_threads
+                  value: "{{inputs.parameters.num_threads}}"
+                # Resources config for init container
+                - name: cpu-limit
+                  value: "5000m"
+                - name: memory-limit
+                  value: "15Gi"
+          - name: alignment-from-pvc-to-s3-object
+            depends: execute-bowtie2-cmd-pvc-callable.Succeeded
+            templateRef:
+              name: from-pvc-to-s3-object-v1-submittable
+              template: from-pvc-to-s3-object
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.output_filename}}"
+                - name: s3-key
+                  value: "{{inputs.parameters.output_prefix}}{{inputs.parameters.output_filename}}"
+                - name: cpu-limit
+                  value: "6000m"
+                - name: memory-limit
+                  value: "28Gi"
+
+
     - name: bowtie2-cmd-pvc-callable
       retryStrategy:
         limit: "6"
@@ -34,6 +96,9 @@ spec:
           # Other Parameters
           - name: num_threads
             value: "7"
+          # Resources config for init container
+          - name: cpu-limit
+          - name: memory-limit
         artifacts:
           - name: bowtie2_index
             path: /results/bwt2_idx
@@ -43,6 +108,7 @@ spec:
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bowtie2_samtools:latest
+        podSpecPatch: '{ "initContainers": [ { "init": "wait", "resources": { "limits": { "cpu": "{{input.parameters.cpu-limit}}", "memory": "{{input.parameters.memory-limit}}" } } } ] }'
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
               && ls -altrh /results/bwt2_idx \
@@ -67,11 +133,3 @@ spec:
           requests:
             memory: 40Gi
             cpu: 7000m
-      outputs:
-        artifacts:
-          - name: output_bam
-            path: "/mnt/vol/{{inputs.parameters.output_filename}}"
-            archive:
-              none: { }
-            s3:
-              key: "{{inputs.parameters.output_prefix}}{{inputs.parameters.output_filename}}"
