@@ -206,7 +206,7 @@ spec:
             depends: execute-fastqc-cmd-for-noAdapt-read-files
             templateRef:
               name: bowtie2-pe-cmd-pvc-callable-v1-submittable
-              template: bowtie2-cmd-pvc-callable
+              template: dag-bowtie2-cmd-pvc-callable
             arguments:
               parameters:
                 - name: pvc-name
