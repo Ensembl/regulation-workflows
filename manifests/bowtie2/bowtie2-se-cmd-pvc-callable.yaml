@@ -24,7 +24,7 @@ spec:
           - name: output_filename
           # Other Parameters
           - name: num_threads
-            value: "7"
+            value: "13"
       dag:
         tasks:
           - name: execute-bowtie2-cmd-pvc-callable
@@ -95,7 +95,6 @@ spec:
           - name: output_filename
           # Other Parameters
           - name: num_threads
-            value: "7"
           # Resources config for init container
           - name: cpu-limit
           - name: memory-limit
@@ -129,7 +128,7 @@ spec:
         resources:
           limits:
             memory: 58Gi
-            cpu: 7900m
+            cpu: 13900m
           requests:
             memory: 40Gi
-            cpu: 7000m
+            cpu: 12900m
