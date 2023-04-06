@@ -189,18 +189,26 @@ spec:
                 - name: output-key
                   value: "{{inputs.parameters.output_key}}"
 
-          #          - name: cleanup-runs-bams-from-pvc
-          #            depends: execute-samtools-merge
-          #            template: remove-runs-bams-from-pvc
-          #            arguments:
-          #              parameters:
-          #                - name: bams-folder
-          #                  value: "so_coordinates_runs_bams"
-          #                - name: pvc-name
-          #                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+          - name: merged-alignment-from-pvc-to-s3-object
+            depends: execute-samtools-merge
+            templateRef:
+              name: from-pvc-to-s3-object-v1-submittable
+              template: from-pvc-to-s3-object
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.read_file_set_id}}.bam"
+                - name: s3-key
+                  value: "{{inputs.parameters.output_key}}"
+                - name: cpu-limit
+                  value: "6000m"
+                - name: memory-limit
+                  value: "28Gi"
 
           - name: execute-samtools-stats
-            depends: execute-samtools-merge
+            depends: merged-alignment-from-pvc-to-s3-object
             template: samtools-stats-cmd
             arguments:
               parameters:
@@ -411,14 +419,6 @@ spec:
           requests:
             cpu: 7000m
             memory: 25Gi
-      outputs:
-        artifacts:
-          - name: output_bam
-            path: "/mnt/vol/{{inputs.parameters.output-basename}}.bam"
-            archive:
-              none: { }
-            s3:
-              key: "{{inputs.parameters.output-key}}"
 
 
     #    - name: remove-runs-bams-from-pvc
