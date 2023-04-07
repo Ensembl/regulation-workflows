@@ -64,14 +64,14 @@ spec:
         volumeMounts:
           - name: workdir
             mountPath: /mnt/vol
-        outputs:
-          artifacts:
-            - name: output-file
-              path: "/mnt/vol/{{inputs.parameters.filename}}"
-              archive:
-                none: { }
-              s3:
-                key: "{{inputs.parameters.s3-key}}"
+      outputs:
+        artifacts:
+          - name: output-file
+            path: "/mnt/vol/{{inputs.parameters.filename}}"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.s3-key}}"
 
 
 
