@@ -38,7 +38,5 @@ spec:
         artifacts:
           - name: reference-genome-fasta
             path: /results/
-            archive:
-              none: { }
             s3:
-              key: "{{inputs.parameters.prefix}}"
+              key: "{{inputs.parameters.prefix}}{{inputs.parameters.bt2_index_base}}.tar.gz"
