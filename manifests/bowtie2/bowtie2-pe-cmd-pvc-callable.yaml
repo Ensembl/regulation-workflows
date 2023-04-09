@@ -105,7 +105,7 @@ spec:
           - name: bowtie2_index
             path: /results/bwt2_idx
             s3:
-              key: "{{inputs.parameters.bowtie2_index_key}}"
+              key: "{{inputs.parameters.bowtie2_index_key}}{{inputs.parameters.bowtie2_index_basename}}.tar.gz"
 
       container:
         workingDir: /mnt/vol
