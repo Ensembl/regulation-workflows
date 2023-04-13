@@ -402,7 +402,7 @@ spec:
           - name: output-basename
           - name: output-key
           - name: num-threads
-            value: "7"
+            value: "13"
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -428,10 +428,10 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 7900m
+            cpu: 13900m
             memory: 30Gi
           requests:
-            cpu: 7000m
+            cpu: 12900m
             memory: 25Gi
 
 
