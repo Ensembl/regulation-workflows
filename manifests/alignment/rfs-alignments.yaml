@@ -175,8 +175,22 @@ spec:
                 - name: s3-prefix
                   value: "{{=jsonpath(inputs.parameters.read_file_set, '$[0].output_prefix')}}"
 
-          - name: execute-samtools-merge
+          - name: validate-number-of-alignments-to-merge
             depends: copy-run-alignments-to-rfs-pvc
+            templateRef:
+              name: validate-expected-number-of-files-in-dir-v1-submittable
+              template: validate-number-of-files
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-rfs-alignment-pvc.outputs.parameters.pvc-name}}"
+                - name: pvc-dir
+                  value: "so_coordinates_runs_bams"
+                - name: expected-number-of-files
+                  value: "{{=len(=jsonpath(inputs.parameters.read_file_set, '$.'))}}"
+
+          - name: execute-samtools-merge
+            depends: validate-number-of-alignments-to-merge
             template: samtools-merge-cmd
             arguments:
               parameters:
