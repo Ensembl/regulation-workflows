@@ -179,7 +179,7 @@ spec:
             depends: copy-run-alignments-to-rfs-pvc
             templateRef:
               name: validate-expected-number-of-files-in-dir-v1-submittable
-              template: validate-number-of-files
+              template: validate-number-of-files-in-dir
             arguments:
               parameters:
                 - name: pvc-name
@@ -187,7 +187,7 @@ spec:
                 - name: pvc-dir
                   value: "so_coordinates_runs_bams"
                 - name: expected-number-of-files
-                  value: "{{=len(=jsonpath(inputs.parameters.read_file_set, '$.'))}}"
+                  value: "{{=len(jsonpath(inputs.parameters.read_file_set, '$[0:]'))}}"
 
           - name: execute-samtools-merge
             depends: validate-number-of-alignments-to-merge
