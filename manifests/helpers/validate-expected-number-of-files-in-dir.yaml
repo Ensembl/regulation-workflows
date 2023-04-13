@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: validate-expected-number-of-files-in-dir-v1-submittable
+spec:
+  entrypoint: validate-number-of-files
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: validate-number-of-files
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: pvc-dir
+          - name: expected-number-of-files
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        workingDir: /mnt/vol
+        command: [ python ]
+        source: |
+          from pathlib import Path
+          import json
+          import sys
+
+          def main() -> int:
+
+            dir_name = """{{inputs.parameters.pvc-dir}}"""
+            dir_path = Path(dir_name)
+            expected_number_of_files = int("{{inputs.parameters.expected-number-of-files}}")
+          
+            file_count = len(list(dir_path.glob("*")))
+          
+            if file_count != expected_number_of_files:
+              print(f"Files in {dir_name}: {list(dir_path.glob('*'))}")
+              print(f"Expected {expected_number_of_files} files in {dir_name}, but found {file_count}")
+              return 1
+            else:
+              print(f"Files in {dir_name}: {list(dir_path.glob('*'))}")
+              print(f"Found {file_count} files in {dir_name}")
+              return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
