@@ -21,7 +21,7 @@ spec:
           - name: task-payload
 
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:all_workflows
+        image: ghcr.io/daugo/ensembl-reg-python:latest
         workingDir: /mnt/vol
         command: [ python ]
         source: |
