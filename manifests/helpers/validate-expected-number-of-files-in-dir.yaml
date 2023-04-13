@@ -3,12 +3,12 @@ kind: WorkflowTemplate
 metadata:
   name: validate-expected-number-of-files-in-dir-v1-submittable
 spec:
-  entrypoint: validate-number-of-files
+  entrypoint: validate-number-of-files-in-dir
   imagePullSecrets:
     - name: ghcr-pull-token
 
   templates:
-    - name: validate-number-of-files
+    - name: validate-number-of-files-in-dir
       retryStrategy:
         limit: "5"
         backoff:
@@ -36,8 +36,9 @@ spec:
           def main() -> int:
 
             dir_name = """{{inputs.parameters.pvc-dir}}"""
+            expected_number_of_files_str = """{{inputs.parameters.expected-number-of-files}}"""
             dir_path = Path(dir_name)
-            expected_number_of_files = int("{{inputs.parameters.expected-number-of-files}}")
+            expected_number_of_files = int(expected_number_of_files_str)
           
             file_count = len(list(dir_path.glob("*")))
           
