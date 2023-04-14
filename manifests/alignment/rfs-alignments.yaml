@@ -254,8 +254,6 @@ spec:
               parameters:
                 - name: s3-key
                   value: "{{inputs.parameters.output_key}}"
-                - name: filename
-                  value: "{{inputs.parameters.read_file_set_id}}.bam"
                 - name: file-size
                   value: "{{tasks.execute-compute-file-metadata.outputs.parameters.file-size}}"
                 - name: md5sum
@@ -513,7 +511,6 @@ spec:
       inputs:
         parameters:
           - name: s3-key
-          - name: filename
           - name: file-size
           - name: md5sum
           - name: read-file-set-id
@@ -523,18 +520,20 @@ spec:
         command: [ python ]
         source: |
           import sys
-          import os
-          import hashlib
           import json
+          from pathlib import Path
           
           def main() -> int:
+          
+            output_key = "{{inputs.parameters.s3-key}}"
+            basename = Path(output_key).stem
           
             post_data = {
               "read_file_set_id": "{{inputs.parameters.read-file-set-id}}",
               "assembly_id": "{{inputs.parameters.assembly-id}}",
               "file": {
                 "file_type": "bam",
-                "basename": "{{inputs.parameters.read-file-set-id}}",
+                "basename": basename,
                 "size": "{{inputs.parameters.file-size}}",
                 "md5sum": "{{inputs.parameters.md5sum}}",
                 "imported": False,
