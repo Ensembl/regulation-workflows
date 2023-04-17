@@ -1,0 +1,754 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: peak-calling-chip-seq-v1-submittable
+spec:
+  entrypoint: peak-calling-chip-seq
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: peak-calling-chip-seq
+      parallelism: 8
+      inputs:
+        parameters:
+          - name: peak_calling_tasks
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: execute-peak-calling-task
+            template: peak-calling-task
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: experiment_id
+                  value: "{{item.experiment_id}}"
+                - name: assembly_id
+                  value: "{{item.assembly_id}}"
+                - name: out_basename
+                  value: "{{item.out_basename}}"
+                - name: out_s3_prefix
+                  value: "{{item.out_s3_prefix}}"
+                - name: alignment_files_total_size
+                  value: "{{item.alignment_files_total_size}}"
+                - name: broad_peaks
+                  value: "{{item.broad_peaks}}"
+                - name: signals
+                  value: "{{item.signals}}"
+                - name: controls
+                  value: "{{=item?.controls ?? nil}}"
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: force-update-task-markers
+                  value: "false"
+            withParam: "{{inputs.parameters.peak_calling_tasks}}"
+
+
+    - name: peak-calling-task
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: experiment_id
+          - name: assembly_id
+          - name: out_basename
+          - name: out_s3_prefix
+          - name: alignment_files_total_size
+          - name: broad_peaks
+          - name: signals
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
+          - name: overwrite-results
+          - name: kubeconfig-path
+          - name: force-update-task-markers
+
+      dag:
+        tasks:
+          - name: compute-peak-calling-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: task-type
+                  value: "peak-calling"
+
+          - name: check-if-task-marker-exists
+            depends: compute-peak-calling-task-marker-name
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
+
+          - name: check-if-bed-file-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.bed"
+
+          - name: check-work-avoidance-consistency
+            depends: "check-if-task-marker-exists && check-if-bed-file-already-in-s3-bucket"
+            templateRef:
+              name: resolve-work-avoidance-v1-submittable
+              template: resolve-work-avoidance
+            arguments:
+              parameters:
+                - name: marker-exists
+                  value: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}}"
+                - name: output-artifact-exists
+                  value: "{{tasks.check-if-bed-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+
+          #          - name: get-peak-calling-pvc-size
+          #            depends: check-work-avoidance-consistency.Succeeded
+          #            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+          #            templateRef:
+          #              name: compute-pvc-size-v1-submittable
+          #              template: compute-pvc-size
+          #            arguments:
+          #              parameters:
+          #                - name: associated_files_size
+          #                  value: "{{inputs.parameters.alignment_files_total_size}}"
+          #                - name: size_factor
+          #                  value: "4.5"
+          #
+          #          - name: create-peak-calling-pvc
+          #            depends: get-peak-calling-pvc-size.Succeeded
+          #            templateRef:
+          #              name: create-pvc-kubectl-v1-submittable
+          #              template: create-pvc-kubectl
+          #            arguments:
+          #              parameters:
+          #                - name: pvc-size
+          #                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+          #                - name: kubeconfig-path
+          #                  value: "{{inputs.parameters.kubeconfig-path}}"
+          #
+          #          - name: execute-sort-signal-alignments-by-queryname
+          #            depends: create-peak-calling-pvc
+          #            template: sort-alignments-by-queryname
+          #            arguments:
+          #              parameters:
+          #                - name: sort_alignment_params
+          #                  value: "{{item}}"
+          #                # PVC in which to store so_queryname bams
+          #                - name: out-pvc-name
+          #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+          #                - name: kubeconfig-path
+          #                  value: "{{inputs.parameters.kubeconfig-path}}"
+          #            withParam: "{{inputs.parameters.signals}}"
+          #
+
+          - name: get-genrich-input-filenames-formatted
+            #            depends: create-peak-calling-pvc
+            template: edit-genrich-input-filenames-formatted
+            arguments:
+              parameters:
+                - name: signals
+                  value: "{{inputs.parameters.signals}}"
+                - name: controls
+                  value: "{{inputs.parameters.controls}}"
+
+    #          - name: execute-genrich-chip-seq
+    #            depends: "get-genrich-input-filenames-formatted && execute-sort-signal-alignments-by-queryname"
+    #            template: genrich-chip-seq
+    #            arguments:
+    #              parameters:
+    #                - name: masked_regions_prefix
+    #                  value: "{{inputs.parameters.masked_regions_prefix}}"
+    #                - name: masked_regions_filename
+    #                  value: "{{inputs.parameters.masked_regions_filename}}"
+    #                - name: signal_files_formatted_str
+    #                  value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.signal_files_formatted_str}}"
+    #                - name: out_bed_filename
+    #                  value: "{{inputs.parameters.out_basename}}.bed"
+    #                - name: out_pileup_filename
+    #                  value: "{{inputs.parameters.out_basename}}_pileup.log"
+    #                - name: out_pq_file_filename
+    #                  value: "{{inputs.parameters.out_basename}}_pqval.log"
+    #                - name: out_s3_prefix
+    #                  value: "{{inputs.parameters.out_s3_prefix}}"
+    #                - name: alignments-pvc
+    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    #
+    #          - name: execute-compute-bed-file-metadata
+    #            depends: execute-genrich-chip-seq
+    #            templateRef:
+    #              name: compute-file-metadata-pvc-callable-v1-submittable
+    #              template: compute-file-metadata-pvc-callable
+    #            arguments:
+    #              parameters:
+    #                - name: pvc-name
+    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    #                - name: filename
+    #                  value: "{{inputs.parameters.out_basename}}.bed"
+    #
+    #          - name: execute-post-peak-file
+    #            depends: execute-compute-bed-file-metadata
+    #            template: post-analysis-file
+    #            arguments:
+    #              parameters:
+    #                - name: s3-key
+    #                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.bed"
+    #                - name: basename
+    #                  value: "{{inputs.parameters.out_basename}}"
+    #                - name: file-size
+    #                  value: "{{tasks.execute-compute-bed-file-metadata.outputs.parameters.file-size}}"
+    #                - name: md5sum
+    #                  value: "{{tasks.execute-compute-bed-file-metadata.outputs.parameters.md5sum}}"
+    #                - name: experiment-id
+    #                  value: "{{inputs.parameters.experiment_id}}"
+    #                - name: assembly-id
+    #                  value: "{{inputs.parameters.assembly_id}}"
+    #                - name: analysis-type
+    #                  value: "peaks"
+    #
+    #          - name: execute-genrich-chip-seq-broad-peaks
+    #            when: "{{inputs.parameters.broad_peaks}} == true"
+    #            depends: execute-genrich-chip-seq
+    #            template: genrich-chip-seq-broad-peaks
+    #            arguments:
+    #              parameters:
+    #                - name: masked_regions_prefix
+    #                  value: "{{inputs.parameters.masked_regions_prefix}}"
+    #                - name: masked_regions_filename
+    #                  value: "{{inputs.parameters.masked_regions_filename}}"
+    #                - name: pileup-pvc
+    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    #                - name: pileup_filename
+    #                  value: "{{inputs.parameters.out_basename}}_pileup.log"
+    #                - name: out_narrow_s3_prefix
+    #                  value: "{{inputs.parameters.out_s3_prefix}}"
+    #                - name: out_narrow_bed_filename
+    #                  value: "narrow-{{inputs.parameters.out_basename}}.bed"
+    #                - name: out_broad_s3_prefix
+    #                  value: "{{inputs.parameters.out_s3_prefix}}"
+    #                - name: out_broad_bed_filename
+    #                  value: "broad-{{inputs.parameters.out_basename}}.bed"
+    #
+    #          - name: execute-compute-narrow-bed-file-metadata
+    #            depends: "execute-genrich-chip-seq-broad-peaks.Succeeded"
+    #            templateRef:
+    #              name: compute-file-metadata-pvc-callable-v1-submittable
+    #              template: compute-file-metadata-pvc-callable
+    #            arguments:
+    #              parameters:
+    #                - name: pvc-name
+    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    #                - name: filename
+    #                  value: "narrow-{{inputs.parameters.out_basename}}.bed"
+    #
+    #          - name: execute-post-narrow-peaks-file
+    #            depends: "execute-compute-narrow-bed-file-metadata"
+    #            template: post-analysis-file
+    #            arguments:
+    #              parameters:
+    #                - name: s3-key
+    #                  value: "{{inputs.parameters.out_s3_prefix}}narrow-{{inputs.parameters.out_basename}}.bed"
+    #                - name: basename
+    #                  value: "narrow-{{inputs.parameters.out_basename}}"
+    #                - name: file-size
+    #                  value: "{{tasks.execute-compute-narrow-bed-file-metadata.outputs.parameters.file-size}}"
+    #                - name: md5sum
+    #                  value: "{{tasks.execute-compute-narrow-bed-file-metadata.outputs.parameters.md5sum}}"
+    #                - name: experiment-id
+    #                  value: "{{inputs.parameters.experiment_id}}"
+    #                - name: assembly-id
+    #                  value: "{{inputs.parameters.assembly_id}}"
+    #                - name: analysis-type
+    #                  value: "narrow_peaks"
+    #
+    #          - name: execute-compute-broad-bed-file-metadata
+    #            depends: "execute-genrich-chip-seq-broad-peaks.Succeeded"
+    #            templateRef:
+    #              name: compute-file-metadata-pvc-callable-v1-submittable
+    #              template: compute-file-metadata-pvc-callable
+    #            arguments:
+    #              parameters:
+    #                - name: pvc-name
+    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    #                - name: filename
+    #                  value: "broad-{{inputs.parameters.out_basename}}.bed"
+    #
+    #          - name: execute-post-broad-peaks-file
+    #            depends: "execute-compute-broad-bed-file-metadata"
+    #            template: post-analysis-file
+    #            arguments:
+    #              parameters:
+    #                - name: s3-key
+    #                  value: "{{inputs.parameters.out_s3_prefix}}broad-{{inputs.parameters.out_basename}}.bed"
+    #                - name: basename
+    #                  value: "broad-{{inputs.parameters.out_basename}}"
+    #                - name: file-size
+    #                  value: "{{tasks.execute-compute-broad-bed-file-metadata.outputs.parameters.file-size}}"
+    #                - name: md5sum
+    #                  value: "{{tasks.execute-compute-broad-bed-file-metadata.outputs.parameters.md5sum}}"
+    #                - name: experiment-id
+    #                  value: "{{inputs.parameters.experiment_id}}"
+    #                - name: assembly-id
+    #                  value: "{{inputs.parameters.assembly_id}}"
+    #                - name: analysis-type
+    #                  value: "broad_peaks"
+    #
+    #          - name: execute-write-gapped-peaks
+    #            depends: "execute-genrich-chip-seq-broad-peaks.Succeeded"
+    #            template: write-gapped-peaks
+    #            arguments:
+    #              parameters:
+    #                - name: narrow-peaks-s3-prefix
+    #                  value: "{{inputs.parameters.out_s3_prefix}}"
+    #                - name: narrow-peaks-filename
+    #                  value: "narrow-{{inputs.parameters.out_basename}}.bed"
+    #                - name: broad-peaks-s3-prefix
+    #                  value: "{{inputs.parameters.out_s3_prefix}}"
+    #                - name: broad-peaks-filename
+    #                  value: "broad-{{inputs.parameters.out_basename}}.bed"
+    #                - name: gapped-peaks-s3-prefix
+    #                  value: "{{inputs.parameters.out_s3_prefix}}"
+    #                - name: gapped-peaks-filename
+    #                  value: "gapped-{{inputs.parameters.out_basename}}.bed"
+    #
+    #          - name: execute-compute-gapped-bed-file-metadata
+    #            depends: "execute-write-gapped-peaks"
+    #            templateRef:
+    #              name: compute-file-metadata-v1-submittable
+    #              template: compute-file-metadata
+    #            arguments:
+    #              parameters:
+    #                - name: s3-key
+    #                  value: "{{inputs.parameters.out_s3_prefix}}gapped-{{inputs.parameters.out_basename}}.bed"
+    #                - name: filename
+    #                  value: "gapped-{{inputs.parameters.out_basename}}.bed"
+    #
+    #          - name: execute-post-gapped-peaks-file
+    #            depends: "execute-compute-gapped-bed-file-metadata"
+    #            template: post-analysis-file
+    #            arguments:
+    #              parameters:
+    #                - name: s3-key
+    #                  value: "{{inputs.parameters.out_s3_prefix}}gapped-{{inputs.parameters.out_basename}}.bed"
+    #                - name: basename
+    #                  value: "gapped-{{inputs.parameters.out_basename}}"
+    #                - name: file-size
+    #                  value: "{{tasks.execute-compute-gapped-bed-file-metadata.outputs.parameters.file-size}}"
+    #                - name: md5sum
+    #                  value: "{{tasks.execute-compute-gapped-bed-file-metadata.outputs.parameters.md5sum}}"
+    #                - name: experiment-id
+    #                  value: "{{inputs.parameters.experiment_id}}"
+    #                - name: assembly-id
+    #                  value: "{{inputs.parameters.assembly_id}}"
+    #                - name: analysis-type
+    #                  value: "gapped_peaks"
+    #
+    #          - name: update-peak-calling-task-marker
+    #            depends: >-
+    #              (
+    #                (
+    #                  execute-genrich-chip-seq-broad-peaks.Skipped ||
+    #                  execute-post-gapped-peaks-file
+    #                ) ||
+    #                check-work-avoidance-consistency.Failed
+    #              )
+    #            when: >-
+    #              (
+    #              ( {{inputs.parameters.force-update-task-markers}} == true
+    #                && {{tasks.check-work-avoidance-consistency.status}} == Failed )
+    #              || ( {{tasks.execute-genrich-chip-seq-broad-peaks.status}} == Skipped
+    #                || {{tasks.execute-post-gapped-peaks-file.status}} == Succeeded )
+    #              )
+    #            templateRef:
+    #              name: update-task-marker-v1-submittable
+    #              template: update-task-marker
+    #            arguments:
+    #              parameters:
+    #                - name: task-marker-s3-key
+    #                  value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
+    #                - name: task-payload
+    #                  value: "{{inputs.parameters.task-payload}}"
+    #
+    #          - name: delete-peak-calling-pvc
+    #            depends: >-
+    #              (
+    #                execute-compute-bed-file-metadata &&
+    #                (
+    #                  execute-genrich-chip-seq-broad-peaks.Skipped ||
+    #                  (
+    #                    execute-compute-narrow-bed-file-metadata &&
+    #                    execute-compute-broad-bed-file-metadata
+    #                  )
+    #                )
+    #              )
+    #            templateRef:
+    #              name: delete-patch-pvc-kubectl-v1-submittable
+    #              template: delete-patch-pvc-kubectl
+    #            arguments:
+    #              parameters:
+    #                - name: pvc-name
+    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    #                - name: kubeconfig-path
+    #                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: sort-alignments-by-queryname
+      inputs:
+        parameters:
+          # Bam file as input
+          - name: sort_alignment_params
+          # PVC in which to store bedgraph
+          - name: out-pvc-name
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-pvc-size
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.file_size')}}"
+                - name: size_factor
+                  value: "1.25"
+
+          - name: execute-sort-alignment-by-queryname
+            depends: get-pvc-size
+            templateRef:
+              name: sort-alignment-by-queryname-pvc-callable-v1-submittable
+              template: sort-alignment-by-queryname-pvc-callable
+            arguments:
+              parameters:
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.basename')}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.filename')}}"
+                - name: s3_key
+                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.s3_key')}}"
+                - name: pvc-size
+                  value: "{{tasks.get-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: out-pvc-name
+                  value: "{{inputs.parameters.out-pvc-name}}"
+
+
+    - name: post-analysis-file
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: basename
+          - name: file-size
+          - name: md5sum
+          - name: experiment-id
+          - name: assembly-id
+          - name: analysis-type
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            post_data = {
+              "experiment_id": "{{inputs.parameters.experiment-id}}",
+              "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "analysis_type": "{{inputs.parameters.analysis-type}}",
+              "file": {
+                "file_type": "bed",
+                "basename": "{{inputs.parameters.basename}}",
+                "size": "{{inputs.parameters.file-size}}",
+                "md5sum": "{{inputs.parameters.md5sum}}",
+                "imported": False,
+                "s3_object": {
+                  "key": "{{inputs.parameters.s3-key}}",
+                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
+                }
+              }
+            }
+          
+            print(json.dumps(post_data,  indent=2))
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+    - name: edit-genrich-input-filenames-formatted
+      inputs:
+        parameters:
+          - name: signals
+          - name: controls
+            value: ""
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import json
+          from pprint import pprint
+
+          def main() -> int:
+            signals_json = """{{inputs.parameters.signals}}"""
+            signals_data = json.loads(signals_json)
+            pprint(signals_data)
+          
+            num_signals = len(signals_data)
+            signal_names = [f"so_queryname_{s['basename']}.bam" for s in signals_data]
+          
+            with open("signal_files_formatted_str.txt", 'w') as f:
+                f.write(','.join(signal_names))
+          
+          
+            controls_json = """{{inputs.parameters.controls}}"""
+            if controls_json:
+              controls_data = json.loads(controls_json)
+              pprint(controls_data)
+          
+              control_names = [f"so_queryname_{c['basename']}.bam" for c in controls_data]
+              assert len(control_names) == 1, 'More than one control for this set of \
+                      signals'
+              control_names = control_names * num_signals
+            else:
+              pprint(control_json)
+              control_names = ""
+          
+          
+            with open("control_files_formatted_str.txt", 'w') as f:
+                f.write(','.join(control_names))
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+      outputs:
+        parameters:
+          - name: signal_files_formatted_str
+            valueFrom:
+              path: signal_files_formatted_str.txt
+          - name: control_files_formatted_str
+            valueFrom:
+              path: control_files_formatted_str.txt
+
+    - name: genrich-chip-seq
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
+          - name: signal_files_formatted_str
+          - name: out_bed_filename
+          - name: out_pileup_filename
+          - name: out_pq_file_filename
+          - name: out_s3_prefix
+          - name: alignments-pvc
+        artifacts:
+          - name: masked-regions-file
+            path: /mnt/vol/{{inputs.parameters.masked_regions_filename}}
+            s3:
+              key: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
+                && echo ${SIGNAL_BAM_FILES} \
+                && Genrich \
+                -t ${SIGNAL_BAM_FILES} \
+                -o {{inputs.parameters.out_bed_filename}} \
+                -f {{inputs.parameters.out_pileup_filename}} \
+                -k {{inputs.parameters.out_pq_file_filename}} \
+                -r \
+                -y \
+                -q 0.1 \
+                -s 20 \
+                -e MT \
+                -E {{inputs.parameters.masked_regions_filename}} \
+                -v \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 4900m
+            memory: 45Gi
+          requests:
+            cpu: 4700m
+            memory: 41Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.alignments-pvc}}"
+      outputs:
+        artifacts:
+          - name: final_bed
+            path: /mnt/vol/{{inputs.parameters.out_bed_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_bed_filename}}"
+          - name: pileup
+            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
+          - name: pq_file
+            path: /mnt/vol/{{inputs.parameters.out_pq_file_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_file_filename}}.tgz"
+
+    - name: genrich-chip-seq-broad-peaks
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
+          - name: pileup-pvc
+          - name: pileup_filename
+          - name: out_narrow_s3_prefix
+          - name: out_narrow_bed_filename
+          - name: out_broad_s3_prefix
+          - name: out_broad_bed_filename
+        artifacts:
+          - name: masked-regions-file
+            path: "/results/{{inputs.parameters.masked_regions_filename}}"
+            s3:
+              key: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && Genrich \
+                -P \
+                -o {{inputs.parameters.out_narrow_bed_filename}} \
+                -f {{inputs.parameters.pileup_filename}} \
+                -p 0.05 \
+                -s 20
+                -r \
+                -y \
+                -e MT \
+                -E {{inputs.parameters.masked_regions_filename}} \
+                -v \
+                && ls -altrh
+                && Genrich \
+                -P \
+                -o {{inputs.parameters.out_broad_bed_filename}} \
+                -f {{inputs.parameters.pileup_filename}} \
+                -g 200 \
+                -a 800 \
+                -p 0.1 \
+                -s 20 \
+                -r \
+                -y \
+                -e MT \
+                -E {{inputs.parameters.masked_regions_filename}} \
+                -v \
+                && ls -altrh 
+                " ]
+        resources:
+          limits:
+            cpu: 1900m
+            memory: 1.5Gi
+          requests:
+            cpu: 900m
+            memory: 1Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pileup-pvc}}"
+      outputs:
+        artifacts:
+          - name: narrow_bed
+            path: /mnt/vol/{{inputs.parameters.out_narrow_bed_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_narrow_s3_prefix}}{{inputs.parameters.out_narrow_bed_filename}}"
+          - name: broad_bed
+            path: /mnt/vol/{{inputs.parameters.out_broad_bed_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_broad_s3_prefix}}{{inputs.parameters.out_broad_bed_filename}}"
+
+    - name: write-gapped-peaks
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: narrow-peaks-filename
+          - name: narrow-peaks-s3-prefix
+          - name: broad-peaks-s3-prefix
+          - name: broad-peaks-filename
+          - name: gapped-peaks-s3-prefix
+          - name: gapped-peaks-filename
+        artifacts:
+          - name: peaks_file
+            path: "/results/{{inputs.parameters.narrow-peaks-filename}}"
+            s3:
+              key: "{{inputs.parameters.narrow-peaks-s3-prefix}}{{inputs.parameters.narrow-peaks-filename}}"
+          - name: broad_peaks_file
+            path: "/results/{{inputs.parameters.broad-peaks-filename}}"
+            s3:
+              key: "{{inputs.parameters.broad-peaks-s3-prefix}}{{inputs.parameters.broad-peaks-filename}}"
+      container:
+        workingDir: /results
+        image: ghcr.io/daugo/ensembl-reg-gapped-peaks:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ " ls -altrh \
+              && SCRIPT_PATH=/usr/local/bin/writeGappedPeaks.py \
+              && python ${SCRIPT_PATH} \
+              {{inputs.parameters.broad-peaks-filename}} \
+              {{inputs.parameters.narrow-peaks-filename}} \
+              {{inputs.parameters.gapped-peaks-filename}}" ]
+      outputs:
+        artifacts:
+          - name: gapped_peaks_file
+            path: /results/{{inputs.parameters.gapped-peaks-filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.gapped-peaks-s3-prefix}}{{inputs.parameters.gapped-peaks-filename}}"
