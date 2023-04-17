@@ -110,8 +110,8 @@ spec:
             depends: "execute-get-peak-calling-tasks"
             when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
-              name: peak-calling-chip-seq-se-no-controls-v1-submittable
-              template: peak-calling-chip-seq-se-no-controls
+              name: peak-calling-chip-seq-v1-submittable
+              template: peak-calling-chip-seq
             arguments:
               parameters:
                 - name: peak_calling_tasks
