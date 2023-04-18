@@ -34,9 +34,11 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-ngmerge:latest
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
+                && FIRST_READ_NAME=$(gzip -c -d {{inputs.parameters.first_read_file_name}} | head -1 | awk '{print $1}') \  
+                && if [[ ${FIRST_READ_NAME} =~ .*'/1' ]]; then T_PARAM_VAL='/'; else T_PARAM_VAL=' '; fi \
                 && NGmerge -a \
                 -u 41 \
-                -t '/' \
+                -t ${T_PARAM_VAL} \
                 -n {{inputs.parameters.num_threads}} \
                 -1 {{inputs.parameters.first_read_file_name}} \
                 -2 {{inputs.parameters.second_read_file_name}} \
