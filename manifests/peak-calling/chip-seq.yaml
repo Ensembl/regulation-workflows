@@ -145,7 +145,7 @@ spec:
 
           - name: execute-sort-control-alignments-by-queryname
             depends: execute-sort-signal-alignments-by-queryname
-            when: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}} != ''"
+            when: "{{=string(tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str)}} != ''"
             template: sort-alignments-by-queryname
             arguments:
               parameters:
