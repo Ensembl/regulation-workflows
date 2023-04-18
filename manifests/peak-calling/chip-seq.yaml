@@ -157,7 +157,7 @@ spec:
             withParam: "{{=toJson(jsonpath(inputs.parameters.task_payload, '$.signals'))}}"
 
           - name: execute-sort-control-alignments-by-queryname
-            depends: execute-sort-signal-alignments-by-queryname
+            depends: "execute-sort-signal-alignments-by-queryname && check-if-any-controls-present.Succeeded"
             when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == false"
             template: sort-alignments-by-queryname
             arguments:
