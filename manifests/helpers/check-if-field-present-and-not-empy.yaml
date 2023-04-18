@@ -9,23 +9,6 @@ spec:
 
   templates:
     - name: check-if-field-present-and-not-empty
-      inputs:
-        parameters:
-          - name: field-name
-          - name: task-payload
-      dag:
-        tasks:
-          - name: check-if-field-present-and-not-empty
-            template: is-field-present-and-not-empty
-            arguments:
-              parameters:
-                - name: field-name
-                  value: "{{inputs.parameters.field-name}}"
-                - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
-
-
-    - name: is-field-present-and-not-empty
       retryStrategy:
         limit: "5"
         backoff:
@@ -57,7 +40,7 @@ spec:
               res = "false"
 
             with open("controls_present.txt", 'w') as f:
-                f.write(res)
+              f.write(res)
 
             return 0
 
