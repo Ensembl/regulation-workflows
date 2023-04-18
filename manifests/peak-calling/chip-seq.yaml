@@ -23,24 +23,8 @@ spec:
             template: peak-calling-task
             arguments:
               parameters:
-                - name: task-payload
+                - name: task_payload
                   value: "{{item}}"
-                - name: experiment_id
-                  value: "{{item.experiment_id}}"
-                - name: assembly_id
-                  value: "{{item.assembly_id}}"
-                - name: out_basename
-                  value: "{{item.out_basename}}"
-                - name: out_s3_prefix
-                  value: "{{item.out_s3_prefix}}"
-                - name: alignment_files_total_size
-                  value: "{{item.alignment_files_total_size}}"
-                - name: broad_peaks
-                  value: "{{item.broad_peaks}}"
-                - name: signals
-                  value: "{{item.signals}}"
-                - name: controls
-                  value: "{{=item?.controls ?? nil}}"
                 - name: masked_regions_prefix
                   value: "{{inputs.parameters.masked_regions_prefix}}"
                 - name: masked_regions_filename
@@ -58,14 +42,7 @@ spec:
       parallelism: 1
       inputs:
         parameters:
-          - name: task-payload
-          - name: experiment_id
-          - name: assembly_id
-          - name: out_basename
-          - name: out_s3_prefix
-          - name: alignment_files_total_size
-          - name: broad_peaks
-          - name: signals
+          - name: task_payload
           - name: masked_regions_prefix
           - name: masked_regions_filename
           - name: overwrite-results
@@ -81,7 +58,7 @@ spec:
             arguments:
               parameters:
                 - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
+                  value: "{{inputs.parameters.task_payload}}"
                 - name: task-type
                   value: "peak-calling"
 
@@ -102,7 +79,7 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.bed"
+                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}.bed"
 
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-bed-file-already-in-s3-bucket"
@@ -118,55 +95,70 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
-          #          - name: get-peak-calling-pvc-size
-          #            depends: check-work-avoidance-consistency.Succeeded
-          #            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
-          #            templateRef:
-          #              name: compute-pvc-size-v1-submittable
-          #              template: compute-pvc-size
-          #            arguments:
-          #              parameters:
-          #                - name: associated_files_size
-          #                  value: "{{inputs.parameters.alignment_files_total_size}}"
-          #                - name: size_factor
-          #                  value: "4.5"
-          #
-          #          - name: create-peak-calling-pvc
-          #            depends: get-peak-calling-pvc-size.Succeeded
-          #            templateRef:
-          #              name: create-pvc-kubectl-v1-submittable
-          #              template: create-pvc-kubectl
-          #            arguments:
-          #              parameters:
-          #                - name: pvc-size
-          #                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
-          #                - name: kubeconfig-path
-          #                  value: "{{inputs.parameters.kubeconfig-path}}"
-          #
-          #          - name: execute-sort-signal-alignments-by-queryname
-          #            depends: create-peak-calling-pvc
-          #            template: sort-alignments-by-queryname
-          #            arguments:
-          #              parameters:
-          #                - name: sort_alignment_params
-          #                  value: "{{item}}"
-          #                # PVC in which to store so_queryname bams
-          #                - name: out-pvc-name
-          #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-          #                - name: kubeconfig-path
-          #                  value: "{{inputs.parameters.kubeconfig-path}}"
-          #            withParam: "{{inputs.parameters.signals}}"
-          #
-
           - name: get-genrich-input-filenames-formatted
-            #            depends: create-peak-calling-pvc
+            depends: check-work-avoidance-consistency.Succeeded
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             template: edit-genrich-input-filenames-formatted
             arguments:
               parameters:
-                - name: signals
-                  value: "{{inputs.parameters.signals}}"
-                - name: controls
-                  value: "{{inputs.parameters.controls}}"
+                - name: task_payload
+                  value: "{{inputs.parameters.task_payload}}"
+
+          - name: get-peak-calling-pvc-size
+            depends: get-genrich-input-filenames-formatted
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.alignment_files_total_size')}}"
+                - name: size_factor
+                  value: "4.5"
+
+          - name: create-peak-calling-pvc
+            depends: get-peak-calling-pvc-size.Succeeded
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: execute-sort-signal-alignments-by-queryname
+            depends: create-peak-calling-pvc
+            template: sort-alignments-by-queryname
+            arguments:
+              parameters:
+                - name: sort_alignment_params
+                  value: "{{item}}"
+                # PVC in which to store so_queryname bams
+                - name: out-pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{=toJson(jsonpath(inputs.parameters.task_payload, '$.signals'))}}"
+
+          - name: execute-sort-control-alignments-by-queryname
+            depends: execute-sort-signal-alignments-by-queryname
+            when: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}} != ''"
+            template: sort-alignments-by-queryname
+            arguments:
+              parameters:
+                - name: sort_alignment_params
+                  value: "{{item}}"
+                # PVC in which to store so_queryname bams
+                - name: out-pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{=toJson(jsonpath(inputs.parameters.task_payload, '$.controls'))}}"
+
+
 
     #          - name: execute-genrich-chip-seq
     #            depends: "get-genrich-input-filenames-formatted && execute-sort-signal-alignments-by-queryname"
@@ -382,8 +374,8 @@ spec:
     #              parameters:
     #                - name: task-marker-s3-key
     #                  value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
-    #                - name: task-payload
-    #                  value: "{{inputs.parameters.task-payload}}"
+    #                - name: task_payload
+    #                  value: "{{inputs.parameters.task_payload}}"
     #
     #          - name: delete-peak-calling-pvc
     #            depends: >-
@@ -501,9 +493,7 @@ spec:
     - name: edit-genrich-input-filenames-formatted
       inputs:
         parameters:
-          - name: signals
-          - name: controls
-            value: ""
+          - name: task_payload
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
@@ -511,49 +501,66 @@ spec:
           import sys
           import os
           import json
+          from collections import defaultdict
           from pprint import pprint
 
           def main() -> int:
-            signals_json = """{{inputs.parameters.signals}}"""
-            signals_data = json.loads(signals_json)
-            pprint(signals_data)
+            task_payload_json = """{{inputs.parameters.task_payload}}"""
+            task_payload_data = json.loads(task_payload_json)
           
-            num_signals = len(signals_data)
-            signal_names = [f"so_queryname_{s['basename']}.bam" for s in signals_data]
+            run_type_signal_filename = defaultdict(list)
+            for s in task_payload_data['signals']:
+              r_t = s['run_type']
+              run_type_signal_filename[r_t].append(f"so_queryname_{s['basename']}.bam")
           
-            with open("signal_files_formatted_str.txt", 'w') as f:
-                f.write(','.join(signal_names))
-          
-          
-            controls_json = """{{inputs.parameters.controls}}"""
-            if controls_json:
-              controls_data = json.loads(controls_json)
-              pprint(controls_data)
-          
-              control_names = [f"so_queryname_{c['basename']}.bam" for c in controls_data]
-              assert len(control_names) == 1, 'More than one control for this set of \
-                      signals'
-              control_names = control_names * num_signals
-            else:
-              pprint(control_json)
-              control_names = ""
+            run_type_control_filename = {}
+            controls_run_types = []
+            if 'controls' in task_payload_data.keys():
+              for c in task_payload_data['controls']:
+                r_t = c['run_type']
+                controls_run_types.append(r_t)
+                run_type_control_filename[r_t] = f"so_queryname_{c['basename']}.bam"
           
           
-            with open("control_files_formatted_str.txt", 'w') as f:
-                f.write(','.join(control_names))
+            assert len(set(controls_run_types)) == len(controls_run_types), "Duplicate run types in controls"
+          
+            signals_filenames_sorted = []
+            controls_filenames_sorted = []
+            for r_t, s_vals in run_type_signal_filename.items():
+              signals_filenames_sorted.extend(s_vals)
+              print(f"r_t: {r_t}, s_vals: {s_vals}")
+          
+              if r_t in run_type_control_filename.keys():
+                controls_filenames_sorted.extend([run_type_control_filename[r_t]] * len(s_vals))
+              else:
+                controls_filenames_sorted.extend(["null"] * len(s_vals))
+          
+            pprint(f"signals_formatted: {','.join(signals_filenames_sorted)}")
+            pprint(f"controls_formatted: {','.join(controls_filenames_sorted)}")
+          
+            with open("signals_files_formatted_str.txt", 'w') as f:
+                f.write(','.join(signals_filenames_sorted))
+          
+            with open("controls_files_formatted_str.txt", 'w') as f:
+              if run_type_control_filename:
+                f.write(','.join(controls_filenames_sorted))
+              else:
+                f.write('')
           
             return 0
-
+          
+          
           if __name__ == '__main__':
               sys.exit(main())
+
       outputs:
         parameters:
-          - name: signal_files_formatted_str
+          - name: signals_files_formatted_str
             valueFrom:
-              path: signal_files_formatted_str.txt
-          - name: control_files_formatted_str
+              path: signals_files_formatted_str.txt
+          - name: controls_files_formatted_str
             valueFrom:
-              path: control_files_formatted_str.txt
+              path: controls_files_formatted_str.txt
 
     - name: genrich-chip-seq
       retryStrategy:
