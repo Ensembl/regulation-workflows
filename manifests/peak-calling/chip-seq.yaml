@@ -95,6 +95,15 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
+          - name: execute-check-if-any-controls-present
+            depends: check-work-avoidance-consistency.Succeeded
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+            template: check-if-any-controls-present
+            arguments:
+              parameters:
+                - name: task_payload
+                  value: "{{inputs.parameters.task_payload}}"
+
           - name: get-genrich-input-filenames-formatted
             depends: check-work-avoidance-consistency.Succeeded
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
@@ -145,7 +154,7 @@ spec:
 
           - name: execute-sort-control-alignments-by-queryname
             depends: execute-sort-signal-alignments-by-queryname
-            when: "{{=string(tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str)}} != ''"
+            when: "{{tasks.execute-check-if-any-controls-present.outputs.parameters.controls-present}} == true"
             template: sort-alignments-by-queryname
             arguments:
               parameters:
@@ -489,6 +498,42 @@ spec:
           
           if __name__ == '__main__':
               sys.exit(main())
+
+    - name: check-if-any-controls-present
+      inputs:
+        parameters:
+          - name: task_payload
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import json
+          from collections import defaultdict
+          from pprint import pprint
+
+          def main() -> int:
+            task_payload_json = """{{inputs.parameters.task_payload}}"""
+            task_payload_data = json.loads(task_payload_json)
+          
+            if 'controls' in task_payload_data.keys() and len(task_payload_data['controls']) > 0:
+              res = "true"
+            else:
+              res = "false"
+          
+            with open("controls_present.txt", 'w') as f:
+                f.write(res)
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+      outputs:
+        parameters:
+          - name: controls-present
+            valueFrom:
+              path: controls_present.txt
 
     - name: edit-genrich-input-filenames-formatted
       inputs:
