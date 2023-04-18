@@ -158,7 +158,7 @@ spec:
 
           - name: execute-sort-control-alignments-by-queryname
             depends: "execute-sort-signal-alignments-by-queryname && check-if-any-controls-present.Succeeded"
-            when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == false"
+            when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == true"
             template: sort-alignments-by-queryname
             arguments:
               parameters:
@@ -171,29 +171,31 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{=toJson(jsonpath(inputs.parameters.task_payload, '$.controls'))}}"
 
+          - name: execute-genrich-chip-seq
+            depends: "get-genrich-input-filenames-formatted && (execute-sort-signal-alignments-by-queryname && execute-sort-control-alignments-by-queryname)"
+            template: genrich-chip-seq
+            arguments:
+              parameters:
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: signal_files_formatted_str
+                  value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.signals_files_formatted_str}}"
+                - name: control_files_formatted_str
+                  value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}}"
+                - name: out_bed_filename
+                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}.bed"
+                - name: out_pileup_filename
+                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}_pileup.log"
+                - name: out_pq_file_filename
+                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}_pqval.log"
+                - name: out_s3_prefix
+                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_s3_prefix')}}"
+                - name: alignments-pvc
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
 
-
-    #          - name: execute-genrich-chip-seq
-    #            depends: "get-genrich-input-filenames-formatted && execute-sort-signal-alignments-by-queryname"
-    #            template: genrich-chip-seq
-    #            arguments:
-    #              parameters:
-    #                - name: masked_regions_prefix
-    #                  value: "{{inputs.parameters.masked_regions_prefix}}"
-    #                - name: masked_regions_filename
-    #                  value: "{{inputs.parameters.masked_regions_filename}}"
-    #                - name: signal_files_formatted_str
-    #                  value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.signal_files_formatted_str}}"
-    #                - name: out_bed_filename
-    #                  value: "{{inputs.parameters.out_basename}}.bed"
-    #                - name: out_pileup_filename
-    #                  value: "{{inputs.parameters.out_basename}}_pileup.log"
-    #                - name: out_pq_file_filename
-    #                  value: "{{inputs.parameters.out_basename}}_pqval.log"
-    #                - name: out_s3_prefix
-    #                  value: "{{inputs.parameters.out_s3_prefix}}"
-    #                - name: alignments-pvc
-    #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+    
     #
     #          - name: execute-compute-bed-file-metadata
     #            depends: execute-genrich-chip-seq
@@ -588,6 +590,7 @@ spec:
           - name: masked_regions_prefix
           - name: masked_regions_filename
           - name: signal_files_formatted_str
+          - name: control_files_formatted_str
           - name: out_bed_filename
           - name: out_pileup_filename
           - name: out_pq_file_filename
@@ -602,11 +605,15 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -uef, -o, xtrace ]
+        # TODO: Handle empty control_files_formatted_str \
         args: [ "ls -altrh \
                 && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
-                && echo ${SIGNAL_BAM_FILES} \
+                && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
+                && echo Signal files: ${SIGNAL_BAM_FILES} \
+                && echo Control files: ${CONTROL_BAM_FILES} \
                 && Genrich \
                 -t ${SIGNAL_BAM_FILES} \
+                -c ${CONTROL_BAM_FILES} \
                 -o {{inputs.parameters.out_bed_filename}} \
                 -f {{inputs.parameters.out_pileup_filename}} \
                 -k {{inputs.parameters.out_pq_file_filename}} \
