@@ -387,7 +387,7 @@ spec:
               parameters:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
-                - name: task_payload
+                - name: task-payload
                   value: "{{inputs.parameters.task_payload}}"
 
           - name: delete-peak-calling-pvc
