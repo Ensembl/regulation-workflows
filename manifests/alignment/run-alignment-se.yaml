@@ -247,6 +247,7 @@ spec:
                 'Alignment file: {{inputs.parameters.alignment-name}} archived and available for downstream analysis'" ]
 
     - name: read-file-to-pvc
+      podSpecPatch: '{ "initContainers": [ { "name": "init", "resources": { "limits": { "cpu": "10000m", "memory": "60Gi" } } } ] }'
       retryStrategy:
         limit: "12"
         backoff:
