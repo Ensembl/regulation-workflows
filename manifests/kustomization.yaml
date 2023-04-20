@@ -18,6 +18,7 @@ resources:
   - peak-calling/atac-seq.yaml
   - peak-calling/chip-seq-se-no-controls.yaml
   - peak-calling/chip-seq.yaml
+  - peak-calling/chip-seq-ad-hoc.yaml
   - peak-calling/dnase-seq.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
   - coverage/bam-to-coverage-bedgraph-pvc-callable.yaml
