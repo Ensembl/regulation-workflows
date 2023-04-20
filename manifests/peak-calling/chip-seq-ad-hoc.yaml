@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: peak-calling-chip-seq-v1-submittable
+  name: peak-calling-chip-seq-ad-hoc-v1-submittable
 spec:
   entrypoint: peak-calling-chip-seq
   imagePullSecrets:
@@ -15,6 +15,10 @@ spec:
           - name: peak_calling_tasks
           - name: masked_regions_prefix
           - name: masked_regions_filename
+          - name: a
+          - name: q
+          - name: p_value_narrow
+          - name: p_value_broad
           - name: overwrite-results
           - name: kubeconfig-path
       dag:
@@ -29,6 +33,14 @@ spec:
                   value: "{{inputs.parameters.masked_regions_prefix}}"
                 - name: masked_regions_filename
                   value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: a
+                  value: "{{inputs.parameters.a}}"
+                - name: q
+                  value: "{{inputs.parameters.q}}"
+                - name: p_value_narrow
+                  value: "{{inputs.parameters.p_value_narrow}}"
+                - name: p_value_broad
+                  value: "{{inputs.parameters.p_value_broad}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
@@ -45,6 +57,10 @@ spec:
           - name: task_payload
           - name: masked_regions_prefix
           - name: masked_regions_filename
+          - name: a
+          - name: q
+          - name: p_value_narrow
+          - name: p_value_broad
           - name: overwrite-results
           - name: kubeconfig-path
           - name: force-update-task-markers
@@ -180,6 +196,8 @@ spec:
                   value: "{{inputs.parameters.masked_regions_prefix}}"
                 - name: masked_regions_filename
                   value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: q
+                  value: "{{inputs.parameters.q}}"
                 - name: signal_files_formatted_str
                   value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.signals_files_formatted_str}}"
                 - name: control_files_formatted_str
@@ -237,6 +255,12 @@ spec:
                   value: "{{inputs.parameters.masked_regions_prefix}}"
                 - name: masked_regions_filename
                   value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: a
+                  value: "{{inputs.parameters.a}}"
+                - name: p_value_narrow
+                  value: "{{inputs.parameters.p_value_narrow}}"
+                - name: p_value_broad
+                  value: "{{inputs.parameters.p_value_broad}}"
                 - name: pileup-pvc
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: pileup_filename
@@ -587,6 +611,7 @@ spec:
         parameters:
           - name: masked_regions_prefix
           - name: masked_regions_filename
+          - name: q
           - name: signal_files_formatted_str
           - name: control_files_formatted_str
           - name: out_bed_filename
@@ -617,7 +642,7 @@ spec:
                 -k {{inputs.parameters.out_pq_file_filename}} \
                 -r \
                 -y \
-                -q 0.1 \
+                -q {{inputs.parameters.q}} \
                 -s 20 \
                 -e MT \
                 -E {{inputs.parameters.masked_regions_filename}} \
@@ -666,6 +691,9 @@ spec:
         parameters:
           - name: masked_regions_prefix
           - name: masked_regions_filename
+          - name: a
+          - name: p_value_narrow
+          - name: p_value_broad
           - name: pileup-pvc
           - name: pileup_filename
           - name: out_narrow_s3_prefix
@@ -686,7 +714,7 @@ spec:
                 -P \
                 -o {{inputs.parameters.out_narrow_bed_filename}} \
                 -f {{inputs.parameters.pileup_filename}} \
-                -p 0.05 \
+                -p {{inputs.parameters.p_value_narrow}} \
                 -s 20
                 -r \
                 -y \
@@ -699,8 +727,8 @@ spec:
                 -o {{inputs.parameters.out_broad_bed_filename}} \
                 -f {{inputs.parameters.pileup_filename}} \
                 -g 200 \
-                -a 800 \
-                -p 0.1 \
+                -a {{inputs.parameters.a}} \
+                -p {{inputs.parameters.p_value_broad}} \
                 -s 20 \
                 -r \
                 -y \
