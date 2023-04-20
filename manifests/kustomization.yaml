@@ -15,6 +15,7 @@ resources:
   - alignment/merge-run-alignments.yaml
   - alignment/get-rfs-alignments-tasks.yaml
   - alignment/check-integrity.yaml
+  - alignment/compute-get-rfs-aligments-tasks-url.yaml
   - peak-calling/atac-seq.yaml
   - peak-calling/chip-seq-se-no-controls.yaml
   - peak-calling/chip-seq.yaml

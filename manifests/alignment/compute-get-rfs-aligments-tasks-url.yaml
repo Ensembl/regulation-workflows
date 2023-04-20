@@ -1,0 +1,67 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compute-rfs-alignments-tasks-url-v1-submittable
+spec:
+  entrypoint: compute-rfs-alignments-tasks-url
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: compute-rfs-alignments-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: assembly_ensembl_accession
+          - name: experiment_type
+          - name: species_name
+          - name: epigenome_name_contains
+          - name: epigenome_group_id
+          - name: skip
+          - name: limit
+          - name: exclude_tasks_with_registered_results
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+
+          def main() -> int:
+
+            query_params = {
+              "limit": f"{{inputs.parameters.limit}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "exclude_tasks_with_registered_results": f"{{inputs.parameters.exclude_tasks_with_registered_results}}"
+            }
+
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/rfs_alignment_tasks"
+                  f"?{parsed_query_params[1:]}"
+            )  
+
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
