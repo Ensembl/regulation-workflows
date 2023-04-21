@@ -284,6 +284,10 @@ spec:
     - name: remove-rf-from-pvc
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "6h"
         retryPolicy: "Always"
       inputs:
         parameters:
@@ -300,6 +304,7 @@ spec:
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
                 && rm \
+                -f -- \
                 {{inputs.parameters.first_read_file_name}} \
                 && ls -altrh" ]
         volumeMounts:
