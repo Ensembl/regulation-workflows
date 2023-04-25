@@ -35,7 +35,7 @@ spec:
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
                 && FIRST_READ_NAME=$(gzip -c -d {{inputs.parameters.first_read_file_name}} | head -1 | awk '{print $1}') \  
-                && if [[ ${FIRST_READ_NAME} =~ .*'/1' ]]; then T_PARAM_VAL='/'; fi \
+                && if [[ ${FIRST_READ_NAME} =~ .*/[12] ]]; then T_PARAM_VAL='/'; fi \
                 && NGmerge -a \
                 -u 41 \
                 -t ${T_PARAM_VAL:-' '} \
