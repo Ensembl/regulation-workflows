@@ -1,0 +1,104 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: list-objects-under-s3-prefix-v1-submittable
+spec:
+  entrypoint: list-objects-under-s3-prefix
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: list-objects-under-s3-prefix
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: s3-endpoint
+            value: "https://uk1s3.embassy.ebi.ac.uk"
+          - name: bucket
+            value: "ensembl-regulation-71319003-analysis-pipelines-b1"
+          - name: s3-prefix
+          - name: regex-filter
+      script:
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: secretKey
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import boto3 as boto3 
+          from botocore.client import Config
+          
+          from warnings import warn
+          from pprint import pprint
+          import sys
+          import os
+          import re
+          import json
+          
+          def _config_s3_client(endpoint):
+            config = Config(
+                read_timeout=900,
+                connect_timeout=900, 
+                retries={"max_attempts": 3}
+            )
+            session = boto3.session.Session()
+          
+            s3_client = session.client(
+                service_name="s3",
+                endpoint_url=endpoint,
+            )
+            return s3_client
+          
+          def s3_ls_names(s3_client, bucket, prefix):
+            response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix, MaxKeys=1000)
+            return [o["Key"] for o in response["Contents"]]
+
+
+          def main() -> int:
+            s3_endpoint = "{{inputs.parameters.s3-endpoint}}"
+          
+            s3_client = _config_s3_client(s3_endpoint)
+
+            bucket_name = "{{inputs.parameters.bucket}}"
+            s3_object_prefix = "{{inputs.parameters.s3-prefix}}"
+            regex_filter = re.compile("{{inputs.parameters.regex-filter}}")
+          
+          
+            try:
+              retrieved_names = s3_ls_names(
+                  s3_client,  
+                  bucket_name,
+                  s3_object_prefix,
+              )
+          
+            except KeyError as e:
+                raise ValueError(f'S3 prefix {s3_object_prefix} not present in bucket {bucket_name}')
+          
+            retrieved_names = [n for n in retrieved_names if regex_filter.search(n)]
+          
+            with open('s3_objects_names.txt', 'w') as f:
+              json.dump(retrieved_names, f, indent=2, sort_keys=True)
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+
+      outputs:
+        parameters:
+          - name: s3_objects_names
+            valueFrom:
+              path: s3_objects_names.txt

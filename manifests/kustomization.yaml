@@ -42,3 +42,4 @@ resources:
   - helpers/validate-expected-number-of-files-in-dir.yaml
   - helpers/check-if-field-present-and-not-empy.yaml
   - helpers/delete-task-marker.yaml
+  - helpers/list-objects-under-s3-prefix.yaml
