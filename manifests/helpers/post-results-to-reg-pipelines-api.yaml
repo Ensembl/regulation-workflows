@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: post-results-to-reg-pipelines-api-v1-submittable
+spec:
+  entrypoint: post-results-to-reg-pipelines-api
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: post-results-to-reg-pipelines-api
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: svc-name
+            value: "regulation-pipelines-api-service"
+          - name: namespace
+            value: "regulation-pipelines-api"
+          - name: api-endpoint
+          - name: json-body-results-filenames
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+      script:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import json
+          import sys
+          from glob import glob
+          from typing import List
+          
+          
+          import requests
+          from requests import HTTPError
+          
+          SVC_NAME = "{{inputs.parameters.svc-name}}"
+          NAMESPACE = "{{inputs.parameters.namespace}}"
+          API_ENDPOINT = "{{inputs.parameters.api-endpoint}}"
+          
+          def main(argv: List[str]) -> int:
+          
+            svc_name = "{{inputs.parameters.svc-name}}"
+            namespace = "{{inputs.parameters.namespace}}"
+          
+            json_body_results_filenames = """{{inputs.parameters.json-body-results-filenames}}"""
+          
+            body_results_filenames = json.loads(json_body_results_filenames)
+          
+            posted_count = 0
+            for filename in body_results_filenames:
+              with open(filename) as f:
+                data = json.load(f)
+          
+                r_url = (f"http://{SVC_NAME}."
+                  f"{NAMESPACE}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  f"/{API_ENDPOINT}"
+                )
+
+                r = requests.post(f"{r_url}", data=json.dumps(data))
+          
+                try:
+                    r.raise_for_status()
+                    posted_count += 1
+                except HTTPError as e:
+                    if r.status_code == 400:
+                        print(
+                            f"Item with {data['file']['basename']} as basename "
+                            f"already present in DB"
+                        )
+                    else:
+                      print(f"Error: {e}")
+          
+            with open("posted-count.txt", "w") as f:
+              f.write(str(posted_count))
+            return 0
+
+          if __name__ == "__main__":
+              sys.exit(main(sys.argv))
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        parameters:
+          - name: posted-count
+            valueFrom:
+              path: posted-count.txt
