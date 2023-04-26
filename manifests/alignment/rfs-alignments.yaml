@@ -49,7 +49,6 @@ spec:
             withParam: "{{inputs.parameters.read_file_sets_alignment_tasks}}"
 
 
-
     - name: rfs-alignment
       parallelism: 1
       inputs:
@@ -162,8 +161,8 @@ spec:
           - name: copy-run-alignments-to-rfs-pvc
             depends: create-rfs-alignment-pvc
             templateRef:
-              name: s3-objects-to-pvc-v1-submittable
-              template: s3-objects-to-pvc
+              name: s3-prefix-objects-to-pvc-v1-submittable
+              template: s3-prefix-objects-to-pvc
             arguments:
               parameters:
                 - name: pvc-name

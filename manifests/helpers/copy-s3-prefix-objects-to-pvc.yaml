@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: s3-objects-to-pvc-v1-submittable
+  name: s3-prefix-objects-to-pvc-v1-submittable
 spec:
-  entrypoint: s3-objects-to-pvc
+  entrypoint: s3-prefix-objects-to-pvc
   imagePullSecrets:
     - name: ghcr-pull-token
 
   templates:
-    - name: s3-objects-to-pvc
+    - name: s3-prefix-objects-to-pvc
       inputs:
         parameters:
           - name: s3-prefix
@@ -16,8 +16,8 @@ spec:
           - name: pvc-dir
       dag:
         tasks:
-          - name: s3-objects-to-pvc
-            template: copy-s3-objects-to-pvc-boto3
+          - name: s3-prefix-objects-to-pvc
+            template: copy-s3-prefix-objects-to-pvc-boto3
             arguments:
               parameters:
                 - name: s3-prefix
@@ -29,7 +29,7 @@ spec:
 
     # TODO: Try this template instead of boto3 after updating AWs to 3.4.4
     # TODO: Add pvc-dir parameter
-    - name: copy-s3-objects-to-pvc
+    - name: copy-s3-prefix-objects-to-pvc
       retryStrategy:
         limit: "5"
         backoff:
@@ -61,7 +61,7 @@ spec:
           - name: workdir
             mountPath: /mnt/vol
 
-    - name: copy-s3-objects-to-pvc-boto3
+    - name: copy-s3-prefix-objects-to-pvc-boto3
       retryStrategy:
         limit: "6"
         backoff:
