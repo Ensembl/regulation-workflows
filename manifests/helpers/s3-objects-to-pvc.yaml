@@ -1,0 +1,98 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: s3-objects-to-pvc-v1-submittable
+spec:
+  entrypoint: s3-objects-to-pvc
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: s3-objects-to-pvc
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          # Warning: bucket and endpoint hardcoded
+          # S3 object location (Source)
+          - name: s3-endpoint
+            value: "https://uk1s3.embassy.ebi.ac.uk"
+          - name: bucket
+            value: "ensembl-regulation-71319003-analysis-pipelines-b1"
+          - name: s3-objects-keys
+          # Destination
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: secretKey
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import boto3 as boto3 
+          from botocore.client import Config
+
+          from pathlib import Path
+          import sys
+          import os
+          import json
+
+          def _config_s3_client(endpoint):
+            config = Config(
+                read_timeout=5000,
+                connect_timeout=5000, 
+                retries={"max_attempts": 3}
+            )
+            session = boto3.session.Session()
+
+            s3_client = session.client(
+                service_name="s3",
+                endpoint_url=endpoint,
+            )
+            return s3_client
+          
+          
+          def main() -> int:
+            s3_endpoint = "{{inputs.parameters.s3-endpoint}}"
+
+            s3_client = _config_s3_client(s3_endpoint)
+
+            bucket_name = "{{inputs.parameters.bucket}}"
+            objects_keys_json_list = """{{inputs.parameters.s3-objects-keys}}"""
+            object_keys = json.loads(objects_keys_json_list)
+          
+            base_dir = Path('/mnt/vol')
+            for obj_k in object_keys:
+              filename = Path(obj_k).name
+              out_dir = base_dir / Path(obj_k).parent
+              out_dir.mkdir(parents=True, exist_ok=True)
+              out_filepath = out_dir / filename
+              s3_client.download_file(bucket_name, obj_k, str(out_filepath))
+          
+          
+            print(f"Files in {base_dir} after transfer: {list(base_dir.rglob('*'))}")
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
