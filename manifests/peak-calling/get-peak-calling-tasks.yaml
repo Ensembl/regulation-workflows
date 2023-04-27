@@ -20,6 +20,8 @@ spec:
             value: ""
           - name: species_name
             value: ""
+          - name: epigenome_name_contains
+            value: ""
           - name: epigenome_group_id
             value: ""
           - name: output_prefix_label
@@ -47,6 +49,8 @@ spec:
                   value: "{{inputs.parameters.assembly_ensembl_accession}}"
                 - name: experiment_type
                   value: "{{inputs.parameters.experiment_type}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
                 - name: epigenome_group_id
@@ -132,6 +136,7 @@ spec:
           - name: namespace
           - name: assembly_ensembl_accession
           - name: experiment_type
+          - name: epigenome_name_contains
           - name: species_name
           - name: epigenome_group_id
           - name: output_prefix_label
@@ -152,6 +157,7 @@ spec:
               "skip": f"{{inputs.parameters.skip}}",
               "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "species_name": f"{{inputs.parameters.species_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
