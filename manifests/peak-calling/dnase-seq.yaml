@@ -347,7 +347,7 @@ spec:
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
-        command: [ bash, -c ]
+        command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
                 && SIGNAL_BAM_FILES=$(ls -m *.bam | xargs echo | sed 's/ //g') \
                 && Genrich \
