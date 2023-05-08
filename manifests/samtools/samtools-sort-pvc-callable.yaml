@@ -115,10 +115,10 @@ spec:
             mountPath: /mnt/out_vol
         resources:
           limits:
-            cpu: 9800m
+            cpu: 5800m
             memory: 58Gi
           requests:
-            cpu: 9500m
+            cpu: 5500m
             memory: 55Gi
 
 
