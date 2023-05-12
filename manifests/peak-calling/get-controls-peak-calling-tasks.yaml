@@ -1,0 +1,141 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  generateName: get-controls-peak-calling-tasks-
+spec:
+  entrypoint: get-controls-peak-calling-tasks-dag
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: get-controls-peak-calling-tasks-dag
+      inputs:
+        parameters:
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: species_name
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+          - name: output_prefix_label
+            value: ""
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+          - name: chipmentation
+            value: "false"
+          - name: overwrite-results
+            value: "false"
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-peak-calling-tasks-url
+            template: compute-get-peak-calling-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+          - name: execute-get-peak-calling-tasks
+            depends: "get-peak-calling-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-peak-calling-tasks-url.outputs.result}}"
+
+          - name: submit-controls-pc-tasks-for-mask-file
+            depends: "execute-get-peak-calling-tasks"
+            templateRef:
+              name: controls-peak-calling-for-mask-file-v1-submittable
+              template: controls-peak-calling-for-mask-file
+            arguments:
+              parameters:
+                - name: peak_calling_tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: compute-get-peak-calling-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: assembly_ensembl_accession
+          - name: epigenome_name_contains
+          - name: species_name
+          - name: epigenome_group_id
+          - name: output_prefix_label
+          - name: skip
+          - name: limit
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            query_params = {
+              "limit": f"{{inputs.parameters.limit}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+            }
+          
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/peak_calling_tasks"
+                  f"?{parsed_query_params}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
