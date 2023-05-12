@@ -135,7 +135,7 @@ spec:
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
-                  "/peak_calling_tasks"
+                  "/controls_peak_calling_tasks"
                   f"?{parsed_query_params}"         
             )
           
