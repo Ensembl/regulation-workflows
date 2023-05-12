@@ -28,6 +28,8 @@ spec:
             value: "0"
           - name: limit
             value: "20"
+          - name: ad_hoc_playground_prefix
+            value: "control-peaks-for-mask-files"
           - name: chipmentation
             value: "false"
           - name: overwrite-results
@@ -57,6 +59,8 @@ spec:
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
                   value: "{{inputs.parameters.limit}}"
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
 
           - name: execute-get-peak-calling-tasks
             depends: "get-peak-calling-tasks-url"
@@ -97,6 +101,7 @@ spec:
           - name: output_prefix_label
           - name: skip
           - name: limit
+          - name: ad_hoc_playground_prefix
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
@@ -115,6 +120,7 @@ spec:
               "species_name": f"{{inputs.parameters.species_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
             }
           
             parsed_query_params = "".join(
