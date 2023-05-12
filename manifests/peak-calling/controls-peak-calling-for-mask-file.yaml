@@ -10,7 +10,7 @@ spec:
 
   templates:
     - name: controls-peak-calling-for-mask-file
-      parallelism: 8
+      parallelism: 15
       inputs:
         parameters:
           - name: peak_calling_tasks
