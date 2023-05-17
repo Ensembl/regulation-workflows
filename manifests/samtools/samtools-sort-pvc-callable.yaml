@@ -102,6 +102,7 @@ spec:
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
                 && ls -altrh /mnt/out_vol/ \
+                && rm -f /mnt/out_vol/{{inputs.parameters.out-filename}}* \
                 && samtools sort -n \
                 -@ {{inputs.parameters.num-threads}} \
                 -o /mnt/out_vol/{{inputs.parameters.out-filename}} \
