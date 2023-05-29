@@ -45,7 +45,7 @@ spec:
 
 
     - name: peak-calling-task
-      parallelism: 1
+      parallelism: 21
       inputs:
         parameters:
           - name: task-payload
