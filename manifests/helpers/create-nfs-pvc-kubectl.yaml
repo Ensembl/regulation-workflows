@@ -10,7 +10,7 @@ spec:
     strategy: OnPodSuccess
 
   templates:
-    - name: create-pvc-kubectl
+    - name: create-nfs-pvc-kubectl
       retryStrategy:
         limit: "5"
         backoff:
