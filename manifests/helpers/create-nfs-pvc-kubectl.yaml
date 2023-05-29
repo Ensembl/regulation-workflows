@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: create-nfs-pvc-kubectl-v1-submittable
+spec:
+  entrypoint: create-nfs-pvc-kubectl
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: create-pvc-kubectl
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        artifacts:
+          - name: kubeconfig
+            path: /.kube/
+            git:
+              repo: https://gitlab.ebi.ac.uk/ensreg/admin/kubectl-configs.git
+              revision: main
+              usernameSecret:
+                name: kubectl-configs-repo-creds
+                key: usernameSecret
+              passwordSecret:
+                name: kubectl-configs-repo-creds
+                key: passwordSecret
+        parameters:
+          - name: pvc-size
+          - name: kubeconfig-path
+      script:
+        env:
+          - name: KUBECONFIG
+            value: "{{inputs.parameters.kubeconfig-path}}"
+        image: ghcr.io/daugo/ensembl-reg-kubectl:latest
+        command: [ bash, -uef, -o, xtrace ]
+        source: |
+          cat <<EOF | kubectl -n argo apply -f -
+          kind: PersistentVolumeClaim
+          apiVersion: v1
+          metadata:
+              name: pvc-nfs-{{pod.name}}
+          spec:
+              storageClassName: aw-nfs
+              accessModes: [ "ReadWriteMany" ]
+              resources:
+                requests:
+                  storage: {{inputs.parameters.pvc-size}}
+          EOF
+      outputs:
+        parameters:
+          - name: pvc-name
+            value: "pvc-nfs-{{pod.name}}"
+            globalName: pvc-name-global
