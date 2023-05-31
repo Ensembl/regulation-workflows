@@ -104,7 +104,7 @@ spec:
 
           - name: load-read-file-to-pvc
             depends: create-run-alignment-pvc
-            template: read-file-to-pvc
+            template: ftp-read-file-to-pvc
             arguments:
               parameters:
                 - name: pvc-name
@@ -245,6 +245,37 @@ spec:
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "echo \
                 'Alignment file: {{inputs.parameters.alignment-name}} archived and available for downstream analysis'" ]
+
+
+    - name: ftp-read-file-to-pvc
+      retryStrategy:
+        limit: "12"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_key
+          - name: first_read_file_name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "echo \
+                Loading {{inputs.parameters.first_read_file_name}} to \
+                {{inputs.parameters.pvc-name}} \
+                && wget -q -O /mnt/vol/{{inputs.parameters.first_read_file_name}} {{inputs.parameters.first_read_file_key}} \
+                && ls -altrh /mnt/vol/" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
 
     - name: read-file-to-pvc
       podSpecPatch: '{ "initContainers": [ { "name": "init", "resources": { "limits": { "cpu": "10000m", "memory": "60Gi" } } } ] }'
