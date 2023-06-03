@@ -1,0 +1,88 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: genrich-controls-pvc-callable-v1-submittable
+spec:
+  entrypoint: genrich-controls
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  templates:
+    - name: genrich-controls
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: out_bed_filename
+          - name: out_pileup_filename
+          - name: out_pq_file_filename
+          - name: out_log_filename
+          - name: out_s3_prefix
+          - name: chipmentation
+          - name: signals-pvc
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && SIGNAL_BAM_FILES=$(ls -m *.bam | xargs echo | sed 's/ //g') \
+                && GENRICH_ARGS_1st_RUN=(
+                  -t ${SIGNAL_BAM_FILES}
+                  -o q_value_run_{{inputs.parameters.out_bed_filename}}
+                  -f {{inputs.parameters.out_pileup_filename}}
+                  -r
+                  -q 0.1
+                  -s 20
+                  -e MT
+                  -v
+                ) \
+                && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_1st_RUN+=(-j); fi \
+                && Genrich ${GENRICH_ARGS_1st_RUN[@]} \
+                | tee {{inputs.parameters.out_log_filename}} \
+                && ls -altrh \
+                && GENRICH_ARGS_2nd_RUN=(
+                  -P
+                  -o {{inputs.parameters.out_bed_filename}}
+                  -f {{inputs.parameters.out_pileup_filename}}
+                  -r
+                  -p 0.05
+                  -s 20
+                  -e MT
+                  -v
+                ) \
+                && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_2nd_RUN+=(-j); fi \
+                && Genrich ${GENRICH_ARGS_2nd_RUN[@]} \
+                | tee {{inputs.parameters.out_log_filename}} \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 4900m
+            memory: 120Gi
+          requests:
+            cpu: 4700m
+            memory: 112Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.signals-pvc}}"
+      outputs:
+        artifacts:
+          - name: final_bed
+            path: /mnt/vol/{{inputs.parameters.out_bed_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_bed_filename}}"
+          - name: pileup
+            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
+          - name: log_file
+            path: /mnt/vol/{{inputs.parameters.out_log_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_log_filename}}"
