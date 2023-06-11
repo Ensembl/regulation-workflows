@@ -1,0 +1,97 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  #  name: commit-rdr-changes-v1-submittable
+  generateName: commit-rdr-changes-v1-
+spec:
+  entrypoint: commit-rdr-changes
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: commit-rdr-changes
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: committer-name
+            value: "David Urbina"
+          - name: committer-email
+            value: "durbina@ebi.ac.uk"
+          - name: commit-message
+            value: "Add Trout alignments (20)"
+          - name: branch-name
+            value: "du/trout-alignments"
+        artifacts:
+          - name: rdr-repo
+            path: /results/
+            git:
+              repo: https://gitlab.ebi.ac.uk/ensreg/rdr.git
+              revision: "main"
+              usernameSecret:
+                name: rdr-repo-api-creds
+                key: usernameSecret
+              passwordSecret:
+                name: rdr-repo-api-creds
+                key: passwordSecret
+      script:
+        env:
+          - name: GLAB_USER
+            valueFrom:
+              secretKeyRef:
+                name: rdr-repo-api-creds
+                key: usernameSecret
+          - name: GLAB_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: rdr-repo-api-creds
+                key: passwordSecret
+        workingDir: /results
+        imagePullPolicy: Always
+        image: ghcr.io/daugo/ensembl-reg-postgres-client:latest
+        command: [ sh ]
+        source: |
+          #!/bin/bash
+          set -eu
+          set -o xtrace
+          
+          ls -altrh
+          git checkout {{inputs.parameters.branch-name}}
+          
+          PGPASSWORD=docker pg_dump \
+          -h rdr.regulation-pipelines-api.svc.cluster.local \
+          -d rdr \
+          -U regulation_usr \
+          -w \
+          --schema-only > db/00_schema.sql
+          
+          PGPASSWORD=docker pg_dump \
+          -h rdr.regulation-pipelines-api.svc.cluster.local \
+          -d rdr \
+          -U regulation_usr \
+          -w \
+          --data-only | \
+          csplit --prefix 'db/xx' - '/^-- Data/-1' '{*}'
+          grep -e '\-\- Data for Name:' db/xx* | \
+          awk '{print $$1 " "  substr($$10, 1, length($$10)-1) "_" substr($$5, 1, length($$5)-1) ".sql"}' | \
+          sed -r 's/((^.+)\/xx([^:]+)):-- (.+$$)/\1 \2\/\3_\4/' | \
+          xargs -I {} sh -c 'mv {}'
+          FIRST_DATA_DUMP_FILE=$$(ls db/01_*) \
+          && cat db/xx00 $$FIRST_DATA_DUMP_FILE > $$FIRST_DATA_DUMP_FILE.tmp \
+          && mv $$FIRST_DATA_DUMP_FILE.tmp $$FIRST_DATA_DUMP_FILE
+          rm db/xx00
+          
+          git status
+
+          git config user.name "{{inputs.parameters.committer-name}}"
+          git config user.email "{{inputs.parameters.committer-email}}"
+
+          git commit -a -m "{{inputs.parameters.commit-message}}"
+          git push https://${GLAB_USER}:${GLAB_TOKEN}@gitlab.ebi.ac.uk/ensreg/rdr.git
