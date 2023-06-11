@@ -1,0 +1,137 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  generateName: delete-alignment-tasks-markers-
+spec:
+  entrypoint: delete-alignment-tasks-markers
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: delete-alignment-tasks-markers
+      inputs:
+        parameters:
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: experiment_type
+            value: ""
+          - name: species_name
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+          - name: exclude_tasks_with_registered_results
+            value: "false"
+          - name: dryrun
+            value: "true"
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-rfs-alignments-tasks-url
+            templateRef:
+              name: compute-rfs-alignments-tasks-url-v1-submittable
+              template: compute-rfs-alignments-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+                - name: exclude_tasks_with_registered_results
+                  value: "{{inputs.parameters.exclude_tasks_with_registered_results}}"
+
+          - name: execute-get-rfs-alignments-tasks
+            depends: "get-rfs-alignments-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-rfs-alignments-tasks-url.outputs.result}}"
+
+          - name: delete-rfs-alignments-markers
+            depends: "execute-get-rfs-alignments-tasks"
+            template: loop-delete-rfs-alignments-markers
+            arguments:
+              parameters:
+                - name: alignment_tasks
+                  value: "{{tasks.execute-get-rfs-alignments-tasks.outputs.result}}"
+                - name: dryrun
+                  value: "{{inputs.parameters.dryrun}}"
+
+
+    - name: loop-delete-rfs-alignments-markers
+      inputs:
+        parameters:
+          - name: alignment_tasks
+          - name: dryrun
+      dag:
+        tasks:
+          - name: delete-rfs-alignment-marker
+            templateRef:
+              name: delete-task-marker-v1-submittable
+              template: delete-task-marker
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: task-type
+                  value: "rfs-alignment"
+                - name: dryrun
+                  value: "{{inputs.parameters.dryrun}}"
+            withParam: "{{inputs.parameters.alignment_tasks}}"
+
+          - name: delete-tr-alignments-markers
+            template: loop-delete-tr-alignments-markers
+            arguments:
+              parameters:
+                - name: run_alignment_tasks
+                  value: "{{item}}"
+                - name: dryrun
+                  value: "{{inputs.parameters.dryrun}}"
+            withParam: "{{=toJson(jsonpath(inputs.parameters.alignment_tasks, '$.read_file_set'))}}"
+
+    - name: loop-delete-tr-alignments-markers
+      inputs:
+        parameters:
+          - name: run_alignment_tasks
+          - name: dryrun
+      dag:
+        tasks:
+          - name: delete-tr-alignment-marker
+            templateRef:
+              name: delete-task-marker-v1-submittable
+              template: delete-task-marker
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: task-type
+                  value: "tr-alignment"
+                - name: dryrun
+                  value: "{{inputs.parameters.dryrun}}"
+            withParam: "{{inputs.parameters.run_alignment_tasks}}"
+
