@@ -1,0 +1,107 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  #  name: commit-alignments-to-rdr-v1-submittable
+  generateName: commit-alignments-to-rdr-
+spec:
+  entrypoint: commit-alignments-to-rdr
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: commit-alignments-to-rdr
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: workflow-logs-prefix
+            value: "aw-artifacts/2023/05/21/get-rfs-alignments-tasks-v1-submittable-pj72v/"
+          - name: commit-message
+            value: "Not used"
+          - name: kubeconfig-path
+            value: "/.kube/regulation-prod.config"
+
+      dag:
+        tasks:
+          - name: get-results-post-payloads
+            templateRef:
+              name: list-objects-under-s3-prefix-v1-submittable
+              template: list-objects-under-s3-prefix
+            arguments:
+              parameters:
+                - name: s3-prefix
+                  value: "{{inputs.parameters.workflow-logs-prefix}}"
+                - name: regex-filter
+                  value: ".*-post.*"
+
+          - name: create-post-json-body-files-pvc
+            depends: "get-results-post-payloads"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "1Gi"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: json-body-results-to-pvc
+            depends: "create-post-json-body-files-pvc"
+            templateRef:
+              name: s3-objects-to-pvc-v1-submittable
+              template: s3-objects-to-pvc
+            arguments:
+              parameters:
+                - name: s3-objects-keys
+                  value: "{{tasks.get-results-post-payloads.outputs.parameters.s3_objects_names}}"
+                - name: pvc-name
+                  value: "{{tasks.create-post-json-body-files-pvc.outputs.parameters.pvc-name}}"
+
+          - name: execute-post-rfs-alignment-to-url
+            depends: "json-body-results-to-pvc"
+            templateRef:
+              name: post-results-to-reg-pipelines-api-v1-submittable
+              template: post-results-to-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: api-endpoint
+                  value: "alignment_files"
+                - name: json-body-results-filenames
+                  value: "{{tasks.get-results-post-payloads.outputs.parameters.s3_objects_names}}"
+                - name: pvc-name
+                  value: "{{tasks.create-post-json-body-files-pvc.outputs.parameters.pvc-name}}"
+
+          - name: delete-post-json-body-files-pvc
+            depends: "execute-post-rfs-alignment-to-url"
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-post-json-body-files-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+
+
+
+#          - name: commit-rdr-changes
+#            templateRef:
+#              name: commit-rdr-changes-v1-submittable
+#              template: commit-rdr-changes
+#            arguments:
+#              parameters:
+#                - name: commit-message
+#                  value: "{{inputs.parameters.commit-message}}"
+#                - name: branch-name
+#                  value: "du/econde_full_registration_v4"
