@@ -1,5 +1,0 @@
-assembly_ensembl_accession: "GRCg6a"
-experiment_type: "atac_seq"
-species_name: "Gallus gallus"
-skip: "0"
-limit: "20"

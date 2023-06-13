@@ -1,6 +1,0 @@
-assembly_ensembl_accession: "Sscrofa11.1"
-experiment_type: "atac_seq"
-species_name: "Sus scrofa"
-epigenome_group_id: "fa8e9c15-cb40-48e9-91bf-9117d40f2fa8"
-skip: "0"
-limit: "50"

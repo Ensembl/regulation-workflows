@@ -1,6 +1,0 @@
-assembly_ensembl_accession: "Sscrofa11.1"
-experiment_type: "atac_seq"
-species_name: "Sus scrofa"
-skip: "0"
-limit: "20"
-
