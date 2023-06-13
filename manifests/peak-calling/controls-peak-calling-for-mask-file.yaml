@@ -225,7 +225,7 @@ spec:
                   -o {{inputs.parameters.out_bed_filename}}
                   -f {{inputs.parameters.out_pileup_filename}}
                   -r
-                  -p 0.05
+                  -p 0.1
                   -s 20
                   -e MT
                   -v
