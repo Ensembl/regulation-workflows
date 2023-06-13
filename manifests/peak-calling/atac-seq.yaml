@@ -130,8 +130,8 @@ spec:
           - name: create-peak-calling-pvc
             depends: "get-peak-calling-pvc-size.Succeeded"
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
-              template: create-pvc-kubectl
+              name: create-nfs-pvc-kubectl-v1-submittable
+              template: create-nfs-pvc-kubectl
             arguments:
               parameters:
                 - name: pvc-size
