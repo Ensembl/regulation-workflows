@@ -103,10 +103,10 @@ spec:
         args: [ "ls -altrh \
                 && ls -altrh /mnt/out_vol/ \
                 && rm -f /mnt/out_vol/{{inputs.parameters.out-filename}}* \
-                && samtools sort -n \
+                && samtools view -@ {{inputs.parameters.num-threads}} -b -h -F 0x004 {{inputs.parameters.filename}} | \
+                samtools sort -n \
                 -@ {{inputs.parameters.num-threads}} \
                 -o /mnt/out_vol/{{inputs.parameters.out-filename}} \
-                {{inputs.parameters.filename}} \
                 && ls -altrh \
                 && ls -altrh /mnt/out_vol/" ]
         volumeMounts:
