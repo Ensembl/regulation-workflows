@@ -22,7 +22,6 @@ spec:
       inputs:
         parameters:
           - name: workflow-logs-prefix
-            value: "aw-artifacts/2023/05/21/get-rfs-alignments-tasks-v1-submittable-pj72v/"
           - name: commit-message
             value: "Not used"
           - name: kubeconfig-path
