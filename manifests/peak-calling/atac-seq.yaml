@@ -347,8 +347,9 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -ue, -o, xtrace ]
-        args: [ "ls -altrh \
+        args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
                 && SIGNAL_BAM_FILES=$(ls -m *.bam | xargs echo | sed 's/ //g') \
+                && echo $SIGNAL_BAM_FILES |  tee -a {{inputs.parameters.out_log_filename}} \
                 && Genrich \
                 -t ${SIGNAL_BAM_FILES} \
                 -o {{inputs.parameters.out_bed_filename}} \
@@ -361,8 +362,8 @@ spec:
                 -e MT \
                 -E {{inputs.parameters.masked_regions_filename}} \
                 -v \
-                | tee {{inputs.parameters.out_log_filename}} \
-                && ls -altrh" ]
+                2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
+                && ls -altrh | tee -a {{inputs.parameters.out_log_filename}}" ]
         resources:
           limits:
             cpu: 4900m
