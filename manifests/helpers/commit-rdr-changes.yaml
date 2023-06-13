@@ -26,9 +26,7 @@ spec:
           - name: committer-email
             value: "durbina@ebi.ac.uk"
           - name: commit-message
-            value: "Add Trout alignments (20)"
-          - name: branch-name
-            value: "du/trout-alignments"
+          - name: branch-name # expects previously created branch
         artifacts:
           - name: rdr-repo
             path: /results/
