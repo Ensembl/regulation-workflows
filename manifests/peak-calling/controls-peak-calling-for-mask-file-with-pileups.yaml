@@ -152,7 +152,12 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -ue, -o, xtrace ]
-        args: [ "ls -altrh \
+        args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
+                && echo '> tar -xOzf {{inputs.parameters.out_log_filename}}.tgz > {{inputs.parameters.out_log_filename}}' \
+                | tee -a {{inputs.parameters.out_log_filename}} \
+                && tar -xOzf {{inputs.parameters.out_log_filename}}.tgz > {{inputs.parameters.out_log_filename}} \
+                && rm {{inputs.parameters.out_log_filename}}.tgz \
+                && ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
                 && GENRICH_ARGS_RUN=(
                   -P
                   -o {{inputs.parameters.out_bed_filename}}
@@ -165,8 +170,8 @@ spec:
                 ) \
                 && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_RUN+=(-j); fi \
                 && Genrich ${GENRICH_ARGS_RUN[@]} \
-                | tee {{inputs.parameters.out_log_filename}} \
-                && ls -altrh" ]
+                2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
+                && ls -altrh | tee -a {{inputs.parameters.out_log_filename}}" ]
         resources:
           limits:
             cpu: 4900m
