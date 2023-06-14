@@ -64,9 +64,9 @@ spec:
                 - name: out-filename
                   value: "so_queryname_{{inputs.parameters.basename}}.bam"
                 - name: num-threads
-                  value: "7"
+                  value: "6"
                 - name: mem-per-thread
-                  value: "3G"
+                  value: "2G"
 
           - name: delete-samtools-sort-queryname-pvc
             depends: execute-samtools-sort-by-queryname-cmd
@@ -120,10 +120,10 @@ spec:
             mountPath: /mnt/out_vol
         resources:
           limits:
-            cpu: 7100m
+            cpu: 6100m
             memory: 28Gi
           requests:
-            cpu: 6800m
+            cpu: 5800m
             memory: 24Gi
 
 
