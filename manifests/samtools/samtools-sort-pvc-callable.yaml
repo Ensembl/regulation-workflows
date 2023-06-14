@@ -64,7 +64,9 @@ spec:
                 - name: out-filename
                   value: "so_queryname_{{inputs.parameters.basename}}.bam"
                 - name: num-threads
-                  value: "10"
+                  value: "7"
+                - name: mem-per-thread
+                  value: "3G"
 
           - name: delete-samtools-sort-queryname-pvc
             depends: execute-samtools-sort-by-queryname-cmd
@@ -89,6 +91,7 @@ spec:
           - name: out-pvc-name
           - name: out-filename
           - name: num-threads
+          - name: mem-per-thread
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -106,6 +109,7 @@ spec:
                 && samtools view -@ {{inputs.parameters.num-threads}} -b -h -F 0x004 {{inputs.parameters.filename}} | \
                 samtools sort -n \
                 -@ {{inputs.parameters.num-threads}} \
+                -m {{inputs.parameters.mem-per-thread}} \
                 -o /mnt/out_vol/{{inputs.parameters.out-filename}} \
                 && ls -altrh \
                 && ls -altrh /mnt/out_vol/" ]
@@ -116,11 +120,11 @@ spec:
             mountPath: /mnt/out_vol
         resources:
           limits:
-            cpu: 5800m
-            memory: 26Gi
+            cpu: 7100m
+            memory: 28Gi
           requests:
-            cpu: 5500m
-            memory: 20Gi
+            cpu: 6800m
+            memory: 24Gi
 
 
 
