@@ -1,0 +1,194 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: controls-peak-calling-for-mask-file-with-pileups-v1-submittable
+spec:
+  entrypoint: controls-peak-calling-for-mask-file-with-pileups
+
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: controls-peak-calling-for-mask-file-with-pileups
+      parallelism: 15
+      inputs:
+        parameters:
+          - name: peak_calling_tasks
+          - name: chipmentation
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: execute-peak-calling-task
+            template: peak-calling-task
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: assembly_id
+                  value: "{{item.assembly_id}}"
+                - name: out_basename
+                  value: "{{item.out_basename}}"
+                - name: out_s3_prefix
+                  value: "{{item.out_s3_prefix}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.peak_calling_tasks}}"
+
+
+    - name: peak-calling-task
+      parallelism: 21
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: assembly_id
+          - name: out_basename
+          - name: out_s3_prefix
+          - name: chipmentation
+          - name: overwrite-results
+          - name: kubeconfig-path
+
+      dag:
+        tasks:
+          - name: check-if-bed-file-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.bed"
+
+          - name: get-peak-calling-pvc-size
+            depends: check-if-bed-file-already-in-s3-bucket.Succeeded
+            when: "{{tasks.check-if-bed-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false"
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "30000000000"
+                - name: size_factor
+                  value: "1.2"
+
+          - name: create-peak-calling-pvc
+            depends: "get-peak-calling-pvc-size.Succeeded"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: load-pileups-file-to-pvc
+            depends: create-peak-calling-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}_pileup.log"
+                - name: filename
+                  value: "{{inputs.parameters.out_basename}}_pileup.log"
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+
+          - name: execute-genrich-controls-with-pileups
+            depends: load-pileups-file-to-pvc
+            template: genrich-controls-with-pileups
+            arguments:
+              parameters:
+                - name: pileups_filename
+                  value: "{{inputs.parameters.out_basename}}_pileup.log"
+                - name: pileups-pvc
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: out_s3_prefix
+                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: out_bed_filename
+                  value: "{{inputs.parameters.out_basename}}.bed"
+                - name: out_log_filename
+                  value: "{{inputs.parameters.out_basename}}_run.log"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+
+          - name: delete-peak-calling-pvc
+            depends: execute-genrich-controls-with-pileups
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: genrich-controls-with-pileups
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pileups_filename
+          - name: pileups-pvc
+          - name: out_s3_prefix
+          - name: out_bed_filename
+          - name: out_log_filename
+          - name: chipmentation
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && GENRICH_ARGS_RUN=(
+                  -P
+                  -o {{inputs.parameters.out_bed_filename}}
+                  -f {{inputs.parameters.pileups_filename}}
+                  -r
+                  -p 0.1
+                  -s 20
+                  -e MT
+                  -v
+                ) \
+                && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_RUN+=(-j); fi \
+                && Genrich ${GENRICH_ARGS_RUN[@]} \
+                | tee {{inputs.parameters.out_log_filename}} \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 4900m
+            memory: 58Gi
+          requests:
+            cpu: 4700m
+            memory: 52Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pileups-pvc}}"
+      outputs:
+        artifacts:
+          - name: final_bed
+            path: /mnt/vol/{{inputs.parameters.out_bed_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_bed_filename}}"
+          - name: log_file
+            path: /mnt/vol/{{inputs.parameters.out_log_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_log_filename}}"
