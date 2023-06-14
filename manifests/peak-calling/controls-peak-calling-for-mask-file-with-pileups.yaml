@@ -27,6 +27,8 @@ spec:
                   value: "{{item}}"
                 - name: assembly_id
                   value: "{{item.assembly_id}}"
+                - name: in_s3_prefix
+                  value: "control-peaks-for-mask-files/peaks/Salmo_salar/Ssal_v3.1/exp/"
                 - name: out_basename
                   value: "{{item.out_basename}}"
                 - name: out_s3_prefix
@@ -46,6 +48,7 @@ spec:
         parameters:
           - name: task-payload
           - name: assembly_id
+          - name: in_s3_prefix
           - name: out_basename
           - name: out_s3_prefix
           - name: chipmentation
@@ -96,7 +99,7 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}_pileup.log"
+                  value: "{{inputs.parameters.in_s3_prefix}}{{inputs.parameters.out_basename}}_pileup.log"
                 - name: filename
                   value: "{{inputs.parameters.out_basename}}_pileup.log"
                 - name: pvc-name
