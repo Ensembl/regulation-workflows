@@ -99,9 +99,9 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{inputs.parameters.in_s3_prefix}}{{inputs.parameters.out_basename}}_pileup.log"
+                  value: "{{inputs.parameters.in_s3_prefix}}{{inputs.parameters.out_basename}}_pileup.log.tgz"
                 - name: filename
-                  value: "{{inputs.parameters.out_basename}}_pileup.log"
+                  value: "{{inputs.parameters.out_basename}}_pileup.log.tgz"
                 - name: pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
 
