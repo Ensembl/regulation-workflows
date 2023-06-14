@@ -10,7 +10,7 @@ spec:
 
   templates:
     - name: peak-calling-atac-seq
-      parallelism: 8
+      parallelism: 10
       inputs:
         parameters:
           - name: peak_calling_tasks

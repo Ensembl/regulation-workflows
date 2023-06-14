@@ -153,10 +153,10 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
-                && echo '> tar -xOzf {{inputs.parameters.out_log_filename}}.tgz > {{inputs.parameters.out_log_filename}}' \
+                && echo '> tar -xOzf {{inputs.parameters.pileups_filename}}.tgz > {{inputs.parameters.pileups_filename}}' \
                 | tee -a {{inputs.parameters.out_log_filename}} \
-                && tar -xOzf {{inputs.parameters.out_log_filename}}.tgz > {{inputs.parameters.out_log_filename}} \
-                && rm {{inputs.parameters.out_log_filename}}.tgz \
+                && tar -xOzf {{inputs.parameters.pileups_filename}}.tgz > {{inputs.parameters.pileups_filename}} \
+                && rm {{inputs.parameters.pileups_filename}}.tgz \
                 && ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
                 && GENRICH_ARGS_RUN=(
                   -P
