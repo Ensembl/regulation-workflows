@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: masked-regions-identification-v1-submittable
+spec:
+  entrypoint: masked-regions-identification
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: masked-regions-identification
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          # Input artifacts information
+          - name: gene-build-mask-filename
+            value: "salmo_salar_gca905237065v2_core_107_1.repeats_dust_trf_merge_20_filt_50.bed"
+          - name: gene-build-mask-key
+            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats.bed"
+          - name: controls-bed-files-key
+            value: "control-peaks-for-mask-files/peaks/Salmo_salar/Ssal_v3.1/exp/r111/"
+          # Output file
+          - name: masked-regions-filename
+            value: "salmo_salar_gca905237065v2_core_107_1.repeats_r111.bed"
+          - name: masked-regions-key
+            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats_r111.bed"
+        artifacts:
+          - name: gene-build-mask
+            path: /results/{{inputs.parameters.gene-build-mask-filename}}
+            s3:
+              key: "{{inputs.parameters.gene-build-mask-key}}"
+          - name: controls-bed-files
+            path: /results/controls-bed-files/
+            s3:
+              key: "{{inputs.parameters.controls-bed-files-key}}"
+      container:
+        workingDir: "/results/"
+        image: ghcr.io/daugo/ensembl-reg-masked-regions-identification:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+              && ls -altrh /results/controls-bed-files/ \
+              && Rscript /usr/local/src/maskedRegionsIdentification.R \
+              {{inputs.parameters.gene-build-mask-filename}} \
+              {{inputs.parameters.masked-regions-filename}} \
+              controls-bed-files/*.bed \
+              && ls -altrh" ]
+        resources:
+          limits:
+            memory: 10Gi
+            cpu: 1200m
+          requests:
+            memory: 5Gi
+            cpu: 900m
