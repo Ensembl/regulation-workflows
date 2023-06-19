@@ -11,6 +11,32 @@ spec:
 
   templates:
     - name: masked-regions-identification
+      inputs:
+        parameters:
+          - name: gene-build-mask-key
+            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats.bed"
+          - name: controls-bed-files-key
+            value: "control-peaks-for-mask-files/peaks/Salmo_salar/Ssal_v3.1/exp/r111/"
+          - name: masked-regions-key
+            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats_r111.bed"
+      dag:
+        tasks:
+          - name: run-masked-regions-identification-script
+            template: masked-regions-identification-script
+            arguments:
+              parameters:
+                - name: gene-build-mask-filename
+                  value: "{{=sprig.base(inputs.parameters.gene_build_mask_key)}}"
+                - name: gene-build-mask-key
+                  value: "{{inputs.parameters.gene-build-mask-key}}"
+                - name: controls-bed-files-key
+                  value: "{{inputs.parameters.controls-bed-files-key}}"
+                - name: masked-regions-filename
+                  value: "{{=sprig.base(inputs.parameters.masked-regions-key)}}"
+                - name: masked-regions-key
+                  value: "{{inputs.parameters.masked-regions-key}}"
+
+    - name: masked-regions-identification-script
       retryStrategy:
         limit: "3"
         retryPolicy: "OnError"
@@ -18,16 +44,11 @@ spec:
         parameters:
           # Input artifacts information
           - name: gene-build-mask-filename
-            value: "salmo_salar_gca905237065v2_core_107_1.repeats_dust_trf_merge_20_filt_50.bed"
           - name: gene-build-mask-key
-            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats.bed"
           - name: controls-bed-files-key
-            value: "control-peaks-for-mask-files/peaks/Salmo_salar/Ssal_v3.1/exp/r111/"
           # Output file
           - name: masked-regions-filename
-            value: "salmo_salar_gca905237065v2_core_107_1.repeats_r111.bed"
           - name: masked-regions-key
-            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats_r111.bed"
         artifacts:
           - name: gene-build-mask
             path: /results/{{inputs.parameters.gene-build-mask-filename}}
