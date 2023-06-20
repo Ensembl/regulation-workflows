@@ -14,29 +14,85 @@ spec:
       inputs:
         parameters:
           - name: gene-build-mask-key
-            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats.bed"
           - name: controls-bed-files-key
-            value: "control-peaks-for-mask-files/peaks/Salmo_salar/Ssal_v3.1/exp/r111/"
+            value: ""
           - name: masked-regions-key
-            value: "masked-regions/Salmo_salar/Ssal_v3.1/salmo_salar_gca905237065v2_core_107_1.repeats_r111.bed"
       dag:
         tasks:
           - name: run-masked-regions-identification-script
-            template: masked-regions-identification-script
+            when: "{{=sprig.empty(inputs.parameters['controls-bed-files-key'])}}"
+            template: masked-regions-identification-script-without-controls
             arguments:
               parameters:
                 - name: gene-build-mask-filename
-                  value: "{{=sprig.base(inputs.parameters.gene_build_mask_key)}}"
+                  value: "{{=sprig.base(inputs.parameters['gene-build-mask-key'])}}"
+                - name: gene-build-mask-key
+                  value: "{{inputs.parameters.gene-build-mask-key}}"
+                - name: masked-regions-filename
+                  value: "{{=sprig.base(inputs.parameters['masked-regions-key'])}}"
+                - name: masked-regions-key
+                  value: "{{inputs.parameters.masked-regions-key}}"
+
+          - name: run-masked-regions-identification-script-with-controls
+            when: "!{{=sprig.empty(inputs.parameters['controls-bed-files-key'])}}"
+            template: masked-regions-identification-script-with-controls
+            arguments:
+              parameters:
+                - name: gene-build-mask-filename
+                  value: "{{=sprig.base(inputs.parameters['gene-build-mask-key'])}}"
                 - name: gene-build-mask-key
                   value: "{{inputs.parameters.gene-build-mask-key}}"
                 - name: controls-bed-files-key
                   value: "{{inputs.parameters.controls-bed-files-key}}"
                 - name: masked-regions-filename
-                  value: "{{=sprig.base(inputs.parameters.masked-regions-key)}}"
+                  value: "{{=sprig.base(inputs.parameters['masked-regions-key'])}}"
                 - name: masked-regions-key
                   value: "{{inputs.parameters.masked-regions-key}}"
 
-    - name: masked-regions-identification-script
+    - name: masked-regions-identification-script-without-controls
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          # Input artifacts information
+          - name: gene-build-mask-filename
+          - name: gene-build-mask-key
+          # Output file
+          - name: masked-regions-filename
+          - name: masked-regions-key
+        artifacts:
+          - name: gene-build-mask
+            path: /results/{{inputs.parameters.gene-build-mask-filename}}
+            s3:
+              key: "{{inputs.parameters.gene-build-mask-key}}"
+      container:
+        workingDir: "/results/"
+        image: ghcr.io/daugo/ensembl-reg-masked-regions-identification:latest
+        command: [ bash, -c, -ue, -o ,xtrace, -o, pipefail ]
+        args: [ "ls -altrh \
+              && Rscript /usr/local/src/maskedRegionsIdentification.R \
+              {{inputs.parameters.gene-build-mask-filename}} \
+              {{inputs.parameters.masked-regions-filename}} \
+              && ls -altrh" ]
+        resources:
+          limits:
+            memory: 15Gi
+            cpu: 1200m
+          requests:
+            memory: 8Gi
+            cpu: 900m
+      outputs:
+        artifacts:
+          - name: final_bed
+            path: /results/{{inputs.parameters.masked-regions-filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.masked-regions-key}}"
+
+
+    - name: masked-regions-identification-script-with-controls
       retryStrategy:
         limit: "3"
         retryPolicy: "OnError"
@@ -61,18 +117,27 @@ spec:
       container:
         workingDir: "/results/"
         image: ghcr.io/daugo/ensembl-reg-masked-regions-identification:latest
-        command: [ bash, -c, -ue, -o, xtrace ]
+        command: [ bash, -c, -ue, -o ,xtrace, -o, pipefail ]
         args: [ "ls -altrh \
-              && ls -altrh /results/controls-bed-files/ \
+              && ls controls-bed-files/* | grep -v -P '.bed$' | xargs rm -rf \
+              && ls -altrh controls-bed-files/ \
               && Rscript /usr/local/src/maskedRegionsIdentification.R \
               {{inputs.parameters.gene-build-mask-filename}} \
               {{inputs.parameters.masked-regions-filename}} \
-              controls-bed-files/*.bed \
+              controls-bed-files/ \
               && ls -altrh" ]
         resources:
           limits:
-            memory: 10Gi
+            memory: 15Gi
             cpu: 1200m
           requests:
-            memory: 5Gi
+            memory: 8Gi
             cpu: 900m
+      outputs:
+        artifacts:
+          - name: final_bed
+            path: /results/{{inputs.parameters.masked-regions-filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.masked-regions-key}}"
