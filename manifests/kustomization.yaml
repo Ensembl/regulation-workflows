@@ -19,6 +19,7 @@ resources:
   - peak-calling/atac-seq.yaml
   - peak-calling/chip-seq-se-no-controls.yaml
   - peak-calling/chip-seq.yaml
+  - peak-calling/chip-seq-v2.yaml
   - peak-calling/chip-seq-ad-hoc.yaml
   - peak-calling/dnase-seq.yaml
   - peak-calling/controls-peak-calling-for-mask-file.yaml
