@@ -1,0 +1,92 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: sort-alignment-by-queryname-pvc-callable-v2-submittable
+spec:
+  entrypoint: sort-alignment-by-queryname-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: sort-alignment-by-queryname-pvc-callable
+      inputs:
+        parameters:
+          # Bam file as input
+          - name: s3-key
+          - name: pvc-name
+          - name: kubeconfig-path
+
+      dag:
+        tasks:
+          - name: load-bam-to-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.s3-key}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['s3-key'])}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+
+
+          - name: execute-samtools-sort-by-queryname-cmd
+            depends: load-bam-to-pvc
+            template: samtools-sort-by-queryname-cmd
+            arguments:
+              parameters:
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['s3-key'])}}"
+                - name: out-filename
+                  value: "so_queryname_{{=sprig.base(inputs.parameters['s3-key'])}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: num-threads
+                  value: "4"
+                - name: mem-per-thread
+                  value: "1G"
+
+
+    - name: samtools-sort-by-queryname-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: filename
+          - name: out-filename
+          - name: pvc-name
+          - name: num-threads
+          - name: mem-per-thread
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && samtools view -@ {{inputs.parameters.num-threads}} -b -h -F 0x004 {{inputs.parameters.filename}} | \
+                samtools sort -n \
+                -@ {{inputs.parameters.num-threads}} \
+                -m {{inputs.parameters.mem-per-thread}} \
+                -o {{inputs.parameters.out-filename}} \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 4100m
+            memory: 15Gi
+          requests:
+            cpu: 3800m
+            memory: 12Gi
+
+
+
