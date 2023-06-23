@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: pvc-to-pvc-copy-v1-submittable
+spec:
+  entrypoint: pvc-to-pvc-copy
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: pvc-to-pvc-copy
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: recursive
+            value: "false"
+          - name: preserve
+            value: "true"
+          - name: source-pvc
+          - name: source-path
+            value: ""
+          - name: destination-pvc
+          - name: destination-path
+            value: ""
+      volumes:
+        - name: source-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.source-pvc}}"
+        - name: destination-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.destination-pvc}}"
+      container:
+        workingDir: /mnt/in_vol/
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+              && CP_ARGS=()
+              && if [[ {{inputs.parameters.recursive}} == true ]]; then CP_ARGS+=( -r ); fi \
+              && if [[ {{inputs.parameters.preserve}} == true ]]; then CP_ARGS+=( -p ); fi \  
+              && cp ${CP_ARGS[@]} \
+              /mnt/in_vol/{{inputs.parameters.source-path}} \
+              /mnt/out_vol/{{inputs.parameters.destination-path}} \
+              && ls -altrh /mnt/out_vol" ]
+        volumeMounts:
+          - name: source-vol
+            mountPath: /mnt/in_vol/
+          - name: destination-vol
+            mountPath: /mnt/out_vol/
