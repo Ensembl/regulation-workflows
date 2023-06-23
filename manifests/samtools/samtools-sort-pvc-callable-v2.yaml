@@ -46,9 +46,9 @@ spec:
                 - name: pvc-name
                   value: "{{inputs.parameters.pvc-name}}"
                 - name: num-threads
-                  value: "4"
+                  value: "5"
                 - name: mem-per-thread
-                  value: "1G"
+                  value: "1500M"
 
 
     - name: samtools-sort-by-queryname-cmd
@@ -82,10 +82,10 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 4100m
+            cpu: 5100m
             memory: 15Gi
           requests:
-            cpu: 3800m
+            cpu: 4800m
             memory: 12Gi
 
 
