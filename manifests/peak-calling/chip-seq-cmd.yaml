@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: genrich-chip-seq-cmd-v1-submittable
+spec:
+  entrypoint: genrich-chip-seq-cmd
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: genrich-chip-seq-cmd
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: signal_files_formatted_str
+          - name: control_files_formatted_str
+          - name: out_bed_filename
+          - name: out_pileup_filename
+          - name: out_pq_file_filename
+          - name: out_log_filename
+          - name: out_s3_prefix
+          - name: alignments-pvc
+          - name: masked-regions-s3-key
+          - name: masked-regions-filename
+        artifacts:
+          - name: masked-regions-file
+            path: /mnt/vol/{{inputs.parameters.masked-regions-filename}}
+            s3:
+              key: "{{inputs.parameters.masked-regions-s3-key}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
+               && GENRICH_ARGS=(
+                   -t ${SIGNAL_BAM_FILES} \
+                   -o {{inputs.parameters.out_bed_filename}} \
+                   -f {{inputs.parameters.out_pileup_filename}} \
+                   -k {{inputs.parameters.out_pq_file_filename}} \
+                   -r \
+                   -y \
+                   -q 0.1 \
+                   -s 20 \
+                   -e MT \
+                   -E {{inputs.parameters.masked-regions-filename}} \
+                   -v \
+                   ) \
+               && if !  [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
+               && echo 'Genrich command: Genrich '${GENRICH_ARGS[@]}' | tee -a {{inputs.parameters.out_log_filename}} \
+               && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
+               && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
+               && echo Signal files: ${SIGNAL_BAM_FILES} | tee -a {{inputs.parameters.out_log_filename}} \
+               && echo Control files: ${CONTROL_BAM_FILES} tee -a {{inputs.parameters.out_log_filename}} \
+               && Genrich ${GENRICH_ARGS[@]} \
+               2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
+               && ls -altrh | tee -a {{inputs.parameters.out_log_filename}}" ]
+        resources:
+          limits:
+            cpu: 4900m
+            memory: 45Gi
+          requests:
+            cpu: 4700m
+            memory: 41Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.alignments-pvc}}"
