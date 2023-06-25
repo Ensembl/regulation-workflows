@@ -76,6 +76,7 @@ spec:
                 -@ {{inputs.parameters.num-threads}} \
                 -m {{inputs.parameters.mem-per-thread}} \
                 -o {{inputs.parameters.out-filename}} \
+                && rm {{inputs.parameters.filename}} \
                 && ls -altrh" ]
         volumeMounts:
           - name: workdir
