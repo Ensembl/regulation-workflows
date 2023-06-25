@@ -54,3 +54,4 @@ resources:
   - helpers/delete-task-marker.yaml
   - helpers/list-objects-under-s3-prefix.yaml
   - helpers/post-results-to-reg-pipelines-api.yaml
+  - helpers/analysis-file-post-request-payload.yaml

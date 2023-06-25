@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: analysis-file-post-request-payload-v1-submittable
+spec:
+  entrypoint: analysis-file-post-request-payload
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: analysis-file-post-request-payload
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: basename
+          - name: file-size
+          - name: md5sum
+          - name: experiment-id
+          - name: assembly-id
+          - name: analysis-type
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            post_data = {
+              "experiment_id": "{{inputs.parameters.experiment-id}}",
+              "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "analysis_type": "{{inputs.parameters.analysis-type}}",
+              "file": {
+                "file_type": "bed",
+                "basename": "{{inputs.parameters.basename}}",
+                "size": "{{inputs.parameters.file-size}}",
+                "md5sum": "{{inputs.parameters.md5sum}}",
+                "imported": False,
+                "s3_object": {
+                  "key": "{{inputs.parameters.s3-key}}",
+                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
+                }
+              }
+            }
+          
+            print(json.dumps(post_data,  indent=2))
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
