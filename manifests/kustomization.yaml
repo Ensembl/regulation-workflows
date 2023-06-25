@@ -50,7 +50,7 @@ resources:
   - helpers/delete-s3-object.yaml
   - helpers/copy-from-pvc-to-s3-object.yaml
   - helpers/validate-expected-number-of-files-in-dir.yaml
-  - helpers/check-if-field-present-and-not-empy.yaml
+  - helpers/check-if-field-present-and-not-empty.yaml
   - helpers/delete-task-marker.yaml
   - helpers/list-objects-under-s3-prefix.yaml
   - helpers/post-results-to-reg-pipelines-api.yaml
