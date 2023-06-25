@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-chip-seq-cmd-v1-submittable
+  name: genrich-chip-seq-pileups-cmd-v1-submittable
 spec:
-  entrypoint: genrich-chip-seq-cmd
+  entrypoint: genrich-chip-seq-pileups-cmd
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
     strategy: OnPodSuccess
 
   templates:
-    - name: genrich-chip-seq-cmd
+    - name: genrich-chip-seq-pileups-cmd
       retryStrategy:
         limit: "5"
         backoff:
@@ -40,7 +40,11 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
-               && GENRICH_ARGS=(
+                && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
+                && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
+                && echo Signal files: ${SIGNAL_BAM_FILES} | tee -a {{inputs.parameters.out_log_filename}} \
+                && echo Control files: ${CONTROL_BAM_FILES} tee -a {{inputs.parameters.out_log_filename}} \
+                && GENRICH_ARGS=(
                    -t ${SIGNAL_BAM_FILES} \
                    -o {{inputs.parameters.out_bed_filename}} \
                    -f {{inputs.parameters.out_pileup_filename}} \
@@ -53,15 +57,12 @@ spec:
                    -E {{inputs.parameters.masked-regions-filename}} \
                    -v \
                    ) \
-               && if !  [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
-               && echo 'Genrich command: Genrich '${GENRICH_ARGS[@]}' | tee -a {{inputs.parameters.out_log_filename}} \
-               && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
-               && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
-               && echo Signal files: ${SIGNAL_BAM_FILES} | tee -a {{inputs.parameters.out_log_filename}} \
-               && echo Control files: ${CONTROL_BAM_FILES} tee -a {{inputs.parameters.out_log_filename}} \
+               && if [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
+               && echo 'Genrich command: Genrich ${GENRICH_ARGS[@]}' | tee -a {{inputs.parameters.out_log_filename}} \
                && Genrich ${GENRICH_ARGS[@]} \
                2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
                && ls -altrh | tee -a {{inputs.parameters.out_log_filename}}" ]
+
         resources:
           limits:
             cpu: 4900m
@@ -76,3 +77,13 @@ spec:
         - name: workdir
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.alignments-pvc}}"
+      outputs:
+        artifacts:
+          - name: pileup
+            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
+          - name: pq_file
+            path: /mnt/vol/{{inputs.parameters.out_pq_file_filename}}
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_file_filename}}.tgz"

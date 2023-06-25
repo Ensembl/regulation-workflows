@@ -25,7 +25,7 @@ resources:
   - peak-calling/controls-peak-calling-for-mask-file.yaml
   - peak-calling/controls-peak-calling-for-mask-file-with-pileups.yaml
   - peak-calling/genrich-controls-pvc-callable.yaml
-  - peak-calling/chip-seq-cmd.yaml
+  - peak-calling/chip-seq-pileups-cmd.yaml
   - masked-regions/masked-regions-identification.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
   - coverage/bam-to-coverage-bedgraph-pvc-callable.yaml
