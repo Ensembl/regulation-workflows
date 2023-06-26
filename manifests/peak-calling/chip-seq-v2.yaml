@@ -225,10 +225,10 @@ spec:
                   value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}}"
                 - name: out_bed_filename
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.bed"
-                - name: out_pileup_filename
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_pileup.log"
-                - name: out_pq_file_filename
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_pqval.log"
+                - name: out_pileups_filename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_pileups.txt"
+                - name: out_pq_values_filename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_pq_values.txt"
                 - name: out_log_filename
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_run.log"
                 - name: out_s3_prefix
@@ -253,8 +253,8 @@ spec:
                   value: "{{item}}"
             withParam: >-
               [
-                { "analysis_type": "genrich_pileups_logs", "extension": "_pileup.log" },
-                { "analysis_type": "genrich_pqval_logs", "extension": "_pqval.log" }
+                { "analysis_type": "genrich_pileups", "extension": "_pileups.txt" },
+                { "analysis_type": "genrich_pq_values", "extension": "_pq_values.txt" }
               ]
 
           # Maybe here assert that output files exist in S3 before updating task marker

@@ -23,8 +23,8 @@ spec:
           - name: signal_files_formatted_str
           - name: control_files_formatted_str
           - name: out_bed_filename
-          - name: out_pileup_filename
-          - name: out_pq_file_filename
+          - name: out_pq_values_filename
+          - name: out_pileups_filename
           - name: out_log_filename
           - name: out_s3_prefix
           - name: alignments-pvc
@@ -48,8 +48,8 @@ spec:
                 && GENRICH_ARGS=(
                    -t ${SIGNAL_BAM_FILES} \
                    -o {{inputs.parameters.out_bed_filename}} \
-                   -f {{inputs.parameters.out_pileup_filename}} \
-                   -k {{inputs.parameters.out_pq_file_filename}} \
+                   -f {{inputs.parameters.out_pq_values_filename}} \
+                   -k {{inputs.parameters.out_pileups_filename}} \
                    -r \
                    -y \
                    -q 0.1 \
@@ -80,11 +80,11 @@ spec:
             claimName: "{{inputs.parameters.alignments-pvc}}"
       outputs:
         artifacts:
-          - name: pileup
-            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
+          - name: pq_values
+            path: /mnt/vol/{{inputs.parameters.out_pq_values_filename}}
             s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
-          - name: pq_file
-            path: /mnt/vol/{{inputs.parameters.out_pq_file_filename}}
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_values_filename}}.tgz"
+          - name: pileups
+            path: /mnt/vol/{{inputs.parameters.out_pileups_filename}}
             s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_file_filename}}.tgz"
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz"
