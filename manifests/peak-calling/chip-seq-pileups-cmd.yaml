@@ -57,7 +57,7 @@ spec:
                    -E {{inputs.parameters.masked-regions-filename}} \
                    -v \
                    ) \
-               && if [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
+               && if ! [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
                && echo 'Genrich command: Genrich ${GENRICH_ARGS[@]}' | tee -a {{inputs.parameters.out_log_filename}} \
                && Genrich ${GENRICH_ARGS[@]} \
                2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
