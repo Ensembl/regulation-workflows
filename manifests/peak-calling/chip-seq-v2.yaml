@@ -76,7 +76,7 @@ spec:
                   value: >-
                     {{=jsonpath(inputs.parameters['task-payload'], 
                     '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters['task-payload'], 
-                    '$.out_basename')}}.bed
+                    '$.out_basename')}}_pileup.log.tgz
 
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-pileups-file-already-in-s3-bucket"
@@ -253,8 +253,8 @@ spec:
                   value: "{{item}}"
             withParam: >-
               [
-                { "analysis_type": "genrich_pileups_logs", "extension": "pileup.log" },
-                { "analysis_type": "genrich_pqval_logs", "extension": "pqval.log" }
+                { "analysis_type": "genrich_pileups_logs", "extension": "_pileup.log" },
+                { "analysis_type": "genrich_pqval_logs", "extension": "_pqval.log" }
               ]
 
           # Maybe here assert that output files exist in S3 before updating task marker
@@ -398,7 +398,7 @@ spec:
                 - name: pvc-name
                   value: "{{inputs.parameters.pvc-name}}"
                 - name: filename
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_{{=jsonpath(inputs.parameters['analysis-type-info'], '$.extension')}}"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}{{=jsonpath(inputs.parameters['analysis-type-info'], '$.extension')}}"
 
           - name: get-output-file-post-request-payload
             depends: compute-output-file-metadata.Succeeded
@@ -408,7 +408,7 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_{{=jsonpath(inputs.parameters['analysis-type-info'], '$.extension')}}"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}{{=jsonpath(inputs.parameters['analysis-type-info'], '$.extension')}}"
                 - name: basename
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
                 - name: file-size
