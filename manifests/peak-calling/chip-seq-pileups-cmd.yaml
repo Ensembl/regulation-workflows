@@ -17,7 +17,7 @@ spec:
           duration: "10s"
           factor: "2"
           maxDuration: "12h"
-        retryPolicy: "Always"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: signal_files_formatted_str
@@ -38,7 +38,7 @@ spec:
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
-        command: [ bash, -c, -uef, -o, xtrace ]
+        command: [ bash, -c, -uef, -o, xtrace, -o, pipefail ]
         args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
                 && rm -f {{inputs.parameters.out_bed_filename}} *log \
                 && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
