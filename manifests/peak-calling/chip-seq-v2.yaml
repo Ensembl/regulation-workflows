@@ -2,19 +2,20 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: peak-calling-chip-seq-v2-submittable
+  annotations:
+    workflows.argoproj.io/description: |
+      Generate genrich log files for signal generation and genrich re-runs
 spec:
   entrypoint: peak-calling-chip-seq
   imagePullSecrets:
     - name: ghcr-pull-token
-
   templates:
     - name: peak-calling-chip-seq
       parallelism: 8
       inputs:
         parameters:
-          - name: peak_calling_tasks
-          - name: masked_regions_prefix
-          - name: masked_regions_filename
+          - name: peak-calling-tasks
+          - name: masked-regions-s3-key
           - name: overwrite-results
           - name: kubeconfig-path
       dag:
@@ -23,32 +24,25 @@ spec:
             template: peak-calling-task
             arguments:
               parameters:
-                - name: task_payload
+                - name: task-payload
                   value: "{{item}}"
-                - name: masked_regions_prefix
-                  value: "{{inputs.parameters.masked_regions_prefix}}"
-                - name: masked_regions_filename
-                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-                - name: force-update-task-markers
-                  value: "false"
-            withParam: "{{inputs.parameters.peak_calling_tasks}}"
+            withParam: "{{inputs.parameters.peak-calling-tasks}}"
 
 
     - name: peak-calling-task
-      parallelism: 1
+      parallelism: 8
       inputs:
         parameters:
-          - name: task_payload
-          - name: masked_regions_prefix
-          - name: masked_regions_filename
+          - name: task-payload
+          - name: masked-regions-s3-key
           - name: overwrite-results
           - name: kubeconfig-path
-          - name: force-update-task-markers
-
       dag:
         tasks:
           - name: compute-peak-calling-task-marker-name
@@ -58,7 +52,7 @@ spec:
             arguments:
               parameters:
                 - name: task-payload
-                  value: "{{inputs.parameters.task_payload}}"
+                  value: "{{inputs.parameters.task-payload}}"
                 - name: task-type
                   value: "peak-calling"
 
@@ -79,7 +73,10 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}.bed"
+                  value: >-
+                    {{=jsonpath(inputs.parameters['task-payload'], 
+                    '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters['task-payload'], 
+                    '$.out_basename')}}.bed
 
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-pileups-file-already-in-s3-bucket"
@@ -95,6 +92,17 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
+          - name: execute-signals-samtools-sort-tasks
+            depends: check-work-avoidance-consistency.Succeeded
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+            template: dag-samtools-sort-tasks
+            arguments:
+              parameters:
+                - name: alignments-info
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
           - name: check-if-any-controls-present
             depends: check-work-avoidance-consistency.Succeeded
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
@@ -106,7 +114,18 @@ spec:
                 - name: field-name
                   value: "controls"
                 - name: task-payload
-                  value: "{{inputs.parameters.task_payload}}"
+                  value: "{{inputs.parameters.task-payload}}"
+
+          - name: execute-controls-samtools-sort-tasks
+            depends: check-if-any-controls-present.Succeeded
+            when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == true"
+            template: dag-samtools-sort-tasks
+            arguments:
+              parameters:
+                - name: alignments-info
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: get-genrich-input-filenames-formatted
             depends: check-work-avoidance-consistency.Succeeded
@@ -114,21 +133,23 @@ spec:
             template: edit-genrich-input-filenames-formatted
             arguments:
               parameters:
-                - name: task_payload
-                  value: "{{inputs.parameters.task_payload}}"
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
 
           - name: get-peak-calling-pvc-size
-            depends: get-genrich-input-filenames-formatted
-            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+            depends: >-
+              get-genrich-input-filenames-formatted.Succeeded 
+              && 
+              ( execute-signals-samtools-sort-tasks.Succeeded || execute-controls-samtools-sort-tasks.Succeeded )
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size
             arguments:
               parameters:
                 - name: associated_files_size
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.alignment_files_total_size')}}"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
                 - name: size_factor
-                  value: "4.5"
+                  value: "3"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
@@ -142,94 +163,105 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
-          - name: execute-sort-signal-alignments-by-queryname
-            depends: create-peak-calling-pvc
-            template: sort-alignments-by-queryname
+          - name: copy-from-signals-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc
+            depends: create-peak-calling-pvc.Succeeded && execute-signals-samtools-sort-tasks.Succeeded
+            template: dag-copy-sort-alignments-pvcs-to-peak-calling-pvc
             arguments:
               parameters:
-                - name: sort_alignment_params
-                  value: "{{item}}"
-                # PVC in which to store so_queryname bams
-                - name: out-pvc-name
+                - name: source-pvcs
+                  value: "{{tasks.execute-signals-samtools-sort-tasks.outputs.parameters.pvcs-names}}"
+                - name: destination-pvc
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+
+          - name: copy-from-controls-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc
+            depends: create-peak-calling-pvc.Succeeded && execute-controls-samtools-sort-tasks.Succeeded
+            template: dag-copy-sort-alignments-pvcs-to-peak-calling-pvc
+            arguments:
+              parameters:
+                - name: source-pvcs
+                  value: "{{tasks.execute-controls-samtools-sort-tasks.outputs.parameters.pvcs-names}}"
+                - name: destination-pvc
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+
+          - name: delete-signals-samtools-sort-tasks-pvcs
+            depends: copy-from-signals-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc.Succeeded
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{item}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-            withParam: "{{=toJson(jsonpath(inputs.parameters.task_payload, '$.signals'))}}"
+            withParam: "{{tasks.execute-signals-samtools-sort-tasks.outputs.parameters.pvcs-names}}"
 
-          - name: execute-sort-control-alignments-by-queryname
-            depends: "execute-sort-signal-alignments-by-queryname && check-if-any-controls-present.Succeeded"
-            when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == true"
-            template: sort-alignments-by-queryname
+          - name: delete-controls-samtools-sort-tasks-pvcs
+            depends: copy-from-controls-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
             arguments:
               parameters:
-                - name: sort_alignment_params
+                - name: pvc-name
                   value: "{{item}}"
-                # PVC in which to store so_queryname bams
-                - name: out-pvc-name
-                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-            withParam: "{{=toJson(jsonpath(inputs.parameters.task_payload, '$.controls'))}}"
+            withParam: "{{tasks.execute-controls-samtools-sort-tasks.outputs.parameters.pvcs-names}}"
 
-          - name: execute-genrich-chip-seq
-            depends: "get-genrich-input-filenames-formatted && (execute-sort-signal-alignments-by-queryname && execute-sort-control-alignments-by-queryname)"
-            template: genrich-chip-seq
+          - name: execute-genrich-task
+            depends: >-
+              delete-signals-samtools-sort-tasks-pvcs.Succeeded 
+              && 
+              ( delete-controls-samtools-sort-tasks-pvcs.Succeeded || execute-controls-samtools-sort-tasks.Skipped )
+            templateRef:
+              name: genrich-chip-seq-pileups-cmd-v1-submittable
+              template: genrich-chip-seq-pileups-cmd
             arguments:
               parameters:
-                - name: masked_regions_prefix
-                  value: "{{inputs.parameters.masked_regions_prefix}}"
-                - name: masked_regions_filename
-                  value: "{{inputs.parameters.masked_regions_filename}}"
                 - name: signal_files_formatted_str
                   value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.signals_files_formatted_str}}"
                 - name: control_files_formatted_str
                   value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}}"
                 - name: out_bed_filename
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}.bed"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.bed"
                 - name: out_pileup_filename
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}_pileup.log"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_pileup.log"
                 - name: out_pq_file_filename
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}_pqval.log"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_pqval.log"
+                - name: out_log_filename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_run.log"
                 - name: out_s3_prefix
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_s3_prefix')}}"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}"
                 - name: alignments-pvc
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: masked-regions-filename
+                  value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
 
-          - name: execute-compute-pileups-file-metadata
-            depends: execute-genrich-chip-seq
-            templateRef:
-              name: compute-file-metadata-pvc-callable-v1-submittable
-              template: compute-file-metadata-pvc-callable
+          - name: output-files-post-processing
+            depends: execute-genrich-task.Succeeded
+            template: dag-output-files-post-processing
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-                - name: filename
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}.bed"
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type-info
+                  value: "{{item}}"
+            withParam: >-
+              [
+                { "analysis_type": "genrich_pileups_logs", "extension": "pileup.log" },
+                { "analysis_type": "genrich_pqval_logs", "extension": "pqval.log" }
+              ]
 
-          - name: execute-post-pileups-file
-            depends: execute-compute-pileups-file-metadata
-            template: post-analysis-file
-            arguments:
-              parameters:
-                - name: s3-key
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}.bed"
-                - name: basename
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.out_basename')}}"
-                - name: file-size
-                  value: "{{tasks.execute-compute-pileups-file-metadata.outputs.parameters.file-size}}"
-                - name: md5sum
-                  value: "{{tasks.execute-compute-pileups-file-metadata.outputs.parameters.md5sum}}"
-                - name: experiment-id
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.experiment_id')}}"
-                - name: assembly-id
-                  value: "{{=jsonpath(inputs.parameters.task_payload, '$.assembly_id')}}"
-                - name: analysis-type
-                  value: "genrich_values"
+          # Maybe here assert that output files exist in S3 before updating task marker
+          # Metadata computed from PVCs, output-files-post-processing doesn't assure us the files made it to S3
 
           - name: update-peak-calling-task-marker
-            depends: "execute-post-pileups-file.Succeeded"
-            when: "{{tasks.execute-post-pileups-file.status}} == Succeeded"
+            depends: output-files-post-processing.Succeeded
             templateRef:
               name: update-task-marker-v1-submittable
               template: update-task-marker
@@ -238,10 +270,10 @@ spec:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
                 - name: task-payload
-                  value: "{{inputs.parameters.task_payload}}"
+                  value: "{{inputs.parameters.task-payload}}"
 
           - name: delete-peak-calling-pvc
-            depends: "execute-compute-pileups-file-metadata"
+            depends: output-files-post-processing.Succeeded
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
@@ -252,15 +284,39 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
-
-    - name: sort-alignments-by-queryname
+    - name: dag-samtools-sort-tasks
       inputs:
         parameters:
-          # Bam file as input
-          - name: sort_alignment_params
-          # PVC in which to store bedgraph
-          - name: out-pvc-name
+          - name: alignments-info
           - name: kubeconfig-path
+      outputs:
+        parameters:
+          - name: pvcs-names
+            valueFrom:
+              parameter: "{{tasks.create-tasks.outputs.parameters.pvc-name}}"
+      dag:
+        tasks:
+          - name: create-tasks
+            template: dag-samtools-sort-task
+            arguments:
+              parameters:
+                - name: alignment-info
+                  value: "{{item}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.alignments-info}}"
+
+
+    - name: dag-samtools-sort-task
+      inputs:
+        parameters:
+          - name: alignment-info
+          - name: kubeconfig-path
+      outputs:
+        parameters:
+          - name: pvc-name
+            valueFrom:
+              parameter: "{{tasks.create-pvc.outputs.parameters.pvc-name}}"
       dag:
         tasks:
           - name: get-pvc-size
@@ -270,83 +326,107 @@ spec:
             arguments:
               parameters:
                 - name: associated_files_size
-                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.file_size')}}"
+                  value: "{{=jsonpath(inputs.parameters['alignment-info'], '$.file_size')}}"
                 - name: size_factor
-                  value: "1.25"
+                  value: "3.8"
 
-          - name: execute-sort-alignment-by-queryname
-            depends: get-pvc-size
+          - name: create-pvc
+            depends: get-pvc-size.Succeeded
             templateRef:
-              name: sort-alignment-by-queryname-pvc-callable-v1-submittable
-              template: sort-alignment-by-queryname-pvc-callable
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
             arguments:
               parameters:
-                - name: basename
-                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.basename')}}"
-                - name: filename
-                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.filename')}}"
-                - name: s3_key
-                  value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.s3_key')}}"
                 - name: pvc-size
                   value: "{{tasks.get-pvc-size.outputs.parameters.pvc-size-formatted}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-                - name: out-pvc-name
-                  value: "{{inputs.parameters.out-pvc-name}}"
+
+          - name: samtools-sort-task
+            depends: create-pvc.Succeeded
+            templateRef:
+              name: sort-alignment-by-queryname-pvc-callable-v2-submittable
+              template: sort-alignment-by-queryname-pvc-callable
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['alignment-info'], '$.s3_key')}}"
+                - name: pvc-name
+                  value: "{{tasks.create-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
 
-    - name: post-analysis-file
-      retryStrategy:
-        limit: "5"
-        retryPolicy: "OnError"
+    - name: dag-copy-sort-alignments-pvcs-to-peak-calling-pvc
+      parallelism: 1
       inputs:
         parameters:
-          - name: s3-key
-          - name: basename
-          - name: file-size
-          - name: md5sum
-          - name: experiment-id
-          - name: assembly-id
-          - name: analysis-type
-      script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import sys
-          import os
-          import hashlib
-          import json
-          
-          def main() -> int:
-          
-            post_data = {
-              "experiment_id": "{{inputs.parameters.experiment-id}}",
-              "assembly_id": "{{inputs.parameters.assembly-id}}",
-              "analysis_type": "{{inputs.parameters.analysis-type}}",
-              "file": {
-                "file_type": "bed",
-                "basename": "{{inputs.parameters.basename}}",
-                "size": "{{inputs.parameters.file-size}}",
-                "md5sum": "{{inputs.parameters.md5sum}}",
-                "imported": False,
-                "s3_object": {
-                  "key": "{{inputs.parameters.s3-key}}",
-                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
-                }
-              }
-            }
-          
-            print(json.dumps(post_data,  indent=2))
-          
-            return 0
-          
-          if __name__ == '__main__':
-              sys.exit(main())
+          - name: source-pvcs
+          - name: destination-pvc
+      dag:
+        tasks:
+          - name: sort-alignment-pvc-to-peak-calling-pvc-copy
+            templateRef:
+              name: pvc-to-pvc-copy-v1-submittable
+              template: pvc-to-pvc-copy
+            arguments:
+              parameters:
+                - name: source-pvc
+                  value: "{{item}}"
+                - name: source-path
+                  value: "*bam"
+                - name: destination-pvc
+                  value: "{{inputs.parameters.destination-pvc}}"
+            withParam: "{{inputs.parameters.source-pvcs}}"
+
+
+    - name: dag-output-files-post-processing
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: task-payload
+          - name: analysis-type-info
+      dag:
+        tasks:
+          - name: compute-output-file-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_{{=jsonpath(inputs.parameters['analysis-type-info'], '$.extension')}}"
+
+          - name: get-output-file-post-request-payload
+            depends: compute-output-file-metadata.Succeeded
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}_{{=jsonpath(inputs.parameters['analysis-type-info'], '$.extension')}}"
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
+                - name: file-size
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                - name: assembly-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.analysis_type')}}"
+
 
     - name: edit-genrich-input-filenames-formatted
       inputs:
         parameters:
-          - name: task_payload
+          - name: task-payload
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
@@ -358,7 +438,7 @@ spec:
           from pprint import pprint
 
           def main() -> int:
-            task_payload_json = """{{inputs.parameters.task_payload}}"""
+            task_payload_json = """{{inputs.parameters.task-payload}}"""
             task_payload_data = json.loads(task_payload_json)
           
             run_type_signal_filename = defaultdict(list)
@@ -414,76 +494,3 @@ spec:
           - name: controls_files_formatted_str
             valueFrom:
               path: controls_files_formatted_str.txt
-
-    - name: genrich-chip-seq
-      retryStrategy:
-        limit: "5"
-        backoff:
-          duration: "10s"
-          factor: "2"
-          maxDuration: "12h"
-        retryPolicy: "Always"
-      inputs:
-        parameters:
-          - name: masked_regions_prefix
-          - name: masked_regions_filename
-          - name: signal_files_formatted_str
-          - name: control_files_formatted_str
-          - name: out_bed_filename
-          - name: out_pileup_filename
-          - name: out_pq_file_filename
-          - name: out_s3_prefix
-          - name: alignments-pvc
-        artifacts:
-          - name: masked-regions-file
-            path: /mnt/vol/{{inputs.parameters.masked_regions_filename}}
-            s3:
-              key: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
-      container:
-        workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-genrich:latest
-        command: [ bash, -c, -uef, -o, xtrace ]
-        # TODO: Handle empty control_files_formatted_str \
-        args: [ "ls -altrh \
-                && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
-                && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
-                && echo Signal files: ${SIGNAL_BAM_FILES} \
-                && echo Control files: ${CONTROL_BAM_FILES} \
-                && Genrich \
-                -t ${SIGNAL_BAM_FILES} \
-                -c ${CONTROL_BAM_FILES} \
-                -o {{inputs.parameters.out_bed_filename}} \
-                -f {{inputs.parameters.out_pileup_filename}} \
-                -k {{inputs.parameters.out_pq_file_filename}} \
-                -r \
-                -y \
-                -q 0.1 \
-                -s 20 \
-                -e MT \
-                -E {{inputs.parameters.masked_regions_filename}} \
-                -v \
-                && ls -altrh" ]
-        resources:
-          limits:
-            cpu: 4900m
-            memory: 45Gi
-          requests:
-            cpu: 4700m
-            memory: 41Gi
-        volumeMounts:
-          - name: workdir
-            mountPath: /mnt/vol
-      volumes:
-        - name: workdir
-          persistentVolumeClaim:
-            claimName: "{{inputs.parameters.alignments-pvc}}"
-      outputs:
-        artifacts:
-          - name: pileup
-            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
-          - name: pq_file
-            path: /mnt/vol/{{inputs.parameters.out_pq_file_filename}}
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_file_filename}}.tgz"
