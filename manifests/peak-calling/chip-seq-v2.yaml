@@ -149,7 +149,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
                 - name: size_factor
-                  value: "3"
+                  value: "4.5"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
@@ -328,7 +328,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['alignment-info'], '$.file_size')}}"
                 - name: size_factor
-                  value: "3.8"
+                  value: "3.5"
 
           - name: create-pvc
             depends: get-pvc-size.Succeeded
