@@ -88,3 +88,9 @@ spec:
             path: /mnt/vol/{{inputs.parameters.out_pileups_filename}}
             s3:
               key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz"
+          - name: log
+            path: /mnt/vol/{{inputs.parameters.out_log_filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_log_filename}}"
