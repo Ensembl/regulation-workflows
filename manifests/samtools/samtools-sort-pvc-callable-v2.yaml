@@ -50,6 +50,16 @@ spec:
                 - name: mem-per-thread
                   value: "1500M"
 
+          - name: delete-unsorted-alignment
+            depends: execute-samtools-sort-by-queryname-cmd
+            template: delete-unsorted-alignments
+            arguments:
+              parameters:
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['s3-key'])}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+
 
     - name: samtools-sort-by-queryname-cmd
       retryStrategy:
@@ -88,5 +98,26 @@ spec:
             cpu: 4800m
             memory: 12Gi
 
-
+    - name: delete-unsorted-alignments
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: filename
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pvc-name}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && rm -f {{inputs.parameters.filename}} \ 
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
 
