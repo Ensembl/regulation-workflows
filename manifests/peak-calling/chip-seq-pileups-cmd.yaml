@@ -22,6 +22,7 @@ spec:
         parameters:
           - name: signal_files_formatted_str
           - name: control_files_formatted_str
+          - name: chipmentation
           - name: out_bed_filename
           - name: out_pq_values_filename
           - name: out_pileups_filename
@@ -59,6 +60,7 @@ spec:
                    -v \
                    ) \
                && if ! [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
+               && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS+=( -j ); fi \
                && echo 'Genrich command: Genrich ${GENRICH_ARGS[@]}' | tee -a {{inputs.parameters.out_log_filename}} \
                && Genrich ${GENRICH_ARGS[@]} \
                2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
