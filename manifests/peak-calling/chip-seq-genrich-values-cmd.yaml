@@ -45,7 +45,7 @@ spec:
                 && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
                 && GENRICH_ARGS=(
                    -t ${SIGNAL_BAM_FILES} \
-                   -o {{inputs.parameters.out_bed_filename}} \
+                   -X \
                    -f {{inputs.parameters.out_pq_values_filename}} \
                    -k {{inputs.parameters.out_pileups_filename}} \
                    -r \
