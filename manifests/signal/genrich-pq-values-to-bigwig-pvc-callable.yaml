@@ -144,7 +144,7 @@ spec:
           "ls -altrh \
           && rm -f {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
           && bedGraphToBigWig {{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
-          && rm -f {{inputs.parameters.signal-basename}}.sorted.bed \
+          && rm -f {{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}.sorted.bed \
           && ls -altrh" 
         ]
         volumeMounts:
