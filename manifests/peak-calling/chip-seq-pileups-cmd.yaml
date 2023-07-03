@@ -26,7 +26,6 @@ spec:
           - name: out_bed_filename
           - name: out_pq_values_filename
           - name: out_pileups_filename
-          - name: out_log_filename
           - name: out_s3_prefix
           - name: alignments-pvc
           - name: masked-regions-s3-key
@@ -60,6 +59,13 @@ spec:
                && if ! [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
                && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS+=( -j ); fi \
                && Genrich ${GENRICH_ARGS[@]} \
+               && echo aw-artifacts/\
+               {{workflow.creationTimestamp.Y}}/\
+               {{workflow.creationTimestamp.m}}/\
+               {{workflow.creationTimestamp.d}}/\
+               {{workflow.name}}/{{pod.name}}/\
+               main.log \
+               > genrich-run-logs-s3-key.txt \
                && ls -altrh" ]
 
         resources:
@@ -77,6 +83,10 @@ spec:
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.alignments-pvc}}"
       outputs:
+        parameters:
+          - name: genrich-run-logs-s3-key
+            valueFrom:
+              path: /mnt/vol/genrich-run-logs-s3-key.txt
         artifacts:
           - name: pq_values
             path: /mnt/vol/{{inputs.parameters.out_pq_values_filename}}
@@ -86,9 +96,3 @@ spec:
             path: /mnt/vol/{{inputs.parameters.out_pileups_filename}}
             s3:
               key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz"
-          - name: log
-            path: /mnt/vol/{{inputs.parameters.out_log_filename}}
-            archive:
-              none: { }
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_log_filename}}"
