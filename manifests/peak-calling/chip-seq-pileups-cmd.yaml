@@ -40,12 +40,10 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -uef, -o, xtrace, -o, pipefail ]
-        args: [ "ls -altrh | tee -a {{inputs.parameters.out_log_filename}} \
+        args: [ "ls -altrh \
                 && rm -f {{inputs.parameters.out_bed_filename}} *log \
                 && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
                 && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
-                && echo Signal files: ${SIGNAL_BAM_FILES} | tee -a {{inputs.parameters.out_log_filename}} \
-                && echo Control files: ${CONTROL_BAM_FILES} tee -a {{inputs.parameters.out_log_filename}} \
                 && GENRICH_ARGS=(
                    -t ${SIGNAL_BAM_FILES} \
                    -o {{inputs.parameters.out_bed_filename}} \
@@ -61,10 +59,8 @@ spec:
                    ) \
                && if ! [[ -z ${CONTROL_BAM_FILES} ]]; then GENRICH_ARGS+=( -c ${CONTROL_BAM_FILES} ); fi \
                && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS+=( -j ); fi \
-               && echo 'Genrich command: Genrich ${GENRICH_ARGS[@]}' | tee -a {{inputs.parameters.out_log_filename}} \
                && Genrich ${GENRICH_ARGS[@]} \
-               2>&1 | tee -a {{inputs.parameters.out_log_filename}} \
-               && ls -altrh | tee -a {{inputs.parameters.out_log_filename}}" ]
+               && ls -altrh" ]
 
         resources:
           limits:
