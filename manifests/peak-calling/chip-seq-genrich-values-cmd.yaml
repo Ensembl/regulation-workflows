@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-chip-seq-pileups-cmd-v1-submittable
+  name: chip-seq-genrich-values-cmd-v1-submittable
 spec:
-  entrypoint: genrich-chip-seq-pileups-cmd
+  entrypoint: chip-seq-genrich-values-cmd
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
     strategy: OnPodSuccess
 
   templates:
-    - name: genrich-chip-seq-pileups-cmd
+    - name: chip-seq-genrich-values-cmd
       retryStrategy:
         limit: "5"
         backoff:

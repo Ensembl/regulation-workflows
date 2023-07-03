@@ -215,8 +215,8 @@ spec:
               && 
               ( delete-controls-samtools-sort-tasks-pvcs.Succeeded || execute-controls-samtools-sort-tasks.Skipped )
             templateRef:
-              name: genrich-chip-seq-pileups-cmd-v1-submittable
-              template: genrich-chip-seq-pileups-cmd
+              name: chip-seq-genrich-values-cmd-v1-submittable
+              template: chip-seq-genrich-values-cmd
             arguments:
               parameters:
                 - name: signal_files_formatted_str
