@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-pq-values-to-bigwig-pvc-callable-v1-submittable-
+  name: genrich-pq-values-to-bigwig-pvc-callable-v1-submittable
   annotations:
     workflows.argoproj.io/description: |
-      Generate bigwig files (signals) from genrich pq-values files
+      Generate bigwig file (signal) from genrich pq-values file
 spec:
   entrypoint: genrich-pq-values-to-bigwig-pvc-callable
   
@@ -24,7 +24,7 @@ spec:
           - name: pq-values-filename
           - name: chrom-sizes-s3-key
           - name: signal-s3-key
-            
+
       dag:
         tasks:
           - name: create-bed-from-pq-values
@@ -37,7 +37,7 @@ spec:
                   value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}"
                 - name: pvc-name
                   value: "{{inputs.parameters.pvc-name}}"
-          
+
           - name: convert-bed-to-bigwig
             depends: "create-bed-from-pq-values.Succeeded"
             template: convert-bed-to-bigwig-cmd
@@ -49,7 +49,7 @@ spec:
                   value: "{{inputs.parameters.pvc-name}}"
                 - name: chrom-sizes-s3-key
                   value: "{{inputs.parameters.chrom-sizes-s3-key}}"
-          
+
           - name: remove-intermediate-files-from-pvc
             depends: "convert-bed-to-bigwig.Succeeded"
             template: remove-intermediate-files-from-pvc-cmd
@@ -89,7 +89,7 @@ spec:
                   value: "{{inputs.parameters.experiment-id}}"
                 - name: assembly-id
                   value: "{{inputs.parameters.assembly-id}}"
-    
+
 
     - name: create-bed-from-pq-values-cmd
       retryStrategy:
@@ -135,7 +135,7 @@ spec:
           - name: signal-s3-key
           - name: pvc-name
           - name: chrom-sizes-s3-key
-          
+
         artifacts:
           - name: chrom_sizes_file
             path: /mnt/vol/chrom.sizes
@@ -149,11 +149,11 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bedgraphtobigwig:latest
         command: [ bash, -c, -ue, -o, xtrace ]
-        args: [ 
+        args: [
           "ls -altrh \
           && rm -f {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
           && bedGraphToBigWig {{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
-          && ls -altrh" 
+          && ls -altrh"
         ]
         volumeMounts:
           - name: workdir
@@ -191,9 +191,9 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bedsort:latest
         command: [ bash, -c, -ue, -o, xtrace ]
-        args: [ 
+        args: [
           "rm -f {{inputs.parameters.signal-basename}}.bed \
-          && rm -f {{inputs.parameters.signal-basename}}.sorted.bed" 
+          && rm -f {{inputs.parameters.signal-basename}}.sorted.bed"
         ]
 
 

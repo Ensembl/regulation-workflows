@@ -29,7 +29,7 @@ resources:
   - masked-regions/masked-regions-identification.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
   - coverage/bam-to-coverage-bedgraph-pvc-callable.yaml
-  - signal/compute-signal-from-pileup-cmd.yaml
+  - signal/genrich-pq-values-to-bigwig-pvc-callable.yaml
   - samtools/samtools-sort-pvc-callable.yaml
   - samtools/samtools-sort-pvc-callable-v2.yaml
   - samtools/samtools-quickcheck-cmd-pvc-callable.yaml
