@@ -49,6 +49,16 @@ spec:
                   value: "{{inputs.parameters.pvc-name}}"
                 - name: chrom-sizes-s3-key
                   value: "{{inputs.parameters.chrom-sizes-s3-key}}"
+          
+          - name: remove-intermediate-files-from-pvc
+            depends: "convert-bed-to-bigwig.Succeeded"
+            template: remove-intermediate-files-from-pvc-cmd
+            arguments:
+              parameters:
+                - name: signal-basename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-filename']), sprig.base(inputs.parameters['pq-values-filename']))}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
 
           - name: execute-compute-bigwig-file-metadata
             depends: convert-bed-to-bigwig
@@ -102,7 +112,6 @@ spec:
           "ls -altrh \
           && awk 'FNR > 1 { if ($NF != \"NA\" && $NF != \"*\") { print $1\"\t\"$2\"\t\"$3\"\t\"$NF } else if ($NF != \"NA\" && $NF == \"*\") { print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-1) } }' {{inputs.parameters.pq-values-filename}} > {{inputs.parameters.signal-basename}}.bed \
           && bedSort {{inputs.parameters.signal-basename}}.bed {{inputs.parameters.signal-basename}}.sorted.bed \
-          && rm -f {{inputs.parameters.signal-basename}}.bed \
           && ls -altrh"
         ]
         volumeMounts:
@@ -144,7 +153,6 @@ spec:
           "ls -altrh \
           && rm -f {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
           && bedGraphToBigWig {{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
-          && rm -f {{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}.sorted.bed \
           && ls -altrh" 
         ]
         volumeMounts:
@@ -165,6 +173,28 @@ spec:
               none: { }
             s3:
               key: "{{inputs.parameters.signal-s3-key}}"
+
+
+    - name: remove-intermediate-files-from-pvc-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: signal-basename
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ 
+          "rm -f {{inputs.parameters.signal-basename}}.bed \
+          && rm -f {{inputs.parameters.signal-basename}}.sorted.bed" 
+        ]
 
 
     - name: post-signal-file
