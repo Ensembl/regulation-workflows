@@ -240,6 +240,19 @@ spec:
                 - name: masked-regions-filename
                   value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
 
+          - name: save-genrich-logs
+            depends: execute-genrich-task.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{tasks.execute-genrich-task.outputs.parameters.genrich-run-logs-s3-key}}"
+                - name: out-s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.log"
+                
           - name: output-files-post-processing
             depends: execute-genrich-task.Succeeded
             template: dag-output-files-post-processing
