@@ -38,6 +38,7 @@ resources:
   - helpers/delete-patch-pvc-kubectl.yaml
   - helpers/compute-pvc-size.yaml
   - helpers/check-s3-object-exists.yaml
+  - helpers/check-if-s3-objects-exist.yaml
   - helpers/compute-file-metadata.yaml
   - helpers/compute-file-metadata-pvc-callable.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml

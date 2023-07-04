@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: check-if-s3-objects-exist-v1-submittable
+spec:
+  entrypoint: check-if-s3-objects-exist
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: check-if-s3-objects-exist
+      inputs:
+        parameters:
+          - name: s3-keys
+          # TODO: add logic to support check-types all, any, none
+      #          - name: check-type
+      #            value: "all"
+      outputs:
+        parameters:
+          - name: check-response
+            valueFrom:
+              parameter: "{{tasks.collect-output-params.outputs.parameters.check-response}}"
+      dag:
+        tasks:
+          - name: loop-s3-object-exists
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{item}}"
+            withParam: "{{inputs.parameters.s3-keys}}"
+
+          - name: collect-output-params
+            depends: loop-s3-object-exists.Succeeded
+            template: collect
+            arguments:
+              parameters:
+                - name: output-params
+                  value: "{{tasks.loop-s3-object-exists.outputs.parameters.s3-object-exists}}"
+
+    - name: collect
+      inputs:
+        parameters:
+          - name: output-params
+      outputs:
+        parameters:
+          - name: check-response
+            value: "{{=all(jsonpath(inputs.parameters['output-params'], '$'), {# == 'true'})}}"
+      container:
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "echo {{inputs.parameters.output-params}}" ]
