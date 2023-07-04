@@ -46,6 +46,7 @@ resources:
   - helpers/update-task-marker.yaml
   - helpers/copy-s3-prefix-objects-to-pvc.yaml
   - helpers/copy-s3-object-to-pvc.yaml
+  - helpers/cp-s3-object-to-s3.yaml
   - helpers/pvc-to-pvc-copy.yaml
   - helpers/s3-objects-to-pvc.yaml
   - helpers/delete-s3-object.yaml
