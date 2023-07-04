@@ -29,15 +29,42 @@ spec:
           import os
           import hashlib
           import json
+          import logging
           
           def main() -> int:
+          
+            PEAKS_FILE_TYPE = "bed"
+            GENRICH_VALUES_FILE_TYPE = "txt"
+            SIGNAL_FILE_TYPE = "bigwig"
+          
+            map_analysis_type_file_type = {
+              "genrich_pileups": GENRICH_VALUES_FILE_TYPE,
+              "genrich_pq_values": GENRICH_VALUES_FILE_TYPE,
+              "signal": SIGNAL_FILE_TYPE,
+              "atac_seq_peaks": PEAKS_FILE_TYPE,
+              "dnase_seq_peaks": PEAKS_FILE_TYPE,
+              "chip_seq_narrow_peaks": PEAKS_FILE_TYPE,
+              "chip_seq_broad_peaks": PEAKS_FILE_TYPE,
+              "chip_seq_gapped_peaks": PEAKS_FILE_TYPE,
+              "controls_peaks": PEAKS_FILE_TYPE,
+            }
+          
+            analysis_type = "{{inputs.parameters.analysis-type}}"
+          
+            try:
+              file_type = map_analysis_type_file_type[analysis_type]
+            except KeyError as e:
+              logging.error(f"Unknown analysis type: {analysis_type}")
+              return 1
+          
+          
           
             post_data = {
               "experiment_id": "{{inputs.parameters.experiment-id}}",
               "assembly_id": "{{inputs.parameters.assembly-id}}",
               "analysis_type": "{{inputs.parameters.analysis-type}}",
               "file": {
-                "file_type": "bed",
+                "file_type": file_type,
                 "basename": "{{inputs.parameters.basename}}",
                 "size": "{{inputs.parameters.file-size}}",
                 "md5sum": "{{inputs.parameters.md5sum}}",
