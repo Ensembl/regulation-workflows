@@ -30,6 +30,8 @@ spec:
             value: "0"
           - name: limit
             value: "20"
+          # TODO: this parameter should be part of each task definition when it makes sense to have (i.e. ChIP-seq experiments)
+          - name: chipmentation
           - name: masked_regions_prefix
           - name: masked_regions_filename
           - name: overwrite-results
@@ -114,16 +116,16 @@ spec:
             depends: "execute-get-peak-calling-tasks"
             when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
-              name: peak-calling-chip-seq-v1-submittable
+              name: peak-calling-chip-seq-v2-submittable
               template: peak-calling-chip-seq
             arguments:
               parameters:
-                - name: peak_calling_tasks
+                - name: peak-calling-tasks
                   value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: masked_regions_prefix
-                  value: "{{inputs.parameters.masked_regions_prefix}}"
-                - name: masked_regions_filename
-                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
