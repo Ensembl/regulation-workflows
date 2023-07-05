@@ -9,6 +9,9 @@ spec:
   entrypoint: peak-calling-chip-seq
   imagePullSecrets:
     - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
   templates:
     - name: peak-calling-chip-seq
       parallelism: 8
@@ -70,18 +73,21 @@ spec:
                 - name: s3-key
                   value: "{{tasks.compute-peak-calling-task-marker-name.outputs.result}}"
 
-          #TODO: Generalize this to check for both expected output artifacts
-          - name: check-if-pq-values-file-already-in-s3-bucket
+          - name: check-if-pq-values-and-pileups-already-in-s3-bucket
             templateRef:
-              name: check-s3-object-exists-v1-submittable
-              template: check-s3-object-exists
+              name: check-if-s3-objects-exist-v1-submittable
+              template: check-if-s3-objects-exist
             arguments:
               parameters:
-                - name: s3-key
-                  value: "pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt.tgz"
+                - name: s3-keys
+                  value: |
+                    [
+                      "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt.tgz",
+                      "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}pileups-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt.tgz"
+                    ]
 
           - name: check-work-avoidance-consistency
-            depends: "check-if-task-marker-exists && check-if-pq-values-file-already-in-s3-bucket"
+            depends: "check-if-task-marker-exists && check-if-pq-values-and-pileups-already-in-s3-bucket"
             templateRef:
               name: resolve-work-avoidance-v1-submittable
               template: resolve-work-avoidance
@@ -90,7 +96,7 @@ spec:
                 - name: marker-exists
                   value: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}}"
                 - name: output-artifact-exists
-                  value: "{{tasks.check-if-pq-values-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
+                  value: "{{tasks.check-if-pq-values-and-pileups-already-in-s3-bucket.outputs.parameters.check-response}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
@@ -252,7 +258,7 @@ spec:
                 - name: out-s3-key
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
                           {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.log"
-                
+
           - name: output-files-post-processing
             depends: execute-genrich-task.Succeeded
             template: dag-output-files-post-processing
