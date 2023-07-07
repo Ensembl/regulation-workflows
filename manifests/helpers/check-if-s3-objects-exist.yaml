@@ -34,21 +34,27 @@ spec:
 
           - name: collect-output-params
             depends: loop-s3-object-exists.Succeeded
-            template: collect
+            template: check-all-true
             arguments:
               parameters:
-                - name: output-params
+                - name: values
                   value: "{{tasks.loop-s3-object-exists.outputs.parameters.s3-object-exists}}"
 
-    - name: collect
+    - name: check-all-true
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
       inputs:
         parameters:
-          - name: output-params
+          - name: values
       outputs:
         parameters:
           - name: check-response
-            value: "{{=all(jsonpath(inputs.parameters['output-params'], '$'), {# == 'true'})}}"
+            value: "{{=all(jsonpath(inputs.parameters['values'], '$'), {# == 'true'})}}"
       container:
         image: ghcr.io/daugo/ensembl-reg-bash:latest
         command: [ bash, -c, -ue, -o, xtrace ]
-        args: [ "echo {{inputs.parameters.output-params}}" ]
+        args: [ "echo {{inputs.parameters.values}}" ]
