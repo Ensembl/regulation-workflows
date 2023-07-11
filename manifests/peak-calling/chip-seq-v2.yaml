@@ -347,7 +347,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['alignment-info'], '$.file_size')}}"
                 - name: size_factor
-                  value: "3.8"
+                  value: "4.2"
 
           - name: create-pvc
             depends: get-pvc-size.Succeeded
