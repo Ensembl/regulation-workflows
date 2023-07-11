@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: decompress-tgz-pvc-callable-v1-submittable
+spec:
+  entrypoint: decompress-tgz-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: decompress-tgz-pvc-callable
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && tar -I pigz -xvf {{inputs.parameters.filename}} -C . \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
