@@ -385,7 +385,7 @@ spec:
                 f.write(f"{task.out_s3_prefix}broad-{task.out_basename}{params_broad.suffix_portion}.bed")
           
             with open("gapped_s3_keys.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}gapped-{task.out_basename}_n_{params_narrow.suffix_portion}_b_{params_broad.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}gapped-{task.out_basename}_n{params_narrow.suffix_portion}_b{params_broad.suffix_portion}.bed")
           
             return 0
           
