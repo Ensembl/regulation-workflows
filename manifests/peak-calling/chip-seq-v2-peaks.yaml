@@ -171,7 +171,7 @@ spec:
                 - name: out-s3-key
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-peaks-s3-key}}"
                 - name: out-filename
-                  value: "{{=sprig.base(tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters['broad-peaks-s3-key'])}}"
+                  value: "{{=sprig.base(tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['broad-peaks-s3-key'])}}"
 
           - name: execute-write-gapped-peaks
             depends: execute-peak-calling-broad-case.Succeeded
