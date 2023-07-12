@@ -132,8 +132,20 @@ spec:
                 - name: pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
 
-          - name: execute-peak-calling-narrow-case
+          - name: decompress-pq-values
             depends: load-pq-values-to-pvc.Succeeded
+            templateRef:
+              name: decompress-tgz-pvc-callable-v1-submittable
+              template: decompress-tgz-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'))}}"
+
+          - name: execute-peak-calling-narrow-case
+            depends: decompress-pq-values.Succeeded
             #            when: {{tasks.check-if-outputs-exist.outputs.parameters.s3-object-exists}} == false
             template: genrich-re-run-cmd
             arguments:

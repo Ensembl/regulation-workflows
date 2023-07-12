@@ -26,6 +26,7 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
+        imagePullPolicy: Always
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bash:latest
         command: [ bash, -c, -ue, -o, xtrace ]
