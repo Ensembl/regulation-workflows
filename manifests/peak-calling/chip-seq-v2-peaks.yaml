@@ -146,14 +146,13 @@ spec:
 
           - name: execute-peak-calling-narrow-case
             depends: decompress-pq-values.Succeeded
-            #            when: {{tasks.check-if-outputs-exist.outputs.parameters.s3-object-exists}} == false
             template: genrich-re-run-cmd
             arguments:
               parameters:
                 - name: pq-values-pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: pq-values-filename
-                  value: "{{=sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'))}}"
+                  value: "{{=sprig.trimSuffix(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'), sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
                 - name: params-cmd-string
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-parameters-str}}"
                 - name: masked-regions-s3-key
@@ -174,7 +173,7 @@ spec:
                 - name: pq-values-pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: pq-values-filename
-                  value: "{{=sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'))}}"
+                  value: "{{=sprig.trimSuffix(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'), sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
                 - name: params-cmd-string
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-parameters-str}}"
                 - name: masked-regions-s3-key
@@ -386,7 +385,7 @@ spec:
                 f.write(f"{task.out_s3_prefix}broad-{task.out_basename}{params_broad.suffix_portion}.bed")
           
             with open("gapped_s3_keys.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}gapped-{task.out_basename}.bed")
+                f.write(f"{task.out_s3_prefix}gapped-{task.out_basename}_n_{params_narrow.suffix_portion}_b_{params_broad.suffix_portion}.bed")
           
             return 0
           
