@@ -148,7 +148,7 @@ spec:
                 - name: pq-values-pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: pq-values-filename
-                  value: "{{=sprig.trimSuffix(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'), sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
+                  value: "{{=sprig.trimSuffix('.tgz', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
                 - name: params-cmd-string
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-parameters-str}}"
                 - name: out-s3-key
@@ -165,7 +165,7 @@ spec:
                 - name: pq-values-pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: pq-values-filename
-                  value: "{{=sprig.trimSuffix(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'), sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
+                  value: "{{=sprig.trimSuffix('.tgz', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
                 - name: params-cmd-string
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-parameters-str}}"
                 - name: out-s3-key
