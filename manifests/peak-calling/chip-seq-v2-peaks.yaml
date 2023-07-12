@@ -399,11 +399,11 @@ spec:
           - name: gapped-peaks-s3-key
         artifacts:
           - name: narrow_peaks_file
-            path: "/results/{{=sprig.base(inputs.parameters.narrow-peaks-s3-key)}}"
+            path: "/results/{{=sprig.base(inputs.parameters['narrow-peaks-s3-key'])}}"
             s3:
               key: "{{inputs.parameters.narrow-peaks-s3-key}}"
           - name: broad_peaks_file
-            path: "/results/{{=sprig.base(inputs.parameters.broad-peaks-s3-key)}}"
+            path: "/results/{{=sprig.base(inputs.parameters['broad-peaks-s3-key'])}}"
             s3:
               key: "{{inputs.parameters.broad-peaks-s3-key}}"
       container:
@@ -413,13 +413,13 @@ spec:
         args: [ " ls -altrh \
               && SCRIPT_PATH=/usr/local/bin/writeGappedPeaks.py \
               && python ${SCRIPT_PATH} \
-              {{=sprig.base(inputs.parameters.broad-peaks-s3-key)}} \
-              {{=sprig.base(inputs.parameters.narrow-peaks-s3-key)}} \
-              {{=sprig.base(inputs.parameters.gapped-peaks-s3-key)}}" ]
+              {{=sprig.base(inputs.parameters['broad-peaks-s3-key'])}} \
+              {{=sprig.base(inputs.parameters['narrow-peaks-s3-key'])}} \
+              {{=sprig.base(inputs.parameters['gapped-peaks-s3-key'])}}" ]
       outputs:
         artifacts:
           - name: gapped_peaks_file
-            path: "/results/{{=sprig.base(inputs.parameters.gapped-peaks-s3-key)}}"
+            path: "/results/{{=sprig.base(inputs.parameters['gapped-peaks-s3-key'])}}"
             archive:
               none: { }
             s3:
