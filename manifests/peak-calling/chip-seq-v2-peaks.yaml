@@ -34,7 +34,6 @@ spec:
           #                "p_val": 0.1,
           #                "g": 200
           #              }
-          - name: masked-regions-s3-key
           ############################
           - name: overwrite-results
             value: "false"
@@ -51,8 +50,6 @@ spec:
                   value: "{{inputs.parameters.genrich-params-narrow}}"
                 - name: genrich-params-broad
                   value: "{{inputs.parameters.genrich-params-broad}}"
-                - name: masked-regions-s3-key
-                  value: "{{inputs.parameters.masked-regions-s3-key}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
@@ -66,7 +63,6 @@ spec:
           - name: task-payload
           - name: genrich-params-narrow
           - name: genrich-params-broad
-          - name: masked-regions-s3-key
           - name: overwrite-results
           - name: kubeconfig-path
       dag:
@@ -155,10 +151,6 @@ spec:
                   value: "{{=sprig.trimSuffix(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'), sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
                 - name: params-cmd-string
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-parameters-str}}"
-                - name: masked-regions-s3-key
-                  value: "{{inputs.parameters.masked-regions-s3-key}}"
-                - name: masked-regions-filename
-                  value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
                 - name: out-s3-key
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-peaks-s3-key}}"
                 - name: out-filename
@@ -176,10 +168,6 @@ spec:
                   value: "{{=sprig.trimSuffix(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'), sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
                 - name: params-cmd-string
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-parameters-str}}"
-                - name: masked-regions-s3-key
-                  value: "{{inputs.parameters.masked-regions-s3-key}}"
-                - name: masked-regions-filename
-                  value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
                 - name: out-s3-key
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-peaks-s3-key}}"
                 - name: out-filename
@@ -224,16 +212,9 @@ spec:
           - name: pq-values-pvc-name
           - name: pq-values-filename
           - name: params-cmd-string
-          - name: masked-regions-s3-key
-          - name: masked-regions-filename
 
           - name: out-s3-key
           - name: out-filename
-        artifacts:
-          - name: masked-regions-file
-            path: "/mnt/vol/{{inputs.parameters.masked-regions-filename}}"
-            s3:
-              key: "{{inputs.parameters.masked-regions-s3-key}}"
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
@@ -243,11 +224,7 @@ spec:
                   -P \
                   -o {{inputs.parameters.out-filename}} \
                   -f {{inputs.parameters.pq-values-filename}} \
-                  -s 20 \
-                  -r \
                   -y \
-                  -e MT \
-                  -E {{inputs.parameters.masked-regions-filename}} \
                   -v \
                 ) \
                 && GENRICH_ARGS+=( {{inputs.parameters.params-cmd-string}} ) \

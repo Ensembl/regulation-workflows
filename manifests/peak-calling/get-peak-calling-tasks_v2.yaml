@@ -32,14 +32,13 @@ spec:
             value: "20"
           - name: genrich-params-narrow
           - name: genrich-params-broad
-          - name: masked-regions-s3-key
           - name: overwrite-results
             value: "false"
           - name: kubeconfig-path
       dag:
         tasks:
           - name: get-peak-calling-tasks-v2-url
-            template: compute-get-peak-calling-tasks-url
+            template: compute-get-peak-calling-tasks-v2-url
             arguments:
               parameters:
                 - name: svc-name
@@ -125,8 +124,6 @@ spec:
                   value: "{{inputs.parameters.genrich-params-narrow}}"
                 - name: genrich-params-broad
                   value: "{{inputs.parameters.genrich-params-broad}}"
-                - name: masked-regions-s3-key
-                  value: "{{inputs.parameters.masked-regions-s3-key}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
