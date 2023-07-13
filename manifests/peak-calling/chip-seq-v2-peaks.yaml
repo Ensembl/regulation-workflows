@@ -156,6 +156,18 @@ spec:
                 - name: out-filename
                   value: "{{=sprig.base(tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['narrow-peaks-s3-key'])}}"
 
+          - name: save-narrow-case-genrich-logs
+            depends: execute-peak-calling-narrow-case.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{tasks.execute-peak-calling-narrow-case.outputs.parameters.genrich-run-logs-s3-key}}"
+                - name: out-s3-key
+                  value: "{{=sprig.trimSuffix('.bed', tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['narrow-peaks-s3-key'])}}.log"
+
           - name: execute-peak-calling-broad-case
             depends: execute-peak-calling-narrow-case.Succeeded
             when: "{{=jsonpath(inputs.parameters['task-payload'], '$.broad_peaks')}} == true"
@@ -173,6 +185,18 @@ spec:
                 - name: out-filename
                   value: "{{=sprig.base(tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['broad-peaks-s3-key'])}}"
 
+          - name: save-broad-case-genrich-logs
+            depends: execute-peak-calling-broad-case.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{tasks.execute-peak-calling-broad-case.outputs.parameters.genrich-run-logs-s3-key}}"
+                - name: out-s3-key
+                  value: "{{=sprig.trimSuffix('.bed', tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['broad-peaks-s3-key'])}}.log"
+
           - name: execute-write-gapped-peaks
             depends: execute-peak-calling-broad-case.Succeeded
             template: write-gapped-peaks
@@ -184,6 +208,25 @@ spec:
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-peaks-s3-key}}"
                 - name: gapped-peaks-s3-key
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.gapped-peaks-s3-key}}"
+          
+          #          - name: output-files-post-processing
+          #            depends: execute-genrich-task.Succeeded
+          #            template: dag-output-files-post-processing
+          #            arguments:
+          #              parameters:
+          #                - name: pvc-name
+          #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+          #                - name: task-payload
+          #                  value: "{{inputs.parameters.task-payload}}"
+          #                - name: analysis-type-info
+          #                  value: "{{item}}"
+          #            withParam: >-
+          #              [
+          #                { "analysis_type": "genrich_pileups","prefix": "pileups-" ,"suffix": ".txt" },
+          #                { "analysis_type": "genrich_pq_values","prefix": "pq-values-" ,"suffix": ".txt" }
+          #              ]
+
+
 
           - name: delete-peak-calling-pvc
             depends: execute-peak-calling-narrow-case.Succeeded && execute-peak-calling-broad-case
@@ -229,6 +272,13 @@ spec:
                 ) \
                 && GENRICH_ARGS+=( {{inputs.parameters.params-cmd-string}} ) \
                 && Genrich ${GENRICH_ARGS[@]} \
+                && echo aw-artifacts/\
+               {{workflow.creationTimestamp.Y}}/\
+               {{workflow.creationTimestamp.m}}/\
+               {{workflow.creationTimestamp.d}}/\
+               {{workflow.name}}/{{pod.name}}/\
+               main.log \
+               > genrich-run-logs-s3-key.txt \
                 && ls -altrh" ]
         resources:
           limits:
@@ -245,6 +295,11 @@ spec:
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.pq-values-pvc-name}}"
       outputs:
+        parameters:
+          # TODO directly use variables here instead of getting the name from genrich-run-logs-s3-key.txt
+          - name: genrich-run-logs-s3-key
+            valueFrom:
+              path: /mnt/vol/genrich-run-logs-s3-key.txt
         artifacts:
           - name: bed-file
             path: /mnt/vol/{{inputs.parameters.out-filename}}
