@@ -271,6 +271,7 @@ spec:
           import sys
           import json
           import logging
+          import re
           
           from pprint import pprint
           from uuid import UUID
@@ -331,6 +332,9 @@ spec:
                   params_suffix_portion += f"_p_{self.p_val}"
               if self.g is not None:
                   params_suffix_portion += f"_g_{self.g}"
+          
+              params_suffix_portion = re.sub('\.', '_', params_suffix_portion)
+          
               return params_suffix_portion
           
           def main() -> int:
