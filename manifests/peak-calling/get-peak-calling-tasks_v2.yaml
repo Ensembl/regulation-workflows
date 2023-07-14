@@ -185,14 +185,18 @@ spec:
           def main() -> int:
           
             query_params = {
-              "limit": f"{{inputs.parameters.limit}}",
-              "skip": f"{{inputs.parameters.skip}}",
+              "species_name": f"{{inputs.parameters.species_name}}",
               "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
-              "species_name": f"{{inputs.parameters.species_name}}",
-              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
+              "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "limit": f"{{inputs.parameters.limit}}",
             }
           
             parsed_query_params = "".join(
