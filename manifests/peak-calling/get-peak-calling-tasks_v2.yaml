@@ -14,24 +14,37 @@ spec:
     - name: get-peak-calling-tasks-dag
       inputs:
         parameters:
-          - name: assembly_ensembl_accession
-            value: ""
-          - name: experiment_type
-            value: ""
           - name: species_name
             value: ""
-          - name: epigenome_name_contains
+          - name: assembly_ensembl_accession
             value: ""
           - name: epigenome_group_id
             value: ""
+
+          - name: experiment_type
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: experiment_name_contains
+            value: ""
+          - name: target_name_contains
+            value: ""
+          - name: histone_mark_type
+            value: ""
+
+          - name: ad_hoc_playground_prefix
+            value: ""
           - name: output_prefix_label
             value: ""
+
           - name: skip
             value: "0"
           - name: limit
             value: "20"
+
           - name: genrich-params-narrow
           - name: genrich-params-broad
+
           - name: overwrite-results
             value: "false"
           - name: kubeconfig-path
@@ -45,18 +58,30 @@ spec:
                   value: "regulation-pipelines-api-service"
                 - name: namespace
                   value: "regulation-pipelines-api"
+
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
                 - name: assembly_ensembl_accession
                   value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+
                 - name: experiment_type
                   value: "{{inputs.parameters.experiment_type}}"
                 - name: epigenome_name_contains
                   value: "{{inputs.parameters.epigenome_name_contains}}"
-                - name: species_name
-                  value: "{{inputs.parameters.species_name}}"
-                - name: epigenome_group_id
-                  value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: experiment_name_contains
+                  value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: target_name_contains
+                  value: "{{inputs.parameters.target_name_contains}}"
+                - name: histone_mark_type
+                  value: "{{inputs.parameters.histone_mark_type}}"
+
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
                 - name: output_prefix_label
                   value: "{{inputs.parameters.output_prefix_label}}"
+
                 - name: skip
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
