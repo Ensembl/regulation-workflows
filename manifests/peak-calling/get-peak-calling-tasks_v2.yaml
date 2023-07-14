@@ -159,11 +159,18 @@ spec:
         parameters:
           - name: svc-name
           - name: namespace
+
+          - name: species_name
           - name: assembly_ensembl_accession
+          - name: epigenome_group_id
+
           - name: experiment_type
           - name: epigenome_name_contains
-          - name: species_name
-          - name: epigenome_group_id
+          - name: experiment_name_contains
+          - name: target_name_contains
+          - name: histone_mark_type
+
+          - name: ad_hoc_playground_prefix
           - name: output_prefix_label
           - name: skip
           - name: limit
