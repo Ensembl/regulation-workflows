@@ -13,7 +13,7 @@ spec:
 
   templates:
     - name: peak-calling-chip-seq
-      parallelism: 8
+      parallelism: 15
       inputs:
         parameters:
           - name: peak-calling-tasks
