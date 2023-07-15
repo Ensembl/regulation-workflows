@@ -22,6 +22,7 @@ spec:
           - name: assembly-id
           - name: analysis-type
       script:
+        workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
         source: |
@@ -78,7 +79,19 @@ spec:
           
             print(json.dumps(post_data,  indent=2))
           
+            with open("{{inputs.parameters.basename}}.json", mode="w") as f:
+              json.dump(post_data, f, indent=2)
+          
             return 0
           
           if __name__ == '__main__':
               sys.exit(main())
+
+      outputs:
+        artifacts:
+          - name: analysis-file-post-request-payload
+            path: /mnt/vol/{{inputs.parameters.basename}}.json
+            archive:
+              none: { }
+            s3:
+              key: "post-data/{{inputs.parameters.s3-key}}.json"
