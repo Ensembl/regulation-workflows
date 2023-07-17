@@ -545,7 +545,18 @@ spec:
           
             print(json.dumps(post_data,  indent=2))
           
+            with open("{{=sprig.base(inputs.parameters['s3-key'])}}.json", mode="w") as f:
+              json.dump(post_data, f, indent=2)
+          
             return 0
           
           if __name__ == '__main__':
               sys.exit(main())
+      outputs:
+        artifacts:
+          - name: alignment-file-post-request-payload
+            path: /mnt/vol/{{=sprig.base(inputs.parameters['s3-key'])}}.json
+            archive:
+              none: { }
+            s3:
+              key: "post-data/{{inputs.parameters.s3-key}}.json"
