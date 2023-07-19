@@ -1,0 +1,216 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: update-old-genrich-values-files-
+  annotations:
+    workflows.argoproj.io/description: |
+      Update genrich values files and get their post request payloads.
+spec:
+  entrypoint: update-old-genrich-values-files
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: update-old-genrich-values-files
+      parallelism: 8
+      inputs:
+        parameters:
+          - name: peak-calling-tasks
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: execute-peak-calling-task
+            template: dag-update-old-genrich-values-files
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.peak-calling-tasks}}"
+
+
+    - name: dag-update-old-genrich-values-files
+      parallelism: 8
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: update-old-genrich-values-file
+            template: dag-update-old-genrich-values-file
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type
+                  value: "{{item.analysis_type}}"
+                - name: file-prefix
+                  value: "{{item.prefix}}"
+                - name: file-suffix
+                  value: "{{item.suffix}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: >-
+              [
+                { "analysis_type": "genrich_pileups","prefix": "pileups-" ,"suffix": ".txt" },
+                { "analysis_type": "genrich_pq_values","prefix": "pq-values-" ,"suffix": ".txt" }
+              ]      
+
+    - name: dag-update-old-genrich-values-file
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: analysis-type
+          - name: file-prefix
+          - name: file-suffix
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-genrich-values-file-pvc-size
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
+                - name: size_factor
+                  value: "1"
+
+          - name: create-genrich-values-file-pvc
+            depends: get-genrich-values-file-pvc-size.Succeeded
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-genrich-values-file-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: load-genrich-values-file-to-pvc
+            depends: create-genrich-values-file-pvc.Succeeded
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+                - name: filename
+                  value: "{{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+                - name: pvc-name
+                  value: "{{tasks.create-genrich-values-file-pvc.outputs.parameters.pvc-name}}"
+
+          - name: decompress-genrich-values-file
+            depends: load-genrich-values-file-to-pvc.Succeeded
+            templateRef:
+              name: decompress-tgz-pvc-callable-v2-submittable
+              template: decompress-tgz-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-genrich-values-file-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+                - name: out-filename
+                  value: "{{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}"
+
+          - name: compress-genrich-values-file-updated-name
+            depends: decompress-genrich-values-file.Succeeded
+            templateRef:
+              name: compress-tgz-pvc-callable-v1-submittable
+              template: compress-tgz-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-genrich-values-file-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}"
+                - name: out-s3-key
+                  value: "test-update-old-genrich-values/{{=sprig.trimSuffix('-temp/',{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}})}}/\
+                          {{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+
+          - name: compute-genrich-values-file-metadata
+            depends: compress-genrich-values-file-updated-name.Succeeded
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-genrich-values-file-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}"
+
+          - name: get-genrich-values-file-post-request-payload
+            depends: compute-genrich-values-file-metadata.Succeeded
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+                - name: basename
+                  value: "{{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+                - name: file-size
+                  value: "{{tasks.compute-genrich-values-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.compute-genrich-values-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                - name: assembly-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
+                - name: analysis-type
+                  value: "{{inputs.parameters.analysis-type}}"
+
+          - name: delete-genrich-values-file-pvc
+            depends: compute-genrich-values-file-metadata.Succeeded
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-genrich-values-file-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
