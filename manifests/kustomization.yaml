@@ -42,6 +42,7 @@ resources:
   - helpers/check-if-s3-objects-exist.yaml
   - helpers/compute-file-metadata.yaml
   - helpers/compute-file-metadata-pvc-callable.yaml
+  - helpers/compress-tgz-pvc-callable_v1.yaml
   - helpers/decompress-tgz-pvc-callable.yaml
   - helpers/decompress-tgz-pvc-callable_v2.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml

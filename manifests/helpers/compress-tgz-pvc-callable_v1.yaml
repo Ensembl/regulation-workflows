@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compress-tgz-pvc-callable-v1-submittable
+spec:
+  entrypoint: compress-tgz-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: compress-tgz-pvc-callable
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: out-s3-key
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        artifacts:
+          - name: compressed-tgz
+            path: /mnt/vol/{{inputs.parameters.filename}}
+            s3:
+              key: '{{inputs.parameters.out-s3-key}}'
