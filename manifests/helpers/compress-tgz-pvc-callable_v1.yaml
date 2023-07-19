@@ -74,7 +74,7 @@ spec:
           - name: filename
           - name: out-s3-key
           - name: num-threads
-            value: "6"
+            value: "4"
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -93,11 +93,11 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 5900m
-            memory: 12Gi
+            cpu: 3900m
+            memory: 10Gi
           requests:
-            cpu: 5700m
-            memory: 4Gi
+            cpu: 3700m
+            memory: 5Gi
       outputs:
         artifacts:
           - name: compressed-tgz
