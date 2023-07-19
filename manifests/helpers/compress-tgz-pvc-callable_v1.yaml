@@ -11,6 +11,25 @@ spec:
 
   templates:
     - name: compress-tgz-pvc-callable
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: out-s3-key
+      dag:
+        tasks:
+          - name: execute-compress-tgz-pvc-callable
+            template: compress-tgz-pvc-callable-pigz
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: out-s3-key
+                  value: "{{inputs.parameters.out-s3-key}}"
+
+    - name: compress-tgz-pvc-callable-native
       retryStrategy:
         limit: "5"
         backoff:
@@ -39,5 +58,51 @@ spec:
         artifacts:
           - name: compressed-tgz
             path: /mnt/vol/{{inputs.parameters.filename}}
+            s3:
+              key: '{{inputs.parameters.out-s3-key}}'
+
+    - name: compress-tgz-pvc-callable-pigz
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: out-s3-key
+          - name: num-threads
+            value: "6"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && tar cf - {{inputs.parameters.filename}} | \
+                pigz -p {{inputs.parameters.num-threads}} > {{inputs.parameters.filename}}.tgz \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 5900m
+            memory: 12Gi
+          requests:
+            cpu: 5700m
+            memory: 4Gi
+      outputs:
+        artifacts:
+          - name: compressed-tgz
+            path: /mnt/vol/{{inputs.parameters.filename}}.tgz
+            archive:
+              none: { }
             s3:
               key: '{{inputs.parameters.out-s3-key}}'
