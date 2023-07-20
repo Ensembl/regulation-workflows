@@ -144,7 +144,7 @@ spec:
             depends: decompress-genrich-values-file.Succeeded
             templateRef:
               name: compress-tgz-pvc-callable-v1-submittable
-              template: compress-tgz-pvc-callable
+              template: compress-tgz-pvc-callable-pigz
             arguments:
               parameters:
                 - name: pvc-name
