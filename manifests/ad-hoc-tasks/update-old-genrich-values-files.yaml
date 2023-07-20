@@ -153,15 +153,36 @@ spec:
                   value: "{{inputs.parameters.file-prefix}}\
                           {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
                           {{inputs.parameters.file-suffix}}"
-                - name: out-s3-key
-                  value: "test-update-old-genrich-values/{{=sprig.trimSuffix('-temp/', jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix'))}}/\
-                          {{inputs.parameters.file-prefix}}\
+                - name: out-filename
+                  value: "{{inputs.parameters.file-prefix}}\
                           {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
                           {{inputs.parameters.file-suffix}}\
                           .tgz"
 
-          - name: compute-genrich-values-file-metadata
+          - name: save-compress-genrich-values-file-to-s3
             depends: compress-genrich-values-file-updated-name.Succeeded
+            templateRef:
+              name: from-pvc-to-s3-object-v1-submittable
+              template: from-pvc-to-s3-object
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-genrich-values-file-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{tasks.compress-genrich-values-file-updated-name.outputs.parameters.out-filename}}"
+                - name: s3-key
+                  value: "{{=sprig.trimSuffix('-temp/', jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix'))}}/\
+                          {{inputs.parameters.file-prefix}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{inputs.parameters.file-suffix}}\
+                          .tgz"
+                - name: cpu-limit
+                  value: "6000m"
+                - name: memory-limit
+                  value: "20Gi"
+
+          - name: compute-genrich-values-file-metadata
+            depends: save-compress-genrich-values-file-to-s3.Succeeded
             templateRef:
               name: compute-file-metadata-pvc-callable-v1-submittable
               template: compute-file-metadata-pvc-callable
