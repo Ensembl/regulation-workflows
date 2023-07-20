@@ -36,7 +36,9 @@ resources:
   - samtools/samtools-quickcheck-cmd-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/create-nfs-pvc-kubectl.yaml
+  - helpers/delete-file-from-pvc.yaml
   - helpers/delete-patch-pvc-kubectl.yaml
+  - helpers/delete-s3-object.yaml
   - helpers/compute-pvc-size.yaml
   - helpers/check-s3-object-exists.yaml
   - helpers/check-if-s3-objects-exist.yaml
@@ -54,7 +56,6 @@ resources:
   - helpers/cp-s3-object-to-s3.yaml
   - helpers/pvc-to-pvc-copy.yaml
   - helpers/s3-objects-to-pvc.yaml
-  - helpers/delete-s3-object.yaml
   - helpers/copy-from-pvc-to-s3-object.yaml
   - helpers/validate-expected-number-of-files-in-dir.yaml
   - helpers/check-if-field-present-and-not-empty.yaml
