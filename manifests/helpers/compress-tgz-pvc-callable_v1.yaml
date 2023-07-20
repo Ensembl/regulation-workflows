@@ -3,32 +3,13 @@ kind: WorkflowTemplate
 metadata:
   name: compress-tgz-pvc-callable-v1-submittable
 spec:
-  entrypoint: compress-tgz-pvc-callable
+  entrypoint: compress-tgz-pvc-callable-pigz
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
     strategy: OnPodSuccess
 
   templates:
-    - name: compress-tgz-pvc-callable
-      inputs:
-        parameters:
-          - name: pvc-name
-          - name: filename
-          - name: out-s3-key
-      dag:
-        tasks:
-          - name: execute-compress-tgz-pvc-callable
-            template: compress-tgz-pvc-callable-pigz
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: "{{inputs.parameters.pvc-name}}"
-                - name: filename
-                  value: "{{inputs.parameters.filename}}"
-                - name: out-s3-key
-                  value: "{{inputs.parameters.out-s3-key}}"
-
     - name: compress-tgz-pvc-callable-native
       retryStrategy:
         limit: "5"
@@ -74,7 +55,7 @@ spec:
           - name: filename
           - name: out-s3-key
           - name: num-threads
-            value: "4"
+            value: "7"
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -93,10 +74,10 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 3900m
+            cpu: 6900m
             memory: 10Gi
           requests:
-            cpu: 3700m
+            cpu: 6700m
             memory: 5Gi
       outputs:
         artifacts:
