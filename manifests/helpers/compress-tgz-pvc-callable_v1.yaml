@@ -21,7 +21,7 @@ spec:
         parameters:
           - name: pvc-name
           - name: filename
-          - name: out-s3-key
+          - name: out-filename
           - name: num-threads
             value: "7"
       volumes:
@@ -35,7 +35,8 @@ spec:
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
                 && tar cf - {{inputs.parameters.filename}} | \
-                pigz -p {{inputs.parameters.num-threads}} > {{inputs.parameters.filename}}.tgz \
+                pigz -p {{inputs.parameters.num-threads}} > {{inputs.parameters.out-filename}} \
+                && echo {{inputs.parameters.out-filename}} > out-filename.txt \
                 && ls -altrh" ]
         volumeMounts:
           - name: workdir
@@ -48,10 +49,14 @@ spec:
             cpu: 6700m
             memory: 5Gi
       outputs:
-        artifacts:
-          - name: compressed-tgz
-            path: /mnt/vol/{{inputs.parameters.filename}}.tgz
-            archive:
-              none: { }
-            s3:
-              key: '{{inputs.parameters.out-s3-key}}'
+        parameters:
+          - name: out-filename
+            valueFrom:
+              path: out-filename.txt
+#        artifacts:
+#          - name: compressed-tgz
+#            path: /mnt/vol/{{inputs.parameters.filename}}.tgz
+#            archive:
+#              none: { }
+#            s3:
+#              key: '{{inputs.parameters.out-s3-key}}'
