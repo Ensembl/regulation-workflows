@@ -1,0 +1,97 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: open-chromatin-genrich-values-cmd-v1-submittable
+spec:
+  entrypoint: open-chromatin-genrich-values-cmd
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: open-chromatin-genrich-values-cmd
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: signal_files_formatted_str
+          - name: out_bed_filename
+          - name: out_pq_values_filename
+          - name: out_pileups_filename
+          - name: out_s3_prefix
+          - name: experiment-type
+          - name: alignments-pvc
+          - name: masked-regions-s3-key
+          - name: masked-regions-filename
+        artifacts:
+          - name: masked-regions-file
+            path: /mnt/vol/{{inputs.parameters.masked-regions-filename}}
+            s3:
+              key: "{{inputs.parameters.masked-regions-s3-key}}"
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -uef, -o, xtrace, -o, pipefail ]
+        args: [ "ls -altrh \
+                && rm -f {{inputs.parameters.out_bed_filename}} *log \
+                && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
+                && GENRICH_ARGS=(
+                   -t ${SIGNAL_BAM_FILES} \
+                   -X \
+                   -f {{inputs.parameters.out_pq_values_filename}} \
+                   -k {{inputs.parameters.out_pileups_filename}} \
+                   -r \
+                   -y \
+                   -j \
+                   -q 0.1 \
+                   -s 20 \
+                   -e MT \
+                   -E {{inputs.parameters.masked-regions-filename}} \
+                   -v \
+                   ) \
+               && if [[ {{inputs.parameters.experiment-type}} == 'dnase_seq' ]]; then GENRICH_ARGS+=( -D ); fi \
+               && Genrich ${GENRICH_ARGS[@]} \
+               && echo aw-artifacts/\
+               {{workflow.creationTimestamp.Y}}/\
+               {{workflow.creationTimestamp.m}}/\
+               {{workflow.creationTimestamp.d}}/\
+               {{workflow.name}}/{{pod.name}}/\
+               main.log \
+               > genrich-run-logs-s3-key.txt \
+               && echo {{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_values_filename}}.tgz \
+               > pq_values_s3_key.txt \
+               && echo {{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz \
+               > pileups_s3_key.txt \
+               && ls -altrh" ]
+
+        resources:
+          limits:
+            cpu: 4900m
+            memory: 45Gi
+          requests:
+            cpu: 4700m
+            memory: 41Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.alignments-pvc}}"
+      outputs:
+        parameters:
+          - name: genrich-run-logs-s3-key
+            valueFrom:
+              path: /mnt/vol/genrich-run-logs-s3-key.txt
+          - name: pq_values_s3_key
+            valueFrom:
+              path: /mnt/vol/pq_values_s3_key.txt
+          - name: pileups_s3_key
+            valueFrom:
+              path: /mnt/vol/pileups_s3_key.txt
