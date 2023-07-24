@@ -1,0 +1,103 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: genrich-values-cmd-v1-submittable
+
+spec:
+  entrypoint: dag-genrich-values-cmd
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: dag-genrich-values-cmd
+      inputs:
+        parameters:
+          - name: signal_files_formatted_str
+          - name: control_files_formatted_str
+          - name: chipmentation
+          - name: out_bed_filename
+          - name: out_pq_values_filename
+          - name: out_pileups_filename
+          - name: out_s3_prefix
+          - name: experiment-type
+          - name: alignments-pvc
+          - name: pq-values-pvc
+          - name: pileups-pvc
+          - name: masked-regions-s3-key
+          - name: masked-regions-filename
+      outputs:
+        parameters:
+          - name: genrich-run-logs-s3-key
+            valueFrom:
+              parameter: "{{=tasks?.execute-genrich-values-cmd-chip-seq-case?.outputs?.parameters?.genrich-run-logs-s3-key ?? \
+                          tasks?.execute-genrich-values-cmd-open-chromatin-case?.outputs?.parameters?.genrich-run-logs-s3-key}}"
+      dag:
+        tasks:
+          - name: execute-genrich-values-cmd-chip-seq-case
+            when: "{{inputs.parameters.experiment-type}} == chip_seq"
+            templateRef:
+              name: chip-seq-genrich-values-cmd-v1-submittable
+              template: chip-seq-genrich-values-cmd
+            arguments:
+              parameters:
+                - name: signal_files_formatted_str
+                  value: "{{inputs.parameters.signal_files_formatted_str}}"
+                - name: control_files_formatted_str
+                  value: "{{inputs.parameters.control_files_formatted_str}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: out_bed_filename
+                  value: "{{inputs.parameters.out_bed_filename}}"
+                - name: out_pq_values_filename
+                  value: "{{inputs.parameters.out_pq_values_filename}}"
+                - name: out_pileups_filename
+                  value: "{{inputs.parameters.out_pileups_filename}}"
+                - name: out_s3_prefix
+                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: experiment-type
+                  value: "{{inputs.parameters.experiment-type}}"
+                - name: alignments-pvc
+                  value: "{{inputs.parameters.alignments-pvc}}"
+                - name: pq-values-pvc
+                  value: "{{inputs.parameters.pq-values-pvc}}"
+                - name: pileups-pvc
+                  value: "{{inputs.parameters.pileups-pvc}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: masked-regions-filename
+                  value: "{{inputs.parameters.masked-regions-filename}}"
+
+          - name: execute-genrich-values-cmd-open-chromatin-case
+            when: >-
+              ( {{inputs.parameters.experiment-type}} == atac_seq ) ||
+              ( {{inputs.parameters.experiment-type}} == dnase_seq )
+            templateRef:
+              name: open-chromatin-genrich-values-cmd-v1-submittable
+              template: open-chromatin-genrich-values-cmd
+            arguments:
+              parameters:
+                - name: signal_files_formatted_str
+                  value: "{{inputs.parameters.signal_files_formatted_str}}"
+                - name: out_bed_filename
+                  value: "{{inputs.parameters.out_bed_filename}}"
+                - name: out_pq_values_filename
+                  value: "{{inputs.parameters.out_pq_values_filename}}"
+                - name: out_pileups_filename
+                  value: "{{inputs.parameters.out_pileups_filename}}"
+                - name: out_s3_prefix
+                  value: "{{inputs.parameters.out_s3_prefix}}"
+                - name: experiment-type
+                  value: "{{inputs.parameters.experiment-type}}"
+                - name: alignments-pvc
+                  value: "{{inputs.parameters.alignments-pvc}}"
+                - name: pq-values-pvc
+                  value: "{{inputs.parameters.pq-values-pvc}}"
+                - name: pileups-pvc
+                  value: "{{inputs.parameters.pileups-pvc}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: masked-regions-filename
+                  value: "{{inputs.parameters.masked-regions-filename}}"
+
