@@ -49,6 +49,7 @@ resources:
   - helpers/decompress-tgz-pvc-callable.yaml
   - helpers/decompress-tgz-pvc-callable_v2.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml
+  - helpers/delete-request-from-reg-pipelines-api.yaml
   - helpers/compute-task-marker-name.yaml
   - helpers/resolve-work-avoidance.yaml
   - helpers/update-task-marker.yaml

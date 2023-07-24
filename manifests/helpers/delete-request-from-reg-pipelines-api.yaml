@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: delete-request-from-reg-pipelines-api-v1-submittable
+spec:
+  entrypoint: delete-request-from-reg-pipelines-api
+
+  templates:
+    - name: delete-request-from-reg-pipelines-api
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: url
+      http:
+        method: DELETE
+        url: "{{inputs.parameters.url}}"
