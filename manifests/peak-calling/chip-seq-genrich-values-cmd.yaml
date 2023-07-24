@@ -28,6 +28,8 @@ spec:
           - name: out_pileups_filename
           - name: out_s3_prefix
           - name: alignments-pvc
+          - name: pq-values-pvc
+          - name: pileups-pvc
           - name: masked-regions-s3-key
           - name: masked-regions-filename
         artifacts:
@@ -46,8 +48,8 @@ spec:
                 && GENRICH_ARGS=(
                    -t ${SIGNAL_BAM_FILES} \
                    -X \
-                   -f {{inputs.parameters.out_pq_values_filename}} \
-                   -k {{inputs.parameters.out_pileups_filename}} \
+                   -f /mnt/vol_pq_values/{{inputs.parameters.out_pq_values_filename}} \
+                   -k /mnt/vol_pileups/{{inputs.parameters.out_pileups_filename}} \
                    -r \
                    -y \
                    -q 0.1 \
@@ -66,10 +68,6 @@ spec:
                {{workflow.name}}/{{pod.name}}/\
                main.log \
                > genrich-run-logs-s3-key.txt \
-               && echo {{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_values_filename}}.tgz \
-               > pq_values_s3_key.txt \
-               && echo {{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz \
-               > pileups_s3_key.txt \
                && ls -altrh" ]
 
         resources:
@@ -82,18 +80,22 @@ spec:
         volumeMounts:
           - name: workdir
             mountPath: /mnt/vol
+          - name: pq-values-vol
+            mountPath: /mnt/vol_pq_values
+          - name: pileups-vol
+            mountPath: /mnt/vol_pileups
       volumes:
         - name: workdir
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.alignments-pvc}}"
+        - name: pq-values-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pq-values-pvc}}"
+        - name: pileups-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pileups-pvc}}"
       outputs:
         parameters:
           - name: genrich-run-logs-s3-key
             valueFrom:
               path: /mnt/vol/genrich-run-logs-s3-key.txt
-          - name: pq_values_s3_key
-            valueFrom:
-              path: /mnt/vol/pq_values_s3_key.txt
-          - name: pileups_s3_key
-            valueFrom:
-              path: /mnt/vol/pileups_s3_key.txt
