@@ -66,6 +66,10 @@ spec:
                {{workflow.name}}/{{pod.name}}/\
                main.log \
                > genrich-run-logs-s3-key.txt \
+               && echo {{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_values_filename}}.tgz \
+               > pq_values_s3_key.txt \
+               && echo {{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz \
+               > pileups_s3_key.txt \
                && ls -altrh" ]
 
         resources:
@@ -87,12 +91,9 @@ spec:
           - name: genrich-run-logs-s3-key
             valueFrom:
               path: /mnt/vol/genrich-run-logs-s3-key.txt
-        artifacts:
-          - name: pq_values
-            path: /mnt/vol/{{inputs.parameters.out_pq_values_filename}}
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pq_values_filename}}.tgz"
-          - name: pileups
-            path: /mnt/vol/{{inputs.parameters.out_pileups_filename}}
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileups_filename}}.tgz"
+          - name: pq_values_s3_key
+            valueFrom:
+              path: /mnt/vol/pq_values_s3_key.txt
+          - name: pileups_s3_key
+            valueFrom:
+              path: /mnt/vol/pileups_s3_key.txt
