@@ -61,6 +61,22 @@ spec:
                 - name: masked-regions-filename
                   value: "{{inputs.parameters.masked-regions-filename}}"
 
+          # TODO: Deduplicate save-genrich-logs template. Expr nil coalescing operator not working as expected
+          # I tried something like this:
+          # {{=tasks['execute-genrich-values-cmd-chip-seq-case']?.outputs?.parameters?['genrich-run-logs-s3-key'] ?? tasks['execute-genrich-values-cmd-open-chromatin-case'].outputs.parameters['genrich-run-logs-s3-key']}}
+          - name: save-genrich-logs-chip-seq-case
+            depends: execute-genrich-values-cmd-chip-seq-case.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{=tasks['execute-genrich-values-cmd-chip-seq-case'].outputs.parameters['genrich-run-logs-s3-key']}}"
+                - name: out-s3-key
+                  value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.log"
+
+
           - name: execute-genrich-values-cmd-open-chromatin-case
             when: >-
               ( {{inputs.parameters.experiment-type}} == atac_seq ) ||
@@ -91,19 +107,14 @@ spec:
                 - name: masked-regions-filename
                   value: "{{inputs.parameters.masked-regions-filename}}"
 
-          - name: save-genrich-logs
-            depends: |
-              execute-genrich-values-cmd-chip-seq-case.Succeeded || 
-              execute-genrich-values-cmd-open-chromatin-case.Succeeded
+          - name: save-genrich-logs-open-chromatin-case
+            depends: execute-genrich-values-cmd-open-chromatin-case.Succeeded
             templateRef:
               name: cp-s3-object-to-s3-v1-submittable
               template: cp-s3-object-to-s3
             arguments:
               parameters:
                 - name: in-s3-key
-                  value: "{{=tasks['execute-genrich-values-cmd-chip-seq-case']?.outputs?.parameters?['genrich-run-logs-s3-key'] ?? \
-                          tasks['execute-genrich-values-cmd-open-chromatin-case']outputs.parameters['genrich-run-logs-s3-key']}}"
+                  value: "{{=tasks['execute-genrich-values-cmd-open-chromatin-case'].outputs.parameters['genrich-run-logs-s3-key']}}"
                 - name: out-s3-key
                   value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.log"
-
-
