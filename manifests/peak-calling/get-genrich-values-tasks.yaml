@@ -1,0 +1,188 @@
+apiVersion: argoproj.io/v1alpha1
+#kind: WorkflowTemplate
+kind: Workflow
+metadata:
+  generateName: get-genrich-values-tasks-
+spec:
+  entrypoint: get-genrich-values-tasks-dag
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: get-genrich-values-tasks-dag
+      inputs:
+        parameters:
+          - name: species_name
+            value: ""
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+
+          - name: experiment_type
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: experiment_name_contains
+            value: ""
+          - name: target_name_contains
+            value: ""
+          - name: histone_mark_type
+            value: ""
+
+          - name: ad_hoc_playground_prefix
+            value: ""
+          - name: output_prefix_label
+            value: ""
+
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+
+          - name: chipmentation
+            value: ""
+          - name: masked-regions-s3-key
+
+          - name: overwrite-results
+            value: "false"
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-genrich-values-tasks-url
+            template: compute-get-genrich-values-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: experiment_name_contains
+                  value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: target_name_contains
+                  value: "{{inputs.parameters.target_name_contains}}"
+                - name: histone_mark_type
+                  value: "{{inputs.parameters.histone_mark_type}}"
+
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
+
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+
+          - name: execute-get-genrich-values-tasks
+            depends: get-genrich-values-tasks-url.Succeeded
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-genrich-values-tasks-url.outputs.result}}"
+
+
+          - name: submit-genrich-values-tasks
+            depends: "execute-get-genrich-values-tasks"
+            when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
+            templateRef:
+              name: genrich-values-v1-submittable
+              template: genrich-values
+            arguments:
+              parameters:
+                - name: peak-calling-tasks
+                  value: "{{tasks.execute-get-genrich-values-tasks.outputs.result}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+    - name: compute-get-genrich-values-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+
+          - name: species_name
+          - name: assembly_ensembl_accession
+          - name: epigenome_group_id
+
+          - name: experiment_type
+          - name: epigenome_name_contains
+          - name: experiment_name_contains
+          - name: target_name_contains
+          - name: histone_mark_type
+
+          - name: ad_hoc_playground_prefix
+          - name: output_prefix_label
+          - name: skip
+          - name: limit
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            query_params = {
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
+              "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "limit": f"{{inputs.parameters.limit}}",
+            }
+          
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/peak_calling_tasks"
+                  f"?{parsed_query_params}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
