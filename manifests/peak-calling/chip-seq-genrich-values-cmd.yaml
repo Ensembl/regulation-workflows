@@ -23,7 +23,6 @@ spec:
           - name: signal_files_formatted_str
           - name: control_files_formatted_str
           - name: chipmentation
-          - name: out_bed_filename
           - name: out_pq_values_filename
           - name: out_pileups_filename
           - name: out_s3_prefix
@@ -42,7 +41,7 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
         command: [ bash, -c, -uef, -o, xtrace, -o, pipefail ]
         args: [ "ls -altrh \
-                && rm -f {{inputs.parameters.out_bed_filename}} *log \
+                && rm -f /mnt/vol_pq_values/* /mnt/vol_pileups/* \
                 && SIGNAL_BAM_FILES={{inputs.parameters.signal_files_formatted_str}} \
                 && CONTROL_BAM_FILES={{inputs.parameters.control_files_formatted_str}} \
                 && GENRICH_ARGS=(

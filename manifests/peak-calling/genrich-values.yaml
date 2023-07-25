@@ -268,14 +268,14 @@ spec:
                   value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}}"
                 - name: chipmentation
                   value: "{{inputs.parameters.chipmentation}}"
-                - name: out_bed_filename
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.bed"
                 - name: out_pileups_filename
                   value: "pileups-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
                 - name: out_pq_values_filename
                   value: "pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
                 - name: out_s3_prefix
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}"
+                - name: out_basename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
                 - name: experiment-type
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}"
                 - name: alignments-pvc
