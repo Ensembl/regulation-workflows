@@ -101,8 +101,8 @@ spec:
             arguments:
               parameters:
                 - name: in-s3-key
-                  value: "{{=tasks.execute-genrich-values-cmd-chip-seq-case.outputs?.parameters?.genrich-run-logs-s3-key ?? \
-                          tasks.execute-genrich-values-cmd-open-chromatin-case.outputs.parameters.genrich-run-logs-s3-key}}"
+                  value: "{{=tasks['execute-genrich-values-cmd-chip-seq-case']?.outputs?.parameters?['genrich-run-logs-s3-key'] ?? \
+                          tasks['execute-genrich-values-cmd-open-chromatin-case']outputs.parameters['genrich-run-logs-s3-key']}}"
                 - name: out-s3-key
                   value: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_basename}}.log"
 
