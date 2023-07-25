@@ -102,7 +102,6 @@ spec:
 
           - name: submit-genrich-values-tasks
             depends: "execute-get-genrich-values-tasks"
-            when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
               name: genrich-values-v1-submittable
               template: genrich-values
