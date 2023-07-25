@@ -27,12 +27,6 @@ spec:
           - name: pileups-pvc
           - name: masked-regions-s3-key
           - name: masked-regions-filename
-      outputs:
-        parameters:
-          - name: genrich-run-logs-s3-key
-            valueFrom:
-              parameter: "{{=tasks?.execute-genrich-values-cmd-chip-seq-case?.outputs?.parameters?.genrich-run-logs-s3-key ?? \
-                          tasks?.execute-genrich-values-cmd-open-chromatin-case?.outputs?.parameters?.genrich-run-logs-s3-key}}"
       dag:
         tasks:
           - name: execute-genrich-values-cmd-chip-seq-case
@@ -100,4 +94,20 @@ spec:
                   value: "{{inputs.parameters.masked-regions-s3-key}}"
                 - name: masked-regions-filename
                   value: "{{inputs.parameters.masked-regions-filename}}"
+
+          - name: save-genrich-logs
+            depends: |
+              execute-genrich-values-cmd-chip-seq-case.Succeeded || 
+              execute-genrich-values-cmd-open-chromatin-case.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{tasks.execute-genrich.outputs.parameters.genrich-run-logs-s3-key}}"
+                - name: out-s3-key
+                  value: "{{=tasks.execute-genrich-values-cmd-chip-seq-case.outputs?.parameters?.genrich-run-logs-s3-key ?? \
+                          tasks.execute-genrich-values-cmd-open-chromatin-case.outputs.parameters.genrich-run-logs-s3-key}}"
+
 
