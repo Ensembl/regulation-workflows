@@ -315,13 +315,15 @@ spec:
             withParam: >-
               [
                 { "analysis_type": "genrich_pq_values",
-                  "prefix": "pq-values-" ,"suffix": ".txt",
+                  "prefix": "pq-values-",
+                  "suffix": ".txt",
                   "pvc-name": "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
                 },
                 { "analysis_type": "genrich_pileups",
-                  "prefix": "pileups-" ,"suffix": ".txt",
+                  "prefix": "pileups-",
+                  "suffix": ".txt",
                   "pvc-name": "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}" 
-                },
+                }
               ]
 
           # Maybe here assert that output files exist in S3 before updating task marker
