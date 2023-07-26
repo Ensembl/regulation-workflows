@@ -495,7 +495,8 @@ spec:
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
                           {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
                           {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
-                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}\
+                          .tgz"
                 - name: basename
                   value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
                           {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
@@ -510,6 +511,48 @@ spec:
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
                 - name: analysis-type
                   value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.analysis_type')}}"
+
+          - name: compress-file
+            depends: compute-output-file-metadata.Succeeded
+            templateRef:
+              name: compress-tgz-pvc-callable-v1-submittable
+              template: compress-tgz-pvc-callable-pigz
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: out-filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}\
+                          .tgz"
+
+          - name: save-file-to-s3
+            depends: compress-file.Succeeded
+            templateRef:
+              name: from-pvc-to-s3-object-v1-submittable
+              template: from-pvc-to-s3-object
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{tasks.compress-file.outputs.parameters.out-filename}}"
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}\
+                          .tgz"
+                - name: cpu-limit
+                  value: "6000m"
+                - name: memory-limit
+                  value: "20Gi"
+
 
 
     - name: edit-genrich-input-filenames-formatted
