@@ -1,0 +1,385 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: get-signal-tasks-
+  annotations:
+    workflows.argoproj.io/description: |
+      Generate bigwig files from genrich pq-value files
+spec:
+  entrypoint: get-signal-tasks-dag
+  
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+
+    - name: get-signal-tasks-dag
+      inputs:
+        parameters:
+          - name: species_name
+            value: ""
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+
+          - name: experiment_type
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: experiment_name_contains
+            value: ""
+          - name: target_name_contains
+            value: ""
+          - name: histone_mark_type
+            value: ""
+
+          - name: ad_hoc_playground_prefix
+            value: ""
+          - name: output_prefix_label
+            value: ""
+
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+
+          - name: genrich-params-narrow
+            value: ""
+          - name: genrich-params-broad
+            value: ""
+
+          - name: overwrite-results
+            value: "false"
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-signal-tasks-url
+            template: compute-get-signal-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: experiment_name_contains
+                  value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: target_name_contains
+                  value: "{{inputs.parameters.target_name_contains}}"
+                - name: histone_mark_type
+                  value: "{{inputs.parameters.histone_mark_type}}"
+
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
+
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+          
+          - name: submit-get-request-from-reg-pipelines-api
+            depends: "get-signal-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v1-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-signal-tasks-url.outputs.result}}"
+
+          - name: submit-signal-tasks
+            depends: "submit-get-request-from-reg-pipelines-api"
+            template: signal-tasks-dag
+            arguments:
+              parameters:
+                - name: signal-tasks
+                  value: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.result}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+    - name: compute-get-signal-tasks-url
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: species_name
+          - name: assembly_ensembl_accession
+          - name: epigenome_group_id
+          - name: experiment_type
+          - name: epigenome_name_contains
+          - name: experiment_name_contains
+          - name: target_name_contains
+          - name: histone_mark_type
+          - name: ad_hoc_playground_prefix
+          - name: output_prefix_label
+          - name: skip
+          - name: limit
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            query_params = {
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
+              "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "limit": f"{{inputs.parameters.limit}}",
+            }
+          
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/signal_tasks"
+                  f"?{parsed_query_params}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+
+
+    - name: signal-tasks-dag
+      parallelism: 8
+      inputs:
+        parameters:
+          - name: signal-tasks
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: submit-pq-values-to-bigwig
+            template: genrich-pq-values-to-bigwig-dag
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: experiment-id
+                  value: "{{item.experiment_id}}"
+                - name: assembly-id
+                  value: "{{item.assembly_id}}"
+                - name: chrom-sizes-s3-key
+                  value: "{{item.chrom_sizes_s3_key}}"
+                - name: out-s3-key
+                  value: "{{item.out_s3_prefix}}{{item.out_basename}}.bw"
+                - name: pq-values-s3-key
+                  value: "{{item.pq_values_s3_key}}"
+                - name: pq-values-file-size
+                  value: "{{item.pq_values_file_size}}"
+                - name: pq-values-md5sum
+                  value: "{{item.pq_values_md5sum}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: force-update-task-markers
+                  value: "false"
+            withParam: "{{inputs.parameters.signal-tasks}}"
+
+
+    - name: genrich-pq-values-to-bigwig-dag
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: experiment-id
+          - name: assembly-id
+          - name: chrom-sizes-s3-key
+          - name: out-s3-key
+          - name: pq-values-s3-key
+          - name: pq-values-file-size
+          - name: pq-values-md5sum
+          - name: kubeconfig-path
+          - name: overwrite-results
+          - name: force-update-task-markers
+            value: "false"
+
+      dag:
+        tasks:
+          - name: compute-signal-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: task-type
+                  value: "signal"
+
+          - name: check-if-task-marker-exists
+            depends: compute-signal-task-marker-name
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
+
+          - name: check-if-bigwig-file-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out-s3-key}}"
+
+          - name: check-work-avoidance-consistency
+            depends: "check-if-task-marker-exists && check-if-bigwig-file-already-in-s3-bucket"
+            templateRef:
+              name: resolve-work-avoidance-v1-submittable
+              template: resolve-work-avoidance
+            arguments:
+              parameters:
+                - name: marker-exists
+                  value: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}}"
+                - name: output-artifact-exists
+                  value: "{{tasks.check-if-bigwig-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+
+          - name: get-signal-pvc-size
+            depends: check-work-avoidance-consistency
+            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{inputs.parameters.pq-values-file-size}}"
+                - name: size_factor
+                  value: "3"
+
+          - name: create-signal-pvc
+            depends: "get-signal-pvc-size.Succeeded"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-signal-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: copy-pq-value-from-s3-to-pvc
+            depends: "create-signal-pvc"
+            templateRef: 
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.pq-values-s3-key}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['pq-values-s3-key'])}}"
+                - name: pvc-name
+                  value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
+
+          - name: unzip-pq-values-file
+            depends: copy-pq-value-from-s3-to-pvc
+            templateRef: 
+              name: decompress-tgz-pvc-callable-v2-submittable
+              template: decompress-tgz-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['pq-values-s3-key'])}}"
+                - name: out-filename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-s3-key']), sprig.base(inputs.parameters['pq-values-s3-key']))}}"
+          
+          - name: genrich-pq-values-to-bigwig
+            depends: unzip-pq-values-file
+            templateRef:
+              name: genrich-pq-values-to-bigwig-pvc-callable-v1-submittable
+              template: genrich-pq-values-to-bigwig-pvc-callable
+            arguments:
+              parameters:
+                - name: experiment-id
+                  value: "{{inputs.parameters.experiment-id}}"
+                - name: assembly-id
+                  value: "{{inputs.parameters.assembly-id}}"
+                - name: pvc-name
+                  value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
+                - name: pq-values-filename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-s3-key']), sprig.base(inputs.parameters['pq-values-s3-key']))}}"
+                - name: chrom-sizes-s3-key
+                  value: "{{inputs.parameters.chrom-sizes-s3-key}}"
+                - name: signal-s3-key
+                  value: "{{inputs.parameters.out-s3-key}}"
+
+          - name: update-signal-task-marker
+            depends: "genrich-pq-values-to-bigwig || check-work-avoidance-consistency.Failed"
+            when: >-
+              ( ( {{inputs.parameters.force-update-task-markers}} == true 
+              && {{tasks.check-work-avoidance-consistency.status}} == Failed ) 
+              || {{tasks.genrich-pq-values-to-bigwig.status}} == Succeeded )
+            templateRef:
+              name: update-task-marker-v1-submittable
+              template: update-task-marker
+            arguments:
+              parameters:
+                - name: task-marker-s3-key
+                  value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+          
+          - name: delete-signal-pvc
+            depends: genrich-pq-values-to-bigwig
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
