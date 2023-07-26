@@ -61,7 +61,7 @@ spec:
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
                 - name: task-type
-                  value: "peak-calling"
+                  value: "genrich-values"
 
           - name: check-if-task-marker-exists
             depends: compute-peak-calling-task-marker-name
