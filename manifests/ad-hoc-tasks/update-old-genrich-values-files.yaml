@@ -86,7 +86,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
                 - name: size_factor
-                  value: "1"
+                  value: "1.3"
 
           - name: create-genrich-values-file-pvc
             depends: get-genrich-values-file-pvc-size.Succeeded
