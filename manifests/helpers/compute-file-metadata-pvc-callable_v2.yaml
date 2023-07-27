@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compute-file-metadata-pvc-callable-v2-submittable
+spec:
+  entrypoint: compute-file-metadata-pvc-callable
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: compute-file-metadata-pvc-callable
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && FILENAME={{inputs.parameters.filename}} \
+                && file_size=$(stat -c%s $FILENAME) \
+                && echo $file_size > file_size.txt \
+                && md5sum=$(md5sum $FILENAME | cut -d' ' -f1) \
+                && echo $md5sum > md5sum.txt \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        parameters:
+          - name: file-size
+            valueFrom:
+              path: /mnt/vol/file_size.txt
+          - name: md5sum
+            valueFrom:
+              path: /mnt/vol/md5sum.txt
