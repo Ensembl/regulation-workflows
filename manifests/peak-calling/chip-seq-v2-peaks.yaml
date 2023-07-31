@@ -98,9 +98,9 @@ spec:
             arguments:
               parameters:
                 - name: associated_files_size
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.pq_values_file_size')}}"
                 - name: size_factor
-                  value: "1"
+                  value: "1.8"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
