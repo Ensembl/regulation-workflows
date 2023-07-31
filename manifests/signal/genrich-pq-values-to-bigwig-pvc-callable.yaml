@@ -151,7 +151,15 @@ spec:
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [
           "ls -altrh \
-          && awk 'FNR > 1 { if ($(NF-{{inputs.parameters.offset}}) != \"NA\" && $NF != \"*\") { print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-{{inputs.parameters.offset}}) } else if ($(NF-{{inputs.parameters.offset}}-1) != \"NA\" && $NF == \"*\") { print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-{{inputs.parameters.offset}}-1) } }' {{inputs.parameters.pq-values-filename}} > {{inputs.parameters.signal-basename}}.bed \
+          && awk '
+            FNR > 1 {
+              if ($(NF-{{inputs.parameters.offset}}) != \"NA\" && $NF != \"*\") {
+                print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-{{inputs.parameters.offset}})
+              } else if ($(NF-{{inputs.parameters.offset}}-1) != \"NA\" && $NF == \"*\") { 
+                print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-{{inputs.parameters.offset}}-1) 
+              } 
+            }
+          ' {{inputs.parameters.pq-values-filename}} > {{inputs.parameters.signal-basename}}.bed \
           && bedSort {{inputs.parameters.signal-basename}}.bed {{inputs.parameters.signal-basename}}.sorted.bed \
           && ls -altrh"
         ]
@@ -161,10 +169,10 @@ spec:
         resources:
           limits:
             cpu: 2900m
-            memory: 58Gi
+            memory: 80Gi
           requests:
             cpu: 2500m
-            memory: 50Gi
+            memory: 60Gi
 
 
     - name: convert-bed-to-bigwig-cmd
