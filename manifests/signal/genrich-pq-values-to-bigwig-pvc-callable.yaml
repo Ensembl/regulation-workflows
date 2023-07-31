@@ -169,10 +169,10 @@ spec:
         resources:
           limits:
             cpu: 2900m
-            memory: 80Gi
+            memory: 58Gi
           requests:
             cpu: 2500m
-            memory: 60Gi
+            memory: 50Gi
 
 
     - name: convert-bed-to-bigwig-cmd
