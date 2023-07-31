@@ -1,0 +1,225 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: genrich-pq-values-to-bigwig-high-mem-pvc-callable-v1-submittable
+  annotations:
+    workflows.argoproj.io/description: |
+      Generate bigwig file from genrich pq-values file
+spec:
+  entrypoint: genrich-pq-values-to-bigwig-pvc-callable
+  
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: genrich-pq-values-to-bigwig-pvc-callable
+      inputs:
+        parameters:
+          - name: experiment-id
+          - name: assembly-id
+          - name: pvc-name
+          - name: pq-values-filename
+          - name: chrom-sizes-s3-key
+          - name: signal-s3-key
+          - name: p-value-based
+            value: "false"
+
+      dag:
+        tasks:
+          - name: create-bed-from-p-values
+            template: create-bed-from-pq-values-cmd
+            when: >-
+              {{inputs.parameters.p-value-based}} == true
+            arguments:
+              parameters:
+                - name: pq-values-filename
+                  value: "{{inputs.parameters.pq-values-filename}}"
+                - name: signal-basename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: offset
+                  value: "1"
+          
+          - name: create-bed-from-q-values
+            template: create-bed-from-pq-values-cmd
+            when: >-
+              {{inputs.parameters.p-value-based}} == false
+            arguments:
+              parameters:
+                - name: pq-values-filename
+                  value: "{{inputs.parameters.pq-values-filename}}"
+                - name: signal-basename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: offset
+                  value: "0"
+
+          - name: convert-bed-to-bigwig
+            depends: >-
+              create-bed-from-p-values.Succeeded || create-bed-from-q-values.Succeeded
+            template: convert-bed-to-bigwig-cmd
+            arguments:
+              parameters:
+                - name: signal-s3-key
+                  value: "{{inputs.parameters.signal-s3-key}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: chrom-sizes-s3-key
+                  value: "{{inputs.parameters.chrom-sizes-s3-key}}"
+
+          - name: remove-intermediate-bed-file-from-pvc
+            depends: "convert-bed-to-bigwig.Succeeded"
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-filename']), sprig.base(inputs.parameters['pq-values-filename']))}}.bed"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+          
+          - name: remove-intermediate-sorted-bed-file-from-pvc
+            depends: "convert-bed-to-bigwig.Succeeded"
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-filename']), sprig.base(inputs.parameters['pq-values-filename']))}}.sorted.bed"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+
+          - name: execute-compute-bigwig-file-metadata
+            depends: convert-bed-to-bigwig
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['signal-s3-key'])}}"
+
+          - name: execute-post-signal-file
+            depends: execute-compute-bigwig-file-metadata
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.signal-s3-key}}"
+                - name: basename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}"
+                - name: file-size
+                  value: "{{tasks.execute-compute-bigwig-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.execute-compute-bigwig-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{inputs.parameters.experiment-id}}"
+                - name: assembly-id
+                  value: "{{inputs.parameters.assembly-id}}"
+                - name: analysis-type
+                  value: "signal"
+
+
+    - name: create-bed-from-pq-values-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pq-values-filename
+          - name: signal-basename
+          - name: pvc-name
+          - name: offset
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [
+          "ls -altrh \
+          && awk '
+            FNR > 1 {
+              if ($(NF-{{inputs.parameters.offset}}) != \"NA\" && $NF != \"*\") {
+                print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-{{inputs.parameters.offset}})
+              } else if ($(NF-{{inputs.parameters.offset}}-1) != \"NA\" && $NF == \"*\") { 
+                print $1\"\t\"$2\"\t\"$3\"\t\"$(NF-{{inputs.parameters.offset}}-1) 
+              } 
+            }
+          ' {{inputs.parameters.pq-values-filename}} > {{inputs.parameters.signal-basename}}.bed \
+          && bedSort {{inputs.parameters.signal-basename}}.bed {{inputs.parameters.signal-basename}}.sorted.bed \
+          && ls -altrh"
+        ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 200Gi
+          requests:
+            cpu: 2500m
+            memory: 100Gi
+
+
+    - name: convert-bed-to-bigwig-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: signal-s3-key
+          - name: pvc-name
+          - name: chrom-sizes-s3-key
+
+        artifacts:
+          - name: chrom_sizes_file
+            path: /mnt/vol/chrom.sizes
+            s3:
+              key: "{{inputs.parameters.chrom-sizes-s3-key}}"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedgraphtobigwig:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [
+          "ls -altrh \
+          && rm -f {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
+          && bedGraphToBigWig {{=sprig.trimSuffix(sprig.ext(inputs.parameters['signal-s3-key']), sprig.base(inputs.parameters['signal-s3-key']))}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['signal-s3-key'])}} \
+          && ls -altrh"
+        ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 25Gi
+          requests:
+            cpu: 2500m
+            memory: 20Gi
+      outputs:
+        artifacts:
+          - name: final_bigwig
+            path: "/mnt/vol/{{=sprig.base(inputs.parameters['signal-s3-key'])}}"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.signal-s3-key}}"
+ 
