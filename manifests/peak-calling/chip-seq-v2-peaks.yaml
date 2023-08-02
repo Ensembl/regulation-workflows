@@ -415,13 +415,13 @@ spec:
             with open("broad_params_str.txt", 'w') as f:  
                 f.write(params_broad.cmd_portion)
           
-            with open("narrow_s3_keys.txt", 'w') as f:
+            with open("narrow_s3_key.txt", 'w') as f:
                 f.write(f"{task.out_s3_prefix}narrow-{task.out_basename}{params_narrow.suffix_portion}.bed")
           
-            with open("broad_s3_keys.txt", 'w') as f:
+            with open("broad_s3_key.txt", 'w') as f:
                 f.write(f"{task.out_s3_prefix}broad-{task.out_basename}{params_broad.suffix_portion}.bed")
           
-            with open("gapped_s3_keys.txt", 'w') as f:
+            with open("gapped_s3_key.txt", 'w') as f:
                 f.write(f"{task.out_s3_prefix}gapped-{task.out_basename}_n{params_narrow.suffix_portion}_b{params_broad.suffix_portion}.bed")
           
             return 0
@@ -439,13 +439,13 @@ spec:
               path: /results/broad_params_str.txt
           - name: narrow-peaks-s3-key
             valueFrom:
-              path: /results/narrow_s3_keys.txt
+              path: /results/narrow_s3_key.txt
           - name: broad-peaks-s3-key
             valueFrom:
-              path: /results/broad_s3_keys.txt
+              path: /results/broad_s3_key.txt
           - name: gapped-peaks-s3-key
             valueFrom:
-              path: /results/gapped_s3_keys.txt
+              path: /results/gapped_s3_key.txt
 
 
     - name: write-gapped-peaks
