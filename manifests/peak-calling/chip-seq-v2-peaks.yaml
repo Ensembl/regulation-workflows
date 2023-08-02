@@ -131,7 +131,7 @@ spec:
           - name: decompress-pq-values
             depends: load-pq-values-to-pvc.Succeeded
             templateRef:
-              name: decompress-tgz-pvc-callable-v2-submittable
+              name: decompress-tgz-pvc-callable-v1-submittable
               template: decompress-tgz-pvc-callable
             arguments:
               parameters:
