@@ -1,0 +1,372 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: open-chromatin-v2-peaks-v1-submittable
+  annotations:
+    workflows.argoproj.io/description: |
+      Genrich re-runs from Genrich pq_values to generate peaks tracks for ATAC-seq and DNase-seq experiments.
+      Support for narrow and broad peaks.
+spec:
+  entrypoint: peak-calling-open-chromatin
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: peak-calling-open-chromatin
+      parallelism: 15
+      inputs:
+        parameters:
+          - name: peak-calling-tasks
+          #### Genrich parameters ####
+          - name: genrich-params
+          #            value: |
+          #              {
+          #                "a": 800,
+          #                "q_val": null,
+          #                "p_val": 0.1,
+          #                "g": 200
+          #              }
+          ############################
+          - name: overwrite-results
+            value: "false"
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: execute-peak-calling-task
+            template: peak-calling-task
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: genrich-params
+                  value: "{{inputs.parameters.genrich-params}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+            withParam: "{{inputs.parameters.peak-calling-tasks}}"
+
+    - name: peak-calling-task
+      parallelism: 8
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: genrich-params
+          - name: overwrite-results
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-s3-keys-and-set-of-genrich-cmds
+            template: compute-peak-calling-outputs-s3-keys
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: genrich-params
+                  value: "{{inputs.parameters.genrich-params}}"
+
+          #          - name: check-if-outputs-exist
+          #            depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
+          #            templateRef:
+          #              name: check-s3-object-exists-v1-submittable
+          #              template: check-s3-object-exists
+          #            arguments:
+          #              parameters:
+          #                - name: s3-key
+          #                  value: "{{item}}"
+          #            withItems:
+
+          - name: get-peak-calling-pvc-size
+            #            depends: check-if-outputs-exist.Succeeded
+            depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.pq_values_file_size')}}"
+                - name: size_factor
+                  value: "1.8"
+
+          - name: create-peak-calling-pvc
+            depends: get-peak-calling-pvc-size.Succeeded
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: load-pq-values-to-pvc
+            depends: create-peak-calling-pvc.Succeeded
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')}}"
+                - name: filename
+                  value: "{{=sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'))}}"
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+
+          - name: decompress-pq-values
+            depends: load-pq-values-to-pvc.Succeeded
+            templateRef:
+              name: decompress-tgz-pvc-callable-v2-submittable
+              template: decompress-tgz-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key'))}}"
+
+          - name: execute-peak-calling
+            depends: decompress-pq-values.Succeeded
+            template: genrich-open-chromatin-re-run-cmd
+            arguments:
+              parameters:
+                - name: pq-values-pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: pq-values-filename
+                  value: "{{=sprig.trimSuffix('.tgz', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.pq_values_s3_key')))}}"
+                - name: params-cmd-string
+                  value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.parameters-str}}"
+                - name: out-s3-key
+                  value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.peaks-s3-key}}"
+                - name: out-filename
+                  value: "{{=sprig.base(tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['peaks-s3-key'])}}"
+
+          - name: save-genrich-logs
+            depends: execute-peak-calling.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{tasks.execute-peak-calling.outputs.parameters.genrich-run-logs-s3-key}}"
+                - name: out-s3-key
+                  value: "{{=sprig.trimSuffix('.bed', tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['peaks-s3-key'])}}.log"
+
+          #          - name: output-files-post-processing
+          #            depends: execute-genrich-task.Succeeded
+          #            template: dag-output-files-post-processing
+          #            arguments:
+          #              parameters:
+          #                - name: pvc-name
+          #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+          #                - name: task-payload
+          #                  value: "{{inputs.parameters.task-payload}}"
+          #                - name: analysis-type-info
+          #                  value: "{{item}}"
+          #            withParam: >-
+          #              [
+          #                { "analysis_type": "genrich_pileups","prefix": "pileups-" ,"suffix": ".txt" },
+          #                { "analysis_type": "genrich_pq_values","prefix": "pq-values-" ,"suffix": ".txt" }
+          #              ]
+
+
+
+          - name: delete-peak-calling-pvc
+            depends: execute-peak-calling.Succeeded
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+
+
+    - name: genrich-open-chromatin-re-run-cmd
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pq-values-pvc-name
+          - name: pq-values-filename
+          - name: params-cmd-string
+
+          - name: out-s3-key
+          - name: out-filename
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && GENRICH_ARGS=(
+                  -P \
+                  -o {{inputs.parameters.out-filename}} \
+                  -f {{inputs.parameters.pq-values-filename}} \
+                  -v \
+                ) \
+                && GENRICH_ARGS+=( {{inputs.parameters.params-cmd-string}} ) \
+                && Genrich ${GENRICH_ARGS[@]} \
+                && echo aw-artifacts/\
+               {{workflow.creationTimestamp.Y}}/\
+               {{workflow.creationTimestamp.m}}/\
+               {{workflow.creationTimestamp.d}}/\
+               {{workflow.name}}/{{pod.name}}/\
+               main.log \
+               > genrich-run-logs-s3-key.txt \
+                && ls -altrh" ]
+        resources:
+          limits:
+            cpu: 1900m
+            memory: 1.5Gi
+          requests:
+            cpu: 900m
+            memory: 1Gi
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pq-values-pvc-name}}"
+      outputs:
+        parameters:
+          # TODO directly use variables here instead of getting the name from genrich-run-logs-s3-key.txt
+          - name: genrich-run-logs-s3-key
+            valueFrom:
+              path: /mnt/vol/genrich-run-logs-s3-key.txt
+        artifacts:
+          - name: bed-file
+            path: /mnt/vol/{{inputs.parameters.out-filename}}
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.out-s3-key}}"
+
+
+    - name: compute-peak-calling-outputs-s3-keys
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: genrich-params
+      script:
+        workingDir: /results/
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import json
+          import logging
+          import re
+          
+          from pprint import pprint
+          from uuid import UUID
+          
+          from typing import (
+            Optional,
+            Union,
+          )
+          
+          from pydantic import BaseModel, validator
+
+          class PeakCallingTaskReRun(BaseModel):
+              epigenome_name: str
+              experiment_name: str
+              experiment_id: UUID
+              assembly_id: UUID
+              experiment_type: str
+              pq_values_s3_key: str
+              pq_values_file_size: int
+              pq_values_md5sum: str
+              out_basename: str
+              out_s3_prefix: str
+              broad_peaks: Union[bool, None] = None
+          
+          class GenrichParams(BaseModel):
+            a: Optional[float]
+            q_val: Optional[float]
+            p_val: Optional[float]
+            g: Optional[int]
+          
+            @validator('p_val')
+            def ignore_p_val(cls, v, values):
+              if 'q_val' in values and values['q_val'] is not None:
+                logging.warning('Ignoring p_val parameter because q_val was provided') 
+                return None
+              return v
+          
+            @property
+            def cmd_portion(self) -> str:
+              params_cmd_portion = ""
+              if self.a is not None:
+                params_cmd_portion += f"-a {self.a} "
+              if self.q_val is not None:
+                params_cmd_portion += f"-q {self.q_val} "
+              if self.p_val is not None:
+                params_cmd_portion += f"-p {self.p_val} "
+              if self.g is not None:
+                params_cmd_portion += f"-g {self.g} "
+              return params_cmd_portion
+          
+            @property
+            def suffix_portion(self) -> str:
+              params_suffix_portion = ""
+              if self.a is not None:
+                  params_suffix_portion += f"_a_{self.a}"
+              if self.q_val is not None:
+                  params_suffix_portion += f"_q_{self.q_val}"
+              if self.p_val is not None:
+                  params_suffix_portion += f"_p_{self.p_val}"
+              if self.g is not None:
+                  params_suffix_portion += f"_g_{self.g}"
+          
+              params_suffix_portion = re.sub('\.', '_', params_suffix_portion)
+          
+              return params_suffix_portion
+          
+          def main() -> int:
+          
+            task_payload = """{{inputs.parameters.task-payload}}"""
+            genrich_params = """{{inputs.parameters.genrich-params}}"""
+          
+            task_payload_data = json.loads(task_payload)
+            genrich_params_data = json.loads(genrich_params)
+          
+          
+            task = PeakCallingTaskReRun(**task_payload_data)
+            params = GenrichParams(**genrich_params_data)
+
+            # TODO: Refactor this part
+            with open("params_str.txt", 'w') as f:
+                f.write(params.cmd_portion)
+          
+            with open("peaks_s3_key.txt", 'w') as f:
+                f.write(f"{task.out_s3_prefix}peaks-{task.out_basename}{params.suffix_portion}.bed")
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+      outputs:
+        parameters:
+          - name: parameters-str
+            valueFrom:
+              path: /results/params_str.txt
+          - name: peaks-s3-key
+            valueFrom:
+              path: /results/peaks_s3_key.txt
+
