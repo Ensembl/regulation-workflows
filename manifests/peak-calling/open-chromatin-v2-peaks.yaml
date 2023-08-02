@@ -13,7 +13,7 @@ spec:
 
   templates:
     - name: peak-calling-open-chromatin
-      parallelism: 15
+      parallelism: 20
       inputs:
         parameters:
           - name: peak-calling-tasks
