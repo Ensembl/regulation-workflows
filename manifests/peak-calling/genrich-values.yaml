@@ -228,7 +228,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
                 - name: size_factor
-                  value: "6.5"
+                  value: "2.5"
 
           - name: create-pq-values-pvc
             depends: get-genrich-values-pvcs-size.Succeeded
@@ -238,7 +238,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-size
-                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                  value: "{{tasks.get-genrich-values-pvcs-size.outputs.parameters.pvc-size-formatted}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
@@ -250,7 +250,7 @@ spec:
             arguments:
               parameters:
                 - name: pvc-size
-                  value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                  value: "{{tasks.get-genrich-values-pvcs-size.outputs.parameters.pvc-size-formatted}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
