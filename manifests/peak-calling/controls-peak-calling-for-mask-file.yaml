@@ -194,12 +194,12 @@ spec:
                   value: "{{item}}"
             withParam: >-
               [
-                { "analysis_type": "controls_genrich_pq_values",
+                { "analysis_type": "genrich_pq_values",
                   "prefix": "pq-values-",
                   "suffix": ".txt",
                   "pvc-name": "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
                 },
-                { "analysis_type": "controls_genrich_pileups",
+                { "analysis_type": "genrich_pileups",
                   "prefix": "pileups-",
                   "suffix": ".txt",
                   "pvc-name": "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}" 
@@ -241,7 +241,7 @@ spec:
                   value: "{{item}}"
             withParam: >-
               [
-                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-peaks",
+                { "analysis_type": "control_peaks",
                   "prefix": "peaks-",
                   "suffix": ".bed"
                 }
