@@ -29,7 +29,7 @@ spec:
           - name: limit
             value: "20"
           - name: ad_hoc_playground_prefix
-            value: "control-peaks-for-mask-files"
+            value: ""
           - name: group_tasks_by_epigenome_group
             value: "false"
           - name: chipmentation
