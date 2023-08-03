@@ -43,9 +43,15 @@ spec:
             value: "20"
 
           - name: genrich-params-narrow
+            value: ""
           - name: genrich-params-broad
+            value: ""
+          - name: genrich-params
+            value: ""
 
           - name: overwrite-results
+            value: "false"
+          - name: production-run
             value: "false"
           - name: kubeconfig-path
       dag:
@@ -136,7 +142,7 @@ spec:
           #                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: submit-chip-seq-peak-calling-tasks
-            depends: "execute-get-peak-calling-tasks"
+            depends: "execute-get-peak-calling-tasks.Succeeded"
             when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
               name: chip-seq-v2-peaks-v1-submittable
@@ -151,6 +157,27 @@ spec:
                   value: "{{inputs.parameters.genrich-params-broad}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: submit-open-chromatin-peak-calling-tasks
+            depends: "execute-get-peak-calling-tasks.Succeeded"
+            when: >-
+              {{inputs.parameters.experiment_type}} == 'atac_seq' ||
+              {{inputs.parameters.experiment_type}} == 'dnase_seq'
+            templateRef:
+              name: open-chromatin-v2-peaks-v1-submittable
+              template: peak-calling-open-chromatin
+            arguments:
+              parameters:
+                - name: peak-calling-tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: genrich-params
+                  value: "{{inputs.parameters.genrich-params}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: production-run
+                  value: "{{inputs.parameters.production-run}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
