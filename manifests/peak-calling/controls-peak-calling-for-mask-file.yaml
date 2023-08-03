@@ -45,7 +45,7 @@ spec:
 
 
     - name: peak-calling-task
-      parallelism: 21
+      parallelism: 15
       inputs:
         parameters:
           - name: task-payload
@@ -87,8 +87,8 @@ spec:
           - name: create-peak-calling-pvc
             depends: "get-peak-calling-pvc-size.Succeeded"
             templateRef:
-              name: create-nfs-pvc-kubectl-v1-submittable
-              template: create-nfs-pvc-kubectl
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
             arguments:
               parameters:
                 - name: pvc-size
@@ -110,29 +110,67 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.signals}}"
 
+          - name: get-genrich-values-pvcs-size
+            depends: execute-sort-alignments-by-queryname.Succeeded
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.alignment_files_total_size')}}"
+                - name: size_factor
+                  value: "3"
+
+          - name: create-pq-values-pvc
+            depends: get-genrich-values-pvcs-size.Succeeded
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-genrich-values-pvcs-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: create-pileups-pvc
+            depends: get-genrich-values-pvcs-size.Succeeded
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-genrich-values-pvcs-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
           - name: execute-genrich-controls
-            depends: execute-sort-alignments-by-queryname
+            depends: >-
+              create-pq-values-pvc.Succeeded && create-pileups-pvc.Succeeded
             template: genrich-controls
             arguments:
               parameters:
                 - name: out_bed_filename
-                  value: "{{inputs.parameters.out_basename}}.bed"
-                - name: out_pileup_filename
-                  value: "{{inputs.parameters.out_basename}}_pileup.log"
-                - name: out_pq_file_filename
-                  value: "{{inputs.parameters.out_basename}}_pqval.log"
-                - name: out_log_filename
-                  value: "{{inputs.parameters.out_basename}}_run.log"
+                  value: "peaks-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.bed"
+                - name: out_pileups_filename
+                  value: "pileups-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
+                - name: out_pq_values_filename
+                  value: "pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
                 - name: out_s3_prefix
-                  value: "{{inputs.parameters.out_s3_prefix}}"
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}"
                 - name: chipmentation
                   value: "{{inputs.parameters.chipmentation}}"
-                - name: signals-pvc
+                - name: alignments-pvc
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-
+                - name: pq-values-pvc
+                  value: "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
+                - name: pileups-pvc
+                  value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
 
           - name: delete-peak-calling-pvc
-            depends: execute-genrich-controls
+            depends: execute-genrich-controls.Succeeded
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
@@ -142,6 +180,85 @@ spec:
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: output-files-post-processing
+            depends: execute-genrich-controls.Succeeded
+            template: dag-output-files-post-processing
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{item.pvc-name}}"
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type-info
+                  value: "{{item}}"
+            withParam: >-
+              [
+                { "analysis_type": "controls_genrich_pq_values",
+                  "prefix": "pq-values-",
+                  "suffix": ".txt",
+                  "pvc-name": "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
+                },
+                { "analysis_type": "controls_genrich_pileups",
+                  "prefix": "pileups-",
+                  "suffix": ".txt",
+                  "pvc-name": "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}" 
+                }
+              ]
+
+          - name: delete-pq-values-pvc
+            depends: output-files-post-processing.Succeeded
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: delete-pileups-pvc
+            depends: output-files-post-processing.Succeeded
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: output-bed-file-post-processing
+            depends: execute-genrich-controls.Succeeded
+            template: dag-bed-output-files-post-processing
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type-info
+                  value: "{{item}}"
+            withParam: >-
+              [
+                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-peaks",
+                  "prefix": "peaks-",
+                  "suffix": ".bed"
+                }
+              ]
+
+          - name: save-genrich-logs
+            depends: execute-genrich-controls.Succeeded
+            templateRef:
+              name: cp-s3-object-to-s3-v1-submittable
+              template: cp-s3-object-to-s3
+            arguments:
+              parameters:
+                - name: in-s3-key
+                  value: "{{tasks.execute-genrich-controls.outputs.parameters.genrich-run-logs-s3-key}}"
+                - name: out-s3-key
+                  value: "{{=sprig.trimSuffix('.bed', tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['peaks-s3-key'])}}.log"
+
 
 
     - name: sort-alignments-by-queryname
@@ -185,6 +302,148 @@ spec:
                 - name: out-pvc-name
                   value: "{{inputs.parameters.out-pvc-name}}"
 
+    - name: dag-output-files-post-processing
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: task-payload
+          - name: analysis-type-info
+      dag:
+        tasks:
+          - name: compute-output-file-metadata
+            templateRef:
+              name: compute-file-metadata-pvc-callable-v1-submittable
+              template: compute-file-metadata-pvc-callable
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                        {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                        {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+
+          - name: get-output-file-post-request-payload
+            depends: compute-output-file-metadata.Succeeded
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}\
+                          .tgz"
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: file-size
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                - name: assembly-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.analysis_type')}}"
+
+          - name: compress-file
+            depends: compute-output-file-metadata.Succeeded
+            templateRef:
+              name: compress-tgz-pvc-callable-v1-submittable
+              template: compress-tgz-pvc-callable-pigz
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: out-filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}\
+                          .tgz"
+
+          - name: save-file-to-s3
+            depends: compress-file.Succeeded
+            templateRef:
+              name: from-pvc-to-s3-object-v1-submittable
+              template: from-pvc-to-s3-object
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{tasks.compress-file.outputs.parameters.out-filename}}"
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}\
+                          .tgz"
+                - name: cpu-limit
+                  value: "6000m"
+                - name: memory-limit
+                  value: "20Gi"
+
+
+    - name: dag-bed-output-files-post-processing
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: analysis-type-info
+      dag:
+        tasks:
+          - name: compute-output-file-metadata
+            templateRef:
+              name: compute-file-metadata-v1-submittable
+              template: compute-file-metadata
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                        {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                        {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+
+          - name: get-output-file-post-request-payload
+            depends: compute-output-file-metadata.Succeeded
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
+                - name: file-size
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                - name: assembly-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.analysis_type')}}"
+
 
 
     - name: genrich-controls
@@ -194,12 +453,13 @@ spec:
       inputs:
         parameters:
           - name: out_bed_filename
-          - name: out_pileup_filename
-          - name: out_pq_file_filename
-          - name: out_log_filename
+          - name: out_pq_values_filename
+          - name: out_pileups_filename
           - name: out_s3_prefix
           - name: chipmentation
-          - name: signals-pvc
+          - name: alignments-pvc
+          - name: pq-values-pvc
+          - name: pileups-pvc
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-genrich:latest
@@ -208,8 +468,9 @@ spec:
                 && SIGNAL_BAM_FILES=$(ls -m *.bam | xargs echo | sed 's/ //g') \
                 && GENRICH_ARGS_1st_RUN=(
                   -t ${SIGNAL_BAM_FILES}
-                  -o q_value_run_{{inputs.parameters.out_bed_filename}}
-                  -f {{inputs.parameters.out_pileup_filename}}
+                  -X \
+                  -f /mnt/vol_pq_values/{{inputs.parameters.out_pq_values_filename}} \
+                  -k /mnt/vol_pileups/{{inputs.parameters.out_pileups_filename}} \
                   -r
                   -q 0.1
                   -s 20
@@ -218,21 +479,22 @@ spec:
                 ) \
                 && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_1st_RUN+=(-j); fi \
                 && Genrich ${GENRICH_ARGS_1st_RUN[@]} \
-                | tee {{inputs.parameters.out_log_filename}} \
                 && ls -altrh \
                 && GENRICH_ARGS_2nd_RUN=(
                   -P
                   -o {{inputs.parameters.out_bed_filename}}
-                  -f {{inputs.parameters.out_pileup_filename}}
-                  -r
+                  -f /mnt/vol_pq_values/{{inputs.parameters.out_pq_values_filename}} \
                   -p 0.1
-                  -s 20
-                  -e MT
                   -v
                 ) \
-                && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_2nd_RUN+=(-j); fi \
                 && Genrich ${GENRICH_ARGS_2nd_RUN[@]} \
-                | tee {{inputs.parameters.out_log_filename}} \
+                && echo aw-artifacts/\
+                {{workflow.creationTimestamp.Y}}/\
+                {{workflow.creationTimestamp.m}}/\
+                {{workflow.creationTimestamp.d}}/\
+                {{workflow.name}}/{{pod.name}}/\
+                main.log \
+                > genrich-run-logs-s3-key.txt \
                 && ls -altrh" ]
         resources:
           limits:
@@ -244,11 +506,25 @@ spec:
         volumeMounts:
           - name: workdir
             mountPath: /mnt/vol
+          - name: pq-values-vol
+            mountPath: /mnt/vol_pq_values
+          - name: pileups-vol
+            mountPath: /mnt/vol_pileups
       volumes:
         - name: workdir
           persistentVolumeClaim:
-            claimName: "{{inputs.parameters.signals-pvc}}"
+            claimName: "{{inputs.parameters.alignments-pvc}}"
+        - name: pq-values-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pq-values-pvc}}"
+        - name: pileups-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.pileups-pvc}}"
       outputs:
+        parameters:
+          - name: genrich-run-logs-s3-key
+            valueFrom:
+              path: /mnt/vol/genrich-run-logs-s3-key.txt
         artifacts:
           - name: final_bed
             path: /mnt/vol/{{inputs.parameters.out_bed_filename}}
@@ -256,13 +532,3 @@ spec:
               none: { }
             s3:
               key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_bed_filename}}"
-          - name: pileup
-            path: /mnt/vol/{{inputs.parameters.out_pileup_filename}}
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_pileup_filename}}.tgz"
-          - name: log_file
-            path: /mnt/vol/{{inputs.parameters.out_log_filename}}
-            archive:
-              none: { }
-            s3:
-              key: "{{inputs.parameters.out_s3_prefix}}{{inputs.parameters.out_log_filename}}"
