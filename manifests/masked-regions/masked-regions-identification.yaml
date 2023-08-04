@@ -119,7 +119,6 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-masked-regions-identification:latest
         command: [ bash, -c, -ue, -o ,xtrace, -o, pipefail ]
         args: [ "ls -altrh \
-              && ls controls-bed-files/* | grep -v -P '.bed$' | xargs rm -rf \
               && ls -altrh controls-bed-files/ \
               && Rscript /usr/local/src/maskedRegionsIdentification.R \
               {{inputs.parameters.gene-build-mask-filename}} \
