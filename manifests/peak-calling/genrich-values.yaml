@@ -463,7 +463,7 @@ spec:
 
 
     - name: dag-output-files-post-processing
-      parallelism: 1
+      parallelism: 2
       inputs:
         parameters:
           - name: pvc-name
@@ -554,8 +554,13 @@ spec:
                   value: "20Gi"
 
 
-
     - name: edit-genrich-input-filenames-formatted
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: task-payload
