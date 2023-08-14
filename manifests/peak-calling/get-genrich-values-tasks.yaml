@@ -31,6 +31,10 @@ spec:
             value: ""
           - name: histone_mark_type
             value: ""
+          - name: min_replicate_count
+            value: ""
+          - name: exclude_tasks_missing_control
+            value: ""
 
           - name: ad_hoc_playground_prefix
             value: ""
@@ -77,6 +81,10 @@ spec:
                   value: "{{inputs.parameters.target_name_contains}}"
                 - name: histone_mark_type
                   value: "{{inputs.parameters.histone_mark_type}}"
+                - name: min_replicate_count
+                  value: "{{inputs.parameters.min_replicate_count}}"
+                - name: exclude_tasks_missing_control
+                  value: "{{inputs.parameters.exclude_tasks_missing_control}}"
 
                 - name: ad_hoc_playground_prefix
                   value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
@@ -133,6 +141,8 @@ spec:
           - name: experiment_name_contains
           - name: target_name_contains
           - name: histone_mark_type
+          - name: min_replicate_count
+          - name: exclude_tasks_missing_control
 
           - name: ad_hoc_playground_prefix
           - name: output_prefix_label
@@ -157,6 +167,8 @@ spec:
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
+              "exclude_tasks_missing_control": f"{{inputs.parameters.exclude_tasks_missing_control}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
               "skip": f"{{inputs.parameters.skip}}",
@@ -175,7 +187,7 @@ spec:
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
-                  "/peak_calling_tasks"
+                  "/genrich_values_tasks"
                   f"?{parsed_query_params}"         
             )
           
