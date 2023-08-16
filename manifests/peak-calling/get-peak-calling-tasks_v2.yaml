@@ -157,6 +157,8 @@ spec:
                   value: "{{inputs.parameters.genrich-params-broad}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: production-run
+                  value: "{{inputs.parameters.production-run}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
