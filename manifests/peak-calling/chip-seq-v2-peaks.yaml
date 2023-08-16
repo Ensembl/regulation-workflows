@@ -37,6 +37,8 @@ spec:
           ############################
           - name: overwrite-results
             value: "false"
+          - name: production-run
+            value: "false"
           - name: kubeconfig-path
       dag:
         tasks:
@@ -52,6 +54,8 @@ spec:
                   value: "{{inputs.parameters.genrich-params-broad}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: production-run
+                  value: "{{inputs.parameters.production-run}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.peak-calling-tasks}}"
@@ -64,6 +68,7 @@ spec:
           - name: genrich-params-narrow
           - name: genrich-params-broad
           - name: overwrite-results
+          - name: production-run
           - name: kubeconfig-path
       dag:
         tasks:
@@ -156,6 +161,24 @@ spec:
                 - name: out-filename
                   value: "{{=sprig.base(tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['narrow-peaks-s3-key'])}}"
 
+          - name: output-narrow-bed-file-post-processing
+            depends: execute-peak-calling-narrow-case.Succeeded
+            when: "{{inputs.parameters.production-run}} == 'true'"
+            template: dag-bed-output-files-post-processing
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type-info
+                  value: "{{item}}"
+            withParam: >-
+              [
+                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-narrow-peaks",
+                  "prefix": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-narrow-peaks-",
+                  "suffix": ".bed"
+                }
+              ]
+
           - name: save-narrow-case-genrich-logs
             depends: execute-peak-calling-narrow-case.Succeeded
             templateRef:
@@ -185,6 +208,24 @@ spec:
                 - name: out-filename
                   value: "{{=sprig.base(tasks['get-s3-keys-and-set-of-genrich-cmds'].outputs.parameters['broad-peaks-s3-key'])}}"
 
+          - name: output-broad-bed-file-post-processing
+            depends: execute-peak-calling-broad-case.Succeeded
+            when: "{{inputs.parameters.production-run}} == 'true'"
+            template: dag-bed-output-files-post-processing
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type-info
+                  value: "{{item}}"
+            withParam: >-
+              [
+                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-broad-peaks",
+                  "prefix": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-broad-peaks-",
+                  "suffix": ".bed"
+                }
+              ]
+
           - name: save-broad-case-genrich-logs
             depends: execute-peak-calling-broad-case.Succeeded
             templateRef:
@@ -208,25 +249,24 @@ spec:
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-peaks-s3-key}}"
                 - name: gapped-peaks-s3-key
                   value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.gapped-peaks-s3-key}}"
-          
-          #          - name: output-files-post-processing
-          #            depends: execute-genrich-task.Succeeded
-          #            template: dag-output-files-post-processing
-          #            arguments:
-          #              parameters:
-          #                - name: pvc-name
-          #                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-          #                - name: task-payload
-          #                  value: "{{inputs.parameters.task-payload}}"
-          #                - name: analysis-type-info
-          #                  value: "{{item}}"
-          #            withParam: >-
-          #              [
-          #                { "analysis_type": "genrich_pileups","prefix": "pileups-" ,"suffix": ".txt" },
-          #                { "analysis_type": "genrich_pq_values","prefix": "pq-values-" ,"suffix": ".txt" }
-          #              ]
 
-
+          - name: output-gapped-bed-file-post-processing
+            depends: execute-write-gapped-peaks.Succeeded
+            when: "{{inputs.parameters.production-run}} == 'true'"
+            template: dag-bed-output-files-post-processing
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: analysis-type-info
+                  value: "{{item}}"
+            withParam: >-
+              [
+                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-gapped-peaks",
+                  "prefix": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-gapped-peaks-",
+                  "suffix": ".bed"
+                }
+              ]
 
           - name: delete-peak-calling-pvc
             depends: execute-peak-calling-narrow-case.Succeeded && execute-peak-calling-broad-case
@@ -267,7 +307,6 @@ spec:
                   -P \
                   -o {{inputs.parameters.out-filename}} \
                   -f {{inputs.parameters.pq-values-filename}} \
-                  -y \
                   -v \
                 ) \
                 && GENRICH_ARGS+=( {{inputs.parameters.params-cmd-string}} ) \
@@ -488,3 +527,53 @@ spec:
               none: { }
             s3:
               key: "{{inputs.parameters.gapped-peaks-s3-key}}"
+
+    - name: dag-bed-output-files-post-processing
+      parallelism: 1
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: analysis-type-info
+      dag:
+        tasks:
+          - name: compute-output-file-metadata
+            templateRef:
+              name: compute-file-metadata-v1-submittable
+              template: compute-file-metadata
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: filename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                        {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                        {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+
+          - name: get-output-file-post-request-payload
+            depends: compute-output-file-metadata.Succeeded
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
+                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                - name: basename
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
+                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
+                - name: file-size
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.compute-output-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                - name: assembly-id
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.analysis_type')}}"
