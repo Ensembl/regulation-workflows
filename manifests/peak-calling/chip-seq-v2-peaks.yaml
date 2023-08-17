@@ -169,15 +169,11 @@ spec:
               parameters:
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
-                - name: analysis-type-info
-                  value: "{{item}}"
-            withParam: >-
-              [
-                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-narrow-peaks",
-                  "prefix": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-narrow-peaks-",
-                  "suffix": ".bed"
-                }
-              ]
+                - name: peaks-s3-key
+                  value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-peaks-s3-key}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}_narrow_peaks"
+
 
           - name: save-narrow-case-genrich-logs
             depends: execute-peak-calling-narrow-case.Succeeded
@@ -216,15 +212,10 @@ spec:
               parameters:
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
-                - name: analysis-type-info
-                  value: "{{item}}"
-            withParam: >-
-              [
-                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-broad-peaks",
-                  "prefix": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-broad-peaks-",
-                  "suffix": ".bed"
-                }
-              ]
+                - name: peaks-s3-key
+                  value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-peaks-s3-key}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}_broad_peaks"
 
           - name: save-broad-case-genrich-logs
             depends: execute-peak-calling-broad-case.Succeeded
@@ -258,15 +249,11 @@ spec:
               parameters:
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
-                - name: analysis-type-info
-                  value: "{{item}}"
-            withParam: >-
-              [
-                { "analysis_type": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-gapped-peaks",
-                  "prefix": "{{=sprig.replace('_', '-', sprig.base(jsonpath(inputs.parameters['task-payload'], '$.experiment_type')))}}-gapped-peaks-",
-                  "suffix": ".bed"
-                }
-              ]
+                - name: peaks-s3-key
+                  value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.gapped-peaks-s3-key}}"
+                - name: analysis-type
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}_gapped_peaks"
+
 
           - name: delete-peak-calling-pvc
             depends: execute-peak-calling-narrow-case.Succeeded && execute-peak-calling-broad-case
@@ -378,17 +365,22 @@ spec:
           from pydantic import BaseModel, validator
 
           class PeakCallingTaskReRun(BaseModel):
-              epigenome_name: str
-              experiment_name: str
-              experiment_id: UUID
-              assembly_id: UUID
-              experiment_type: str
-              pq_values_s3_key: str
-              pq_values_file_size: int
-              pq_values_md5sum: str
-              out_basename: str
-              out_s3_prefix: str
-              broad_peaks: Union[bool, None] = None
+            epigenome_name: str
+            experiment_name: str
+            experiment_id: UUID
+            assembly_id: UUID
+            experiment_type: str
+            pq_values_s3_key: str
+            pq_values_file_size: int
+            pq_values_md5sum: str
+            out_basename: str
+            out_s3_prefix: str
+            broad_peaks: Union[bool, None] = None
+          
+            @property
+            def experiment_type_formatted(self) -> str:
+              return re.sub('_', '-', self.experiment_type)
+          
           
           class GenrichParams(BaseModel):
             a: Optional[float]
@@ -432,6 +424,7 @@ spec:
           
               return params_suffix_portion
           
+          
           def main() -> int:
           
             task_payload = """{{inputs.parameters.task-payload}}"""
@@ -455,13 +448,13 @@ spec:
                 f.write(params_broad.cmd_portion)
           
             with open("narrow_s3_key.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}narrow-{task.out_basename}{params_narrow.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-narrow-{task.out_basename}{params_narrow.suffix_portion}.bed")
           
             with open("broad_s3_key.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}broad-{task.out_basename}{params_broad.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-broad-{task.out_basename}{params_broad.suffix_portion}.bed")
           
             with open("gapped_s3_key.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}gapped-{task.out_basename}_n{params_narrow.suffix_portion}_b{params_broad.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-gapped-{task.out_basename}_n{params_narrow.suffix_portion}_b{params_broad.suffix_portion}.bed")
           
             return 0
           
@@ -533,7 +526,8 @@ spec:
       inputs:
         parameters:
           - name: task-payload
-          - name: analysis-type-info
+          - name: peaks-s3-key
+          - name: analysis-type
       dag:
         tasks:
           - name: compute-output-file-metadata
@@ -543,14 +537,9 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
-                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
-                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
-                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                  value: "{{inputs.parameters.peaks-s3-key}}"
                 - name: filename
-                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
-                        {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
-                        {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                  value: "{{=sprig.base(inputs.parameters['peaks-s3-key'])}}"
 
           - name: get-output-file-post-request-payload
             depends: compute-output-file-metadata.Succeeded
@@ -560,13 +549,9 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}\
-                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
-                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}\
-                          {{=jsonpath(inputs.parameters['analysis-type-info'], '$.suffix')}}"
+                  value: "{{inputs.parameters.peaks-s3-key}}"
                 - name: basename
-                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.prefix')}}\
-                          {{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
+                  value: "{{=sprig.trimSuffix('.bed', sprig.base(inputs.parameters['peaks-s3-key']))}}"
                 - name: file-size
                   value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
                 - name: md5sum
@@ -576,4 +561,4 @@ spec:
                 - name: assembly-id
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
                 - name: analysis-type
-                  value: "{{=jsonpath(inputs.parameters['analysis-type-info'], '$.analysis_type')}}"
+                  value: "{{inputs.parameters.analysis-type}}"
