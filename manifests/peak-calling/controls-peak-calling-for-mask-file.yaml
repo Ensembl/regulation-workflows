@@ -345,8 +345,9 @@ spec:
                   value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
                 - name: md5sum
                   value: "{{tasks.compute-output-file-metadata.outputs.parameters.md5sum}}"
+                # TODO: these analysis files should be associated to an epigenome instead of experiment
                 - name: experiment-id
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                  value: "does-not-exist"
                 - name: assembly-id
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
                 - name: analysis-type
@@ -437,8 +438,9 @@ spec:
                   value: "{{tasks.compute-output-file-metadata.outputs.parameters.file-size}}"
                 - name: md5sum
                   value: "{{tasks.compute-output-file-metadata.outputs.parameters.md5sum}}"
+                # TODO: these analysis files should be associated to an epigenome instead of experiment
                 - name: experiment-id
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_id')}}"
+                  value: "does-not-exist"
                 - name: assembly-id
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.assembly_id')}}"
                 - name: analysis-type
