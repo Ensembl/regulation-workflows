@@ -581,6 +581,10 @@ spec:
             run_type_signal_filename = defaultdict(list)
             for s in task_payload_data['signals']:
               r_t = s['run_type']
+              # TODO: generalize this strategy once RDR migration using runs is done
+              # Temporary fix to finish fish in r111: assume PE150nt
+              if r_t == '0':
+                r_t = 'PE150nt'  
               run_type_signal_filename[r_t].append(f"so_queryname_{s['basename']}.bam")
           
             run_type_control_filename = {}
@@ -588,6 +592,10 @@ spec:
             if 'controls' in task_payload_data.keys():
               for c in task_payload_data['controls']:
                 r_t = c['run_type']
+                # TODO: generalize this strategy once RDR migration using runs is done
+                # Temporary fix to finish fish in r111: assume PE150nt
+                if r_t == '0':
+                  r_t = 'PE150nt'  
                 controls_run_types.append(r_t)
                 run_type_control_filename[r_t] = f"so_queryname_{c['basename']}.bam"
           
