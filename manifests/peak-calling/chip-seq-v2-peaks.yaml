@@ -448,13 +448,13 @@ spec:
                 f.write(params_broad.cmd_portion)
           
             with open("narrow_s3_key.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-narrow-{task.out_basename}{params_narrow.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-narrow-peaks-{task.out_basename}{params_narrow.suffix_portion}.bed")
           
             with open("broad_s3_key.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-broad-{task.out_basename}{params_broad.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-broad-peaks-{task.out_basename}{params_broad.suffix_portion}.bed")
           
             with open("gapped_s3_key.txt", 'w') as f:
-                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-gapped-{task.out_basename}_n{params_narrow.suffix_portion}_b{params_broad.suffix_portion}.bed")
+                f.write(f"{task.out_s3_prefix}{task.experiment_type_formatted}-gapped-peaks-{task.out_basename}_n{params_narrow.suffix_portion}_b{params_broad.suffix_portion}.bed")
           
             return 0
           
