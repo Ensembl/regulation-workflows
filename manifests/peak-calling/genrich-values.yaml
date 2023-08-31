@@ -14,7 +14,7 @@ spec:
 
   templates:
     - name: genrich-values
-      parallelism: 8
+      parallelism: 10
       inputs:
         parameters:
           - name: peak-calling-tasks
