@@ -44,10 +44,10 @@ spec:
           - name: skip
             value: "0"
           - name: limit
-            value: "20"
+            value: "100"
 
           - name: chipmentation
-            value: ""
+            value: "false"
           - name: masked-regions-s3-key
 
           - name: overwrite-results
