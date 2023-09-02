@@ -127,6 +127,12 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: compute-get-genrich-values-tasks-url
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: svc-name
