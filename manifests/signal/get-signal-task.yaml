@@ -7,10 +7,10 @@ metadata:
       Generate bigwig files from genrich pq-value files
 spec:
   entrypoint: get-signal-tasks-dag
-  
+
   imagePullSecrets:
     - name: ghcr-pull-token
-  
+
   podGC:
     strategy: OnPodSuccess
 
@@ -47,14 +47,12 @@ spec:
           - name: limit
             value: "20"
 
-          - name: genrich-params-narrow
-            value: ""
-          - name: genrich-params-broad
-            value: ""
-
           - name: overwrite-results
             value: "false"
           - name: kubeconfig-path
+
+          - name: p-value-based
+
       dag:
         tasks:
           - name: get-signal-tasks-url
@@ -93,7 +91,7 @@ spec:
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
                   value: "{{inputs.parameters.limit}}"
-          
+
           - name: submit-get-request-from-reg-pipelines-api
             depends: "get-signal-tasks-url"
             templateRef:
@@ -115,6 +113,8 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: p-value-based
+                  value: "{{inputs.parameters.p-value-based}}"
 
 
     - name: compute-get-signal-tasks-url
@@ -143,7 +143,7 @@ spec:
           import urllib.parse
 
           def main() -> int:
-          
+
             query_params = {
               "species_name": f"{{inputs.parameters.species_name}}",
               "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
@@ -158,25 +158,25 @@ spec:
               "skip": f"{{inputs.parameters.skip}}",
               "limit": f"{{inputs.parameters.limit}}",
             }
-          
+
             parsed_query_params = "".join(
               [
-                f"&{key}={value}" for key, value in query_params.items() 
+                f"&{key}={value}" for key, value in query_params.items()
                 if value
               ]
             )
-          
+
             url_str = (f"http://{{inputs.parameters.svc-name}}."
                   f"{{inputs.parameters.namespace}}."
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
                   "/signal_tasks"
-                  f"?{parsed_query_params}"         
+                  f"?{parsed_query_params}"
             )
-          
+
             print(urllib.parse.quote(url_str, safe=":/?=&"))
-          
+
             return 0
 
           if __name__ == '__main__':
@@ -184,12 +184,13 @@ spec:
 
 
     - name: signal-tasks-dag
-      parallelism: 8
+      parallelism: 20
       inputs:
         parameters:
           - name: signal-tasks
           - name: overwrite-results
           - name: kubeconfig-path
+          - name: p-value-based
       dag:
         tasks:
           - name: submit-pq-values-to-bigwig
@@ -218,6 +219,8 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: force-update-task-markers
                   value: "false"
+                - name: p-value-based
+                  value: "{{inputs.parameters.p-value-based}}"
             withParam: "{{inputs.parameters.signal-tasks}}"
 
 
@@ -234,6 +237,7 @@ spec:
           - name: pq-values-md5sum
           - name: kubeconfig-path
           - name: overwrite-results
+          - name: p-value-based
           - name: force-update-task-markers
             value: "false"
 
@@ -294,7 +298,7 @@ spec:
                 - name: associated_files_size
                   value: "{{inputs.parameters.pq-values-file-size}}"
                 - name: size_factor
-                  value: "3"
+                  value: "5"
 
           - name: create-signal-pvc
             depends: "get-signal-pvc-size.Succeeded"
@@ -310,7 +314,7 @@ spec:
 
           - name: copy-pq-value-from-s3-to-pvc
             depends: "create-signal-pvc"
-            templateRef: 
+            templateRef:
               name: s3-object-to-pvc-v1-submittable
               template: s3-object-to-pvc
             arguments:
@@ -324,7 +328,7 @@ spec:
 
           - name: unzip-pq-values-file
             depends: copy-pq-value-from-s3-to-pvc
-            templateRef: 
+            templateRef:
               name: decompress-tgz-pvc-callable-v2-submittable
               template: decompress-tgz-pvc-callable
             arguments:
@@ -335,7 +339,7 @@ spec:
                   value: "{{=sprig.base(inputs.parameters['pq-values-s3-key'])}}"
                 - name: out-filename
                   value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-s3-key']), sprig.base(inputs.parameters['pq-values-s3-key']))}}"
-          
+
           - name: genrich-pq-values-to-bigwig
             depends: unzip-pq-values-file
             templateRef:
@@ -355,12 +359,14 @@ spec:
                   value: "{{inputs.parameters.chrom-sizes-s3-key}}"
                 - name: signal-s3-key
                   value: "{{inputs.parameters.out-s3-key}}"
+                - name: p-value-based
+                  value: "{{inputs.parameters.p-value-based}}"
 
           - name: update-signal-task-marker
             depends: "genrich-pq-values-to-bigwig || check-work-avoidance-consistency.Failed"
             when: >-
-              ( ( {{inputs.parameters.force-update-task-markers}} == true 
-              && {{tasks.check-work-avoidance-consistency.status}} == Failed ) 
+              ( ( {{inputs.parameters.force-update-task-markers}} == true
+              && {{tasks.check-work-avoidance-consistency.status}} == Failed )
               || {{tasks.genrich-pq-values-to-bigwig.status}} == Succeeded )
             templateRef:
               name: update-task-marker-v1-submittable
@@ -371,7 +377,7 @@ spec:
                   value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
-          
+
           - name: delete-signal-pvc
             depends: genrich-pq-values-to-bigwig
             templateRef:
