@@ -72,10 +72,10 @@ spec:
         resources:
           limits:
             cpu: 4900m
-            memory: 112Gi
+            memory: 45Gi
           requests:
             cpu: 4700m
-            memory: 100Gi
+            memory: 41Gi
         volumeMounts:
           - name: workdir
             mountPath: /mnt/vol
