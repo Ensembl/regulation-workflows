@@ -37,6 +37,7 @@ spec:
             PEAKS_FILE_TYPE = "bed"
             GENRICH_VALUES_FILE_TYPE = "txt"
             SIGNAL_FILE_TYPE = "bigwig"
+            PEAKS_EXPORT_FILE_TYPE = "bigbed"
           
             map_analysis_type_file_type = {
               "genrich_pileups": GENRICH_VALUES_FILE_TYPE,
@@ -48,6 +49,7 @@ spec:
               "chip_seq_broad_peaks": PEAKS_FILE_TYPE,
               "chip_seq_gapped_peaks": PEAKS_FILE_TYPE,
               "controls_peaks": PEAKS_FILE_TYPE,
+              "peaks": PEAKS_EXPORT_FILE_TYPE,
             }
           
             analysis_type = "{{inputs.parameters.analysis-type}}"
