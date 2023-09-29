@@ -31,7 +31,7 @@ resources:
   - peak-calling/genrich-values.yaml
   - peak-calling/chip-seq-genrich-values-cmd.yaml
   - peak-calling/open-chromatin-genrich-values-cmd.yaml
-  - peak-calling/peak-bed-to-bigbed-pvc-callable.yaml
+  - export-peak/bed-to-bigbed-pvc-callable.yaml
   - masked-regions/masked-regions-identification.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
   - coverage/bam-to-coverage-bedgraph-pvc-callable.yaml
