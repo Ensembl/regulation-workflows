@@ -129,7 +129,7 @@ spec:
             s3:
               key: "{{inputs.parameters.chrom-sizes-s3-key}}"
           - name: sorted-bed
-            path: /mnt/vol/{{inputs.parameters.bed-filename}}.sorted.bed
+            path: /mnt/vol/{{inputs.parameters.bed-basename}}.sorted.bed
       container:
         imagePullPolicy: Always
         workingDir: /mnt/vol
