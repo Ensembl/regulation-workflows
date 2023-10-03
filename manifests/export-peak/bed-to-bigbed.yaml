@@ -1,0 +1,154 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: bed-to-bigbed-v1-submittable
+  annotations:
+    workflows.argoproj.io/description: |
+      Generate bigbed file from peak bed file
+spec:
+  entrypoint: bed-to-bigbed
+  
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  
+  podGC:
+    strategy: OnPodSuccess
+
+  templates:
+    - name: bed-to-bigbed
+      inputs:
+        parameters:
+          - name: experiment-id
+          - name: assembly-id
+          - name: bed-s3-key
+          - name: chrom-sizes-s3-key
+          - name: bigbed-s3-key
+          - name: bed-type
+      dag:
+        tasks:
+          - name: sort-bed
+            template: sort-bed-cmd
+            arguments:
+              parameters:
+                - name: bed-s3-key
+                  value: "{{inputs.parameters.bed-s3-key}}"
+        
+          - name: convert-bed-to-bigbed
+            depends: >-
+              sort-bed.Succeeded
+            template: convert-bed-to-bigbed-cmd
+            arguments:
+              parameters:
+                - name: bed-basename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}"
+                - name: bigbed-s3-key
+                  value: "{{inputs.parameters.bigbed-s3-key}}"
+                - name: chrom-sizes-s3-key
+                  value: "{{inputs.parameters.chrom-sizes-s3-key}}"
+                - name: bed-type
+                  value: "{{inputs.parameters.bed-type}}"
+              artifacts:
+                - name: sorted-bed 
+                  from: "{{tasks.sort-bed.outputs.artifacts.sorted-bed}}"
+           
+          - name: execute-compute-bigbed-file-metadata
+            depends: >- 
+              convert-bed-to-bigbed.Succeeded
+            templateRef:
+              name: compute-file-metadata-v1-submittable
+              template: compute-file-metadata
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.bigbed-s3-key}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['bigbed-s3-key'])}}"
+
+          - name: execute-post-bigbed-file
+            depends: execute-compute-bigbed-file-metadata
+            templateRef:
+              name: analysis-file-post-request-payload-v1-submittable
+              template: analysis-file-post-request-payload
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.bigbed-s3-key}}"
+                - name: basename
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bigbed-s3-key']), sprig.base(inputs.parameters['bigbed-s3-key']))}}"
+                - name: file-size
+                  value: "{{tasks.execute-compute-bigbed-file-metadata.outputs.parameters.file-size}}"
+                - name: md5sum
+                  value: "{{tasks.execute-compute-bigbed-file-metadata.outputs.parameters.md5sum}}"
+                - name: experiment-id
+                  value: "{{inputs.parameters.experiment-id}}"
+                - name: assembly-id
+                  value: "{{inputs.parameters.assembly-id}}"
+                - name: analysis-type
+                  value: "peaks"
+
+    - name: sort-bed-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: bed-s3-key
+        artifacts:
+          - name: bed-file
+            path: /mnt/vol/{{=sprig.base(inputs.parameters['bed-s3-key'])}}
+            s3:
+              key: "{{inputs.parameters.bed-s3-key}}"
+      outputs:
+        artifacts:
+          - name: sorted-bed
+            path: /mnt/vol/{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}.sorted.bed
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [
+          "ls -altrh \
+          && bedSort {{=sprig.base(inputs.parameters['bed-s3-key'])}} {{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}.sorted.bed \
+          && ls -altrh"
+        ]
+    
+    - name: convert-bed-to-bigbed-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: bed-basename
+          - name: bigbed-s3-key
+          - name: chrom-sizes-s3-key
+          - name: bed-type
+
+        artifacts:
+          - name: chrom_sizes_file
+            path: /mnt/vol/chrom.sizes
+            s3:
+              key: "{{inputs.parameters.chrom-sizes-s3-key}}"
+          - name: sorted-bed
+            path: /mnt/vol/{{inputs.parameters.bed-basename}}.sorted.bed
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bed-to-bigbed:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [
+          "ls -altrh \
+          && rm -f {{=sprig.base(inputs.parameters['bigbed-s3-key'])}} \
+          && if [[ {{inputs.parameters.bed-type}} == 'narrow' ]]; \
+          then bedToBigBed -as=/workdir/bigNarrowPeak.as -type=bed6+4 {{inputs.parameters.bed-basename}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['bigbed-s3-key'])}}; \
+          elif [[ {{inputs.parameters.bed-type}} == 'gapped' ]]; \
+          then bedToBigBed -tab -type=bed12+3 {{inputs.parameters.bed-basename}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['bigbed-s3-key'])}}; fi \
+          && ls -altrh"
+        ]
+      outputs:
+        artifacts:
+          - name: final_bigbed
+            path: "/mnt/vol/{{=sprig.base(inputs.parameters['bigbed-s3-key'])}}"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.bigbed-s3-key}}" 
