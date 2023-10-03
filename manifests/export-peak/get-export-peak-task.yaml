@@ -200,7 +200,7 @@ spec:
                 - name: chrom-sizes-s3-key
                   value: "{{item.chrom_sizes_s3_key}}"
                 - name: out-s3-key
-                  value: "{{item.out_s3_prefix}}{{item.out_basename}}.bw"
+                  value: "{{item.out_s3_prefix}}{{item.out_basename}}.bb"
                 - name: bed-s3-key
                   value: "{{item.bed_s3_key}}"
                 - name: bed-file-size
@@ -281,60 +281,19 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
-          - name: get-export-peak-pvc-size
-            depends: check-work-avoidance-consistency
-            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
-            templateRef:
-              name: compute-pvc-size-v1-submittable
-              template: compute-pvc-size
-            arguments:
-              parameters:
-                - name: associated_files_size
-                  value: "{{inputs.parameters.bed-file-size}}"
-                - name: size_factor
-                  value: "2"
-
-          - name: create-export-peak-pvc
-            depends: "get-export-peak-pvc-size.Succeeded"
-            templateRef:
-              name: create-pvc-kubectl-v1-submittable
-              template: create-pvc-kubectl
-            arguments:
-              parameters:
-                - name: pvc-size
-                  value: "{{tasks.get-export-peak-pvc-size.outputs.parameters.pvc-size-formatted}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
-
-          - name: copy-bed-from-s3-to-pvc
-            depends: "create-export-peak-pvc"
-            templateRef:
-              name: s3-object-to-pvc-v1-submittable
-              template: s3-object-to-pvc
-            arguments:
-              parameters:
-                - name: s3-key
-                  value: "{{inputs.parameters.bed-s3-key}}"
-                - name: filename
-                  value: "{{=sprig.base(inputs.parameters['bed-s3-key'])}}"
-                - name: pvc-name
-                  value: "{{tasks.create-export-peak-pvc.outputs.parameters.pvc-name}}"
-
           - name: bed-to-bigbed
-            depends: copy-bed-from-s3-to-pvc
+            depends: check-work-avoidance-consistency
             templateRef:
-              name: bed-to-bigbed-pvc-callable-v1-submittable
-              template: bed-to-bigbed-pvc-callable
+              name: bed-to-bigbed-callable-v1-submittable
+              template: bed-to-bigbed-callable
             arguments:
               parameters:
                 - name: experiment-id
                   value: "{{inputs.parameters.experiment-id}}"
                 - name: assembly-id
                   value: "{{inputs.parameters.assembly-id}}"
-                - name: pvc-name
-                  value: "{{tasks.create-export-peak-pvc.outputs.parameters.pvc-name}}"
-                - name: bed-filename
-                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}"
+                - name: bed-s3-key
+                  value: "{{inputs.parameters.bed-s3-key}}"
                 - name: chrom-sizes-s3-key
                   value: "{{inputs.parameters.chrom-sizes-s3-key}}"
                 - name: bigbed-s3-key
@@ -357,16 +316,4 @@ spec:
                   value: "{{tasks.compute-export-peak-task-marker-name.outputs.result}}"
                 - name: task-payload
                   value: "{{inputs.parameters.task-payload}}"
-
-          - name: delete-export-peak-pvc
-            depends: bed-to-bigbed
-            templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
-              template: delete-patch-pvc-kubectl
-            arguments:
-              parameters:
-                - name: pvc-name
-                  value: "{{tasks.create-export-peak-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
  
