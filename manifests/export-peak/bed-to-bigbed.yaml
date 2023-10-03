@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bed-to-bigbed-callable-v1-submittable
+  name: bed-to-bigbed-v1-submittable
   annotations:
     workflows.argoproj.io/description: |
       Generate bigbed file from peak bed file
 spec:
-  entrypoint: bed-to-bigbed-callable
+  entrypoint: bed-to-bigbed
   
   imagePullSecrets:
     - name: ghcr-pull-token
@@ -15,7 +15,7 @@ spec:
     strategy: OnPodSuccess
 
   templates:
-    - name: bed-to-bigbed-callable
+    - name: bed-to-bigbed
       inputs:
         parameters:
           - name: experiment-id
@@ -39,7 +39,7 @@ spec:
             template: convert-bed-to-bigbed-cmd
             arguments:
               parameters:
-                - name: bed-filename
+                - name: bed-basename
                   value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}"
                 - name: bigbed-s3-key
                   value: "{{inputs.parameters.bigbed-s3-key}}"
@@ -95,20 +95,20 @@ spec:
           - name: bed-s3-key
         artifacts:
           - name: bed-file
-            path: /mnt/vol/bed-file.bed
+            path: /mnt/vol/{{=sprig.base(inputs.parameters['bed-s3-key'])}}
             s3:
               key: "{{inputs.parameters.bed-s3-key}}"
       outputs:
         artifacts:
           - name: sorted-bed
-            path: /mnt/vol/sorted-bed-file.bed
+            path: /mnt/vol/{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}.sorted.bed
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bedsort:latest
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [
           "ls -altrh \
-          && bedSort bed-file.bed sorted-bed-file.bed \
+          && bedSort {{=sprig.base(inputs.parameters['bed-s3-key'])}} {{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}.sorted.bed \
           && ls -altrh"
         ]
     
@@ -118,7 +118,7 @@ spec:
         retryPolicy: "OnError"
       inputs:
         parameters:
-          - name: bed-filename
+          - name: bed-basename
           - name: bigbed-s3-key
           - name: chrom-sizes-s3-key
           - name: bed-type
@@ -129,7 +129,7 @@ spec:
             s3:
               key: "{{inputs.parameters.chrom-sizes-s3-key}}"
           - name: sorted-bed
-            path: /mnt/vol/sorted-bed-file.bed
+            path: /mnt/vol/{{inputs.parameters.bed-filename}}.sorted.bed
       container:
         imagePullPolicy: Always
         workingDir: /mnt/vol
@@ -139,9 +139,9 @@ spec:
           "ls -altrh \
           && rm -f {{=sprig.base(inputs.parameters['bigbed-s3-key'])}} \
           && if [[ {{inputs.parameters.bed-type}} == 'narrow' ]]; \
-          then bedToBigBed -as=/workdir/bigNarrowPeak.as -type=bed6+4 sorted-bed-file.bed chrom.sizes {{=sprig.base(inputs.parameters['bigbed-s3-key'])}}; \
+          then bedToBigBed -as=/workdir/bigNarrowPeak.as -type=bed6+4 {{inputs.parameters.bed-basename}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['bigbed-s3-key'])}}; \
           elif [[ {{inputs.parameters.bed-type}} == 'gapped' ]]; \
-          then bedToBigBed -tab -type=bed12+3 sorted-bed-file.bed chrom.sizes {{=sprig.base(inputs.parameters['bigbed-s3-key'])}}; fi \
+          then bedToBigBed -tab -type=bed12+3 {{inputs.parameters.bed-basename}}.sorted.bed chrom.sizes {{=sprig.base(inputs.parameters['bigbed-s3-key'])}}; fi \
           && ls -altrh"
         ]
       outputs:

@@ -284,8 +284,8 @@ spec:
           - name: bed-to-bigbed
             depends: check-work-avoidance-consistency
             templateRef:
-              name: bed-to-bigbed-callable-v1-submittable
-              template: bed-to-bigbed-callable
+              name: bed-to-bigbed-v1-submittable
+              template: bed-to-bigbed
             arguments:
               parameters:
                 - name: experiment-id
