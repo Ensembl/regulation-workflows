@@ -71,3 +71,5 @@ resources:
   - helpers/list-objects-under-s3-prefix.yaml
   - helpers/post-results-to-reg-pipelines-api.yaml
   - helpers/analysis-file-post-request-payload.yaml
+  - helpers/get-api-payload-response-by-index.yaml
+  - helpers/handle-reg-pipeline-api-payload-response.yaml

@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-api-payload-response-by-index-v1-submittable
+spec:
+  entrypoint: get-api-payload-response-by-index
+
+  templates:
+    - name: get-api-payload-response-by-index
+      inputs:
+        parameters:
+          - name: index
+        artifacts:
+          - name: items
+            path: /tmp/items
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [python]
+        source: |
+            import sys
+            import json
+
+            def main() -> int:
+
+              with open('/tmp/items') as f:
+                payload = json.load(f)
+              print(json.dumps(payload[{{inputs.parameters.index}}]))
+
+              return 0
+          
+            if __name__ == '__main__':
+              sys.exit(main())
+
