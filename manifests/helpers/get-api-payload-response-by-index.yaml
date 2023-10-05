@@ -15,7 +15,7 @@ spec:
             path: /tmp/items
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [python]
+        command: [ python ]
         source: |
             import sys
             import json
@@ -24,10 +24,16 @@ spec:
 
               with open('/tmp/items') as f:
                 payload = json.load(f)
-              print(json.dumps(payload[{{inputs.parameters.index}}]))
+              with open('/tmp/task-payload', 'w') as f:
+                f.write(json.dumps(payload[{{inputs.parameters.index}}]))
 
               return 0
           
             if __name__ == '__main__':
               sys.exit(main())
-
+      outputs:
+        parameters:
+          - name: task-payload
+            valueFrom: 
+              path: /tmp/task-payload
+   

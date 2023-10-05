@@ -106,7 +106,9 @@ spec:
             depends: "submit-get-request-from-reg-pipelines-api"
             when: >-
               {{=asInt(inputs.parameters.limit) > asInt(inputs.parameters.skip)}}
-            template: handle-reg-pipeline-api-payload-response
+            templateRef: 
+              name: handle-reg-pipeline-api-payload-response-v1-submittable
+              template: handle-reg-pipeline-api-payload-response
             arguments:
               parameters:
                 - name: payload-response
@@ -211,8 +213,8 @@ spec:
                
       dag:
         tasks:
-          - name: submit-pq-values-to-bigwig
-            template: genrich-pq-values-to-bigwig-dag
+          - name: submit-get-api-payload-response-by-index-dag 
+            template: get-api-payload-response-by-index-dag
             arguments:
               parameters:
                 - name: index
@@ -221,8 +223,6 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-                - name: force-update-task-markers
-                  value: "false"
                 - name: p-value-based
                   value: "{{inputs.parameters.p-value-based}}"
               artifacts:
@@ -231,22 +231,22 @@ spec:
             withSequence:
               count: "{{inputs.parameters.count}}"
 
-    - name: genrich-pq-values-to-bigwig-dag
+    - name: get-api-payload-response-by-index-dag
       inputs:
         parameters:
+          - name: index
+          - name: p-value-based
           - name: kubeconfig-path
           - name: overwrite-results
-          - name: p-value-based
-          - name: force-update-task-markers
-            value: "false"
-          - name: index
         artifacts:
           - name: items
 
       dag:
         tasks:
           - name: submit-get-api-payload-response-by-index
-            template: get-api-payload-response-by-index
+            templateRef:
+              name: get-api-payload-response-by-index-v1-submittable
+              template: get-api-payload-response-by-index
             arguments:
               parameters:
                 - name: index
@@ -255,18 +255,111 @@ spec:
                 - name: items
                   from: "{{inputs.artifacts.items}}"
 
-          - name: compute-signal-task-marker-name
+          - name: submit-pq-values-to-bigwig
             depends: submit-get-api-payload-response-by-index
+            template: genrich-pq-values-to-bigwig-dag
+            arguments:
+              parameters:
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: p-value-based
+                  value: "{{inputs.parameters.p-value-based}}"
+                - name: task-payload
+                  value: "{{tasks.submit-get-api-payload-response-by-index.outputs.parameters.task-payload}}"
+                - name: experiment-id
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'], 
+                        '$.experiment_id'
+                      )
+                    }}
+                - name: assembly-id
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        '$.assembly_id'
+                      )
+                    }}
+                - name: chrom-sizes-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        '$.chrom_sizes_s3_key'
+                      )
+                    }}
+                - name: pq-values-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        '$.pq_values_s3_key'
+                      )
+                    }}
+                - name: pq-values-file-size
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        '$.pq_values_file_size'
+                      )
+                    }}
+                - name: pq-values-md5sum
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        '$.pq_values_md5sum'
+                      )
+                    }}"
+                - name: out-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'], 
+                        '$.out_s3_prefix'
+                      )
+                    }}{{=
+                      jsonpath(
+                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        '$.out_basename'
+                      )
+                    }}.bw
+
+    - name: genrich-pq-values-to-bigwig-dag
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: experiment-id
+          - name: assembly-id
+          - name: chrom-sizes-s3-key
+          - name: out-s3-key
+          - name: pq-values-s3-key
+          - name: pq-values-file-size
+          - name: pq-values-md5sum
+          - name: kubeconfig-path
+          - name: overwrite-results
+          - name: p-value-based
+          - name: force-update-task-markers
+            value: "false"
+
+      dag:
+        tasks:
+          - name: compute-signal-task-marker-name
             templateRef:
               name: compute-task-marker-name-v1-submittable
               template: compute-task-marker-name
             arguments:
               parameters:
                 - name: task-payload
-                  value: "{{tasks.submit-get-api-payload-response-by-index.outputs.result}}"
+                  value: "{{inputs.parameters.task-payload}}"
                 - name: task-type
                   value: "signal"
-          
+
           - name: check-if-task-marker-exists
             depends: compute-signal-task-marker-name
             templateRef:
@@ -278,15 +371,13 @@ spec:
                   value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
 
           - name: check-if-bigwig-file-already-in-s3-bucket
-            depends: submit-get-api-payload-response-by-index
             templateRef:
               name: check-s3-object-exists-v1-submittable
               template: check-s3-object-exists
             arguments:
               parameters:
                 - name: s3-key
-                  value: >-
-                    {{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.out_s3_prefix')}}{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.out_basename')}}.bw
+                  value: "{{inputs.parameters.out-s3-key}}"
 
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-bigwig-file-already-in-s3-bucket"
@@ -311,7 +402,7 @@ spec:
             arguments:
               parameters:
                 - name: associated_files_size
-                  value: "{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_file_size')}}"
+                  value: "{{inputs.parameters.pq-values-file-size}}"
                 - name: size_factor
                   value: "5"
 
@@ -335,9 +426,9 @@ spec:
             arguments:
               parameters:
                 - name: s3-key
-                  value: "{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key')}}"
+                  value: "{{inputs.parameters.pq-values-s3-key}}"
                 - name: filename
-                  value: "{{=sprig.base(jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key'))}}"
+                  value: "{{=sprig.base(inputs.parameters['pq-values-s3-key'])}}"
                 - name: pvc-name
                   value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
 
@@ -351,10 +442,9 @@ spec:
                 - name: pvc-name
                   value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
                 - name: filename
-                  value: "{{=sprig.base(jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key'))}}"
+                  value: "{{=sprig.base(inputs.parameters['pq-values-s3-key'])}}"
                 - name: out-filename
-                  value: >-
-                    {{=sprig.trimSuffix(sprig.ext(jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key')), sprig.base(jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key')))}}
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-s3-key']), sprig.base(inputs.parameters['pq-values-s3-key']))}}"
 
           - name: genrich-pq-values-to-bigwig
             depends: unzip-pq-values-file
@@ -364,19 +454,17 @@ spec:
             arguments:
               parameters:
                 - name: experiment-id
-                  value: "{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.experiment_id')}}"
+                  value: "{{inputs.parameters.experiment-id}}"
                 - name: assembly-id
-                  value: "{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.assembly_id')}}"
+                  value: "{{inputs.parameters.assembly-id}}"
                 - name: pvc-name
                   value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
                 - name: pq-values-filename
-                  value: >-
-                    {{=sprig.trimSuffix(sprig.ext(jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key')), sprig.base(jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.pq_values_s3_key')))}}
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-s3-key']), sprig.base(inputs.parameters['pq-values-s3-key']))}}"
                 - name: chrom-sizes-s3-key
-                  value: "{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.chrom_sizes_s3_key')}}"
+                  value: "{{inputs.parameters.chrom-sizes-s3-key}}"
                 - name: signal-s3-key
-                  value: >-
-                    {{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.out_s3_prefix')}}{{=jsonpath(tasks['submit-get-api-payload-response-by-index'].outputs.result, '$.out_basename')}}.bw
+                  value: "{{inputs.parameters.out-s3-key}}"
                 - name: p-value-based
                   value: "{{inputs.parameters.p-value-based}}"
 
@@ -394,7 +482,7 @@ spec:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
                 - name: task-payload
-                  value: "{{tasks.submit-get-api-payload-response-by-index.outputs.result}}"
+                  value: "{{inputs.parameters.task-payload}}"
 
           - name: delete-signal-pvc
             depends: genrich-pq-values-to-bigwig
@@ -407,52 +495,3 @@ spec:
                   value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-
-    - name: handle-reg-pipeline-api-payload-response
-      inputs:
-        parameters:
-          - name: payload-response
-          - name: count
-      container:
-        imagePullPolicy: Always
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
-        command: [ bash, -c, -ue, -o, xtrace ]
-        args: [
-            "echo '{{inputs.parameters.payload-response}}' > /tmp/items \
-             && echo '{{inputs.parameters.count}}' > /tmp/count"
-          ]
-      outputs:
-        artifacts:
-          - name: items
-            path: /tmp/items
-        parameters:
-          - name: count
-            valueFrom:
-              path: /tmp/count
-
-    - name: get-api-payload-response-by-index
-      inputs:
-        parameters:
-          - name: index
-        artifacts:
-          - name: items
-            path: /tmp/items
-      script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [python]
-        source: |
-            import sys
-            import json
-            from pathlib import Path
-
-            def main() -> int:
-
-              with open('/tmp/items') as f:
-                payload = json.load(f)
-              print(json.dumps(payload[{{inputs.parameters.index}}]))
-
-              return 0
-          
-            if __name__ == '__main__':
-              sys.exit(main())
-
