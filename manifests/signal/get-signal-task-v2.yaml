@@ -199,8 +199,8 @@ spec:
                
       dag:
         tasks:
-          - name: submit-get-api-payload-response-by-index-dag 
-            template: get-api-payload-response-by-index-dag
+          - name: submit-get-wf-task-payload-by-index-dag 
+            template: get-wf-task-payload-by-index-dag
             arguments:
               parameters:
                 - name: index
@@ -217,7 +217,7 @@ spec:
             withSequence:
               count: "{{inputs.parameters.count}}"
 
-    - name: get-api-payload-response-by-index-dag
+    - name: get-wf-task-payload-by-index-dag
       inputs:
         parameters:
           - name: index
@@ -229,10 +229,10 @@ spec:
 
       dag:
         tasks:
-          - name: submit-get-api-payload-response-by-index
+          - name: submit-get-wf-task-payload-by-index
             templateRef: 
-              name: get-api-payload-response-by-index-v1-submittable
-              template: get-api-payload-response-by-index 
+              name: get-wf-task-payload-by-index-v1-submittable
+              template: get-wf-task-payload-by-index 
             arguments:
               parameters:
                 - name: index
@@ -242,7 +242,7 @@ spec:
                   from: "{{inputs.artifacts.items}}"
 
           - name: submit-pq-values-to-bigwig
-            depends: submit-get-api-payload-response-by-index
+            depends: submit-get-wf-task-payload-by-index
             template: genrich-pq-values-to-bigwig-dag
             arguments:
               parameters:
@@ -253,12 +253,12 @@ spec:
                 - name: p-value-based
                   value: "{{inputs.parameters.p-value-based}}"
                 - name: task-payload
-                  value: "{{tasks.submit-get-api-payload-response-by-index.outputs.parameters.task-payload}}"
+                  value: "{{tasks.submit-get-wf-task-payload-by-index.outputs.parameters.task-payload}}"
                 - name: experiment-id
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'], 
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
                         '$.experiment_id'
                       )
                     }}
@@ -266,7 +266,7 @@ spec:
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'],
                         '$.assembly_id'
                       )
                     }}
@@ -274,7 +274,7 @@ spec:
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'],
                         '$.chrom_sizes_s3_key'
                       )
                     }}
@@ -282,7 +282,7 @@ spec:
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'],
                         '$.pq_values_s3_key'
                       )
                     }}
@@ -290,7 +290,7 @@ spec:
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'],
                         '$.pq_values_file_size'
                       )
                     }}
@@ -298,7 +298,7 @@ spec:
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'],
                         '$.pq_values_md5sum'
                       )
                     }}"
@@ -306,12 +306,12 @@ spec:
                   value: >-
                     {{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'], 
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
                         '$.out_s3_prefix'
                       )
                     }}{{=
                       jsonpath(
-                        tasks['submit-get-api-payload-response-by-index'].outputs.parameters['task-payload'],
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'],
                         '$.out_basename'
                       )
                     }}.bw

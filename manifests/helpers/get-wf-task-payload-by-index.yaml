@@ -1,12 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-api-payload-response-by-index-v1-submittable
+  name: get-wf-task-payload-by-index-v1-submittable
 spec:
-  entrypoint: get-api-payload-response-by-index
+  entrypoint: get-wf-task-payload-by-index
 
   templates:
-    - name: get-api-payload-response-by-index
+    - name: get-wf-task-payload-by-index
       inputs:
         parameters:
           - name: index
