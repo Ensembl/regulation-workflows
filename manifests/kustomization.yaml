@@ -55,6 +55,7 @@ resources:
   - helpers/decompress-tgz-pvc-callable.yaml
   - helpers/decompress-tgz-pvc-callable_v2.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml
+  - helpers/get-request-from-reg-pipelines-api-v2.yaml
   - helpers/delete-request-from-reg-pipelines-api.yaml
   - helpers/compute-task-marker-name.yaml
   - helpers/resolve-work-avoidance.yaml
@@ -71,3 +72,4 @@ resources:
   - helpers/list-objects-under-s3-prefix.yaml
   - helpers/post-results-to-reg-pipelines-api.yaml
   - helpers/analysis-file-post-request-payload.yaml
+  - helpers/get-wf-task-payload-by-index.yaml
