@@ -94,35 +94,21 @@ spec:
 
           - name: submit-get-request-from-reg-pipelines-api
             depends: "get-signal-tasks-url"
-            templateRef:
-              name: get-request-from-reg-pipelines-api-v1-submittable
+            templateRef: 
+              name: get-request-from-reg-pipelines-api-v2-submittable
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
                 - name: url
                   value: "{{tasks.get-signal-tasks-url.outputs.result}}"
           
-          - name: submit-handle-reg-pipeline-api-payload-response
-            depends: "submit-get-request-from-reg-pipelines-api"
-            when: >-
-              {{=asInt(inputs.parameters.limit) > asInt(inputs.parameters.skip)}}
-            templateRef: 
-              name: handle-reg-pipeline-api-payload-response-v1-submittable
-              template: handle-reg-pipeline-api-payload-response
-            arguments:
-              parameters:
-                - name: payload-response
-                  value: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.result}}"
-                - name: count
-                  value: "{{=asInt(inputs.parameters.limit) - asInt(inputs.parameters.skip)}}"
-
           - name: submit-signal-tasks
-            depends: "submit-handle-reg-pipeline-api-payload-response"
+            depends: "submit-get-request-from-reg-pipelines-api"
             template: signal-tasks-dag
             arguments:
               parameters:
                 - name: count
-                  value: "{{tasks.submit-handle-reg-pipeline-api-payload-response.outputs.parameters.count}}"
+                  value: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.parameters.count}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
@@ -131,7 +117,7 @@ spec:
                   value: "{{inputs.parameters.p-value-based}}"
               artifacts:
                 - name: items
-                  from: "{{tasks.submit-handle-reg-pipeline-api-payload-response.outputs.artifacts.items}}"
+                  from: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.artifacts.items}}"
 
 
     - name: compute-get-signal-tasks-url
@@ -244,9 +230,9 @@ spec:
       dag:
         tasks:
           - name: submit-get-api-payload-response-by-index
-            templateRef:
+            templateRef: 
               name: get-api-payload-response-by-index-v1-submittable
-              template: get-api-payload-response-by-index
+              template: get-api-payload-response-by-index 
             arguments:
               parameters:
                 - name: index
@@ -495,3 +481,4 @@ spec:
                   value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+
