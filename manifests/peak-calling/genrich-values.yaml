@@ -716,69 +716,99 @@ spec:
         retryPolicy: "OnError"
       inputs:
         parameters:
-          - name: task-payload
+          - name: signals-payload
+          - name: controls-payload
+            value: ""
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
         source: |
           import sys
-          import os
           import json
           from collections import defaultdict
           from pprint import pprint
-
+          
+          from pydantic import BaseModel
+          
+          
+          class SignalAlignmentInfo(BaseModel):
+              run_type: str
+              filename: str
+          
+          
+          class ControlsAlignmentInfo(BaseModel):
+              run_type: str
+              filename: str
+          
+          
           def main() -> int:
-            task_payload_json = """{{inputs.parameters.task-payload}}"""
-            task_payload_data = json.loads(task_payload_json)
+              signals_payload_json = """{{inputs.parameters.signals-payload}}"""
+              signals_payload_data = json.loads(signals_payload_json)
           
-            run_type_signal_filename = defaultdict(list)
-            for s in task_payload_data['signals']:
-              r_t = s['run_type']
-              # TODO: generalize this strategy once RDR migration using runs is done
-              # Temporary fix to finish fish in r111: assume PE150nt
-              if r_t == '0':
-                r_t = 'PE150nt'  
-              run_type_signal_filename[r_t].append(f"so_queryname_{s['basename']}.bam")
+              signals_alignments_info = [SignalAlignmentInfo(**s) for s in
+                                         signals_payload_data]
           
-            run_type_control_filename = {}
-            controls_run_types = []
-            if 'controls' in task_payload_data.keys():
-              for c in task_payload_data['controls']:
-                r_t = c['run_type']
-                # TODO: generalize this strategy once RDR migration using runs is done
-                # Temporary fix to finish fish in r111: assume PE150nt
-                if r_t == '0':
-                  r_t = 'PE150nt'  
-                controls_run_types.append(r_t)
-                run_type_control_filename[r_t] = f"so_queryname_{c['basename']}.bam"
+              controls_payload_json = """{{inputs.parameters.controls-payload}}"""
           
-          
-            assert len(set(controls_run_types)) == len(controls_run_types), "Duplicate run types in controls"
-          
-            signals_filenames_sorted = []
-            controls_filenames_sorted = []
-            for r_t, s_vals in run_type_signal_filename.items():
-              signals_filenames_sorted.extend(s_vals)
-              print(f"r_t: {r_t}, s_vals: {s_vals}")
-          
-              if r_t in run_type_control_filename.keys():
-                controls_filenames_sorted.extend([run_type_control_filename[r_t]] * len(s_vals))
+              if "{{inputs.parameters.controls-payload}}" != "":
+                  controls_payload_data = json.loads(controls_payload_json)
+                  controls_alignments_info = [ControlsAlignmentInfo(**c) for c in
+                                              controls_payload_data]
               else:
-                controls_filenames_sorted.extend(["null"] * len(s_vals))
+                  controls_alignments_info = []
           
-            pprint(f"signals_formatted: {','.join(signals_filenames_sorted)}")
-            pprint(f"controls_formatted: {','.join(controls_filenames_sorted)}")
+              run_type_signal_filename = defaultdict(list)
+              for s in signals_alignments_info:
+                  # TODO: generalize this strategy once RDR migration using runs is done
+                  # Temporary fix to finish fish in r111: assume PE150nt
+                  if s.run_type == '0':
+                      s._run_type = 'PE150nt'
+                  run_type_signal_filename[s.run_type].append(
+                      f"so_queryname_{s.filename}"
+                      )
           
-            with open("signals_files_formatted_str.txt", 'w') as f:
-                f.write(','.join(signals_filenames_sorted))
+              run_type_control_filename = {}
+              controls_run_types = []
           
-            with open("controls_files_formatted_str.txt", 'w') as f:
-              if run_type_control_filename:
-                f.write(','.join(controls_filenames_sorted))
-              else:
-                f.write('')
+              for c in controls_alignments_info:
+                  # TODO: generalize this strategy once RDR migration using runs is done
+                  # Temporary fix to finish fish in r111: assume PE150nt
+                  if c.run_type == '0':
+                      c.run_type = 'PE150nt'
+                  controls_run_types.append(c.run_type)
+                  run_type_control_filename[
+                      c.run_type] = f"so_queryname_{c.filename}"
           
-            return 0
+              assert len(set(controls_run_types)) == len(
+                  controls_run_types
+                  ), "Duplicate run types in controls"
+          
+              signals_filenames_sorted = []
+              controls_filenames_sorted = []
+              for r_t, s_vals in run_type_signal_filename.items():
+                  signals_filenames_sorted.extend(s_vals)
+                  print(f"r_t: {r_t}, s_vals: {s_vals}")
+          
+                  if r_t in run_type_control_filename.keys():
+                      controls_filenames_sorted.extend(
+                          [run_type_control_filename[r_t]] * len(s_vals)
+                          )
+                  else:
+                      controls_filenames_sorted.extend(["null"] * len(s_vals))
+          
+              pprint(f"signals_formatted: {','.join(signals_filenames_sorted)}")
+              pprint(f"controls_formatted: {','.join(controls_filenames_sorted)}")
+          
+              with open("signals_files_formatted_str.txt", 'w') as f:
+                  f.write(','.join(signals_filenames_sorted))
+          
+              with open("controls_files_formatted_str.txt", 'w') as f:
+                  if run_type_control_filename:
+                      f.write(','.join(controls_filenames_sorted))
+                  else:
+                      f.write('')
+          
+              return 0
           
           
           if __name__ == '__main__':
