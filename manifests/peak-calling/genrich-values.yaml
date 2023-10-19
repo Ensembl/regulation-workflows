@@ -144,18 +144,50 @@ spec:
                 - name: task-controls
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
 
-          - name: get-genrich-input-filenames-formatted
-            depends: check-work-avoidance-consistency.Succeeded
-            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
+          - name: get-genrich-input-filenames-formatted-no-controls
+            depends: check-work-avoidance-consistency.Succeeded && get-same-run-type-controls.Skipped
+            when: >-
+              ( {{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false
+              && {{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == false )
             template: edit-genrich-input-filenames-formatted
             arguments:
               parameters:
-                - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
+                - name: signals-payload
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
+
+          - name: get-genrich-input-filenames-formatted
+            depends: check-work-avoidance-consistency.Succeeded && get-same-run-type-controls.Succeeded
+            when: >-
+              ( {{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false
+              &&  {{tasks.get-same-run-type-controls.outputs.parameters.merge-controls}} == false )
+            template: edit-genrich-input-filenames-formatted
+            arguments:
+              parameters:
+                - name: signals-payload
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
+                - name: controls-payload
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
+
+
+          - name: get-genrich-input-filenames-formatted-merged-controls
+            depends: check-work-avoidance-consistency.Succeeded && get-same-run-type-controls.Succeeded
+            when: >-
+              ( {{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false
+              && {{tasks.get-same-run-type-controls.outputs.parameters.merge-controls}} == true )
+            template: edit-genrich-input-filenames-formatted
+            arguments:
+              parameters:
+                - name: signals-payload
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
+                - name: controls-payload
+                  value: "{{tasks.get-same-run-type-controls.outputs.parameters.controls-alignments-info}}"
 
           - name: get-peak-calling-pvc-size
             depends: >-
-              get-genrich-input-filenames-formatted.Succeeded && execute-signals-samtools-sort-tasks.Succeeded
+              ( ( get-genrich-input-filenames-formatted-no-controls.Succeeded
+               || get-genrich-input-filenames-formatted.Succeeded 
+               || get-genrich-input-filenames-formatted-merged-controls.Succeeded )
+               && execute-signals-samtools-sort-tasks.Succeeded )
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size
@@ -263,9 +295,48 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
+          - name: execute-genrich-no-controls
+            depends: >-
+              get-genrich-input-filenames-formatted-no-controls.Succeeded 
+              && create-pq-values-pvc.Succeeded 
+              && create-pileups-pvc.Succeeded
+            templateRef:
+              name: genrich-values-cmd-v1-submittable
+              template: dag-genrich-values-cmd
+            arguments:
+              parameters:
+                - name: signal_files_formatted_str
+                  value: "{{tasks.get-genrich-input-filenames-formatted-no-controls.outputs.parameters.signals_files_formatted_str}}"
+                - name: control_files_formatted_str
+                  value: "{{tasks.get-genrich-input-filenames-formatted-no-controls.outputs.parameters.controls_files_formatted_str}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: out_pileups_filename
+                  value: "pileups-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
+                - name: out_pq_values_filename
+                  value: "pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
+                - name: out_s3_prefix
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}"
+                - name: out_basename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
+                - name: experiment-type
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}"
+                - name: alignments-pvc
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: pq-values-pvc
+                  value: "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
+                - name: pileups-pvc
+                  value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: masked-regions-filename
+                  value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
+
           - name: execute-genrich
             depends: >-
-              create-pq-values-pvc.Succeeded && create-pileups-pvc.Succeeded
+              get-genrich-input-filenames-formatted.Succeeded 
+              && create-pq-values-pvc.Succeeded 
+              && create-pileups-pvc.Succeeded
             templateRef:
               name: genrich-values-cmd-v1-submittable
               template: dag-genrich-values-cmd
@@ -298,8 +369,48 @@ spec:
                 - name: masked-regions-filename
                   value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
 
+          - name: execute-genrich-merged-controls
+            depends: >-
+              get-genrich-input-filenames-formatted-merged-controls.Succeeded 
+              && create-pq-values-pvc.Succeeded 
+              && create-pileups-pvc.Succeeded
+            templateRef:
+              name: genrich-values-cmd-v1-submittable
+              template: dag-genrich-values-cmd
+            arguments:
+              parameters:
+                - name: signal_files_formatted_str
+                  value: "{{tasks.get-genrich-input-filenames-formatted-merged-controls.outputs.parameters.signals_files_formatted_str}}"
+                - name: control_files_formatted_str
+                  value: "{{tasks.get-genrich-input-filenames-formatted-merged-controls.outputs.parameters.controls_files_formatted_str}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: out_pileups_filename
+                  value: "pileups-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
+                - name: out_pq_values_filename
+                  value: "pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
+                - name: out_s3_prefix
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}"
+                - name: out_basename
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
+                - name: experiment-type
+                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}"
+                - name: alignments-pvc
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+                - name: pq-values-pvc
+                  value: "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
+                - name: pileups-pvc
+                  value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: masked-regions-filename
+                  value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
+
           - name: delete-peak-calling-pvc
-            depends: execute-genrich.Succeeded
+            depends: >-
+              execute-genrich-no-controls.Succeeded
+              || execute-genrich.Succeeded
+              || execute-genrich-merged-controls.Succeeded
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
@@ -311,7 +422,10 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: output-files-post-processing
-            depends: execute-genrich.Succeeded
+            depends: >-
+              execute-genrich-no-controls.Succeeded
+              || execute-genrich.Succeeded
+              || execute-genrich-merged-controls.Succeeded
             template: dag-output-files-post-processing
             arguments:
               parameters:
@@ -687,10 +801,10 @@ spec:
           - name: merge-controls
             valueFrom:
               path: merge_controls.txt
-          - name: controls_alignments_info
+          - name: controls-alignments-info
             valueFrom:
               path: controls_alignments_info.json
-          - name: control_merge_tasks
+          - name: control-merge-tasks
             valueFrom:
               path: control_merge_tasks.json
     #
@@ -750,7 +864,7 @@ spec:
           
               controls_payload_json = """{{inputs.parameters.controls-payload}}"""
           
-              if "{{inputs.parameters.controls-payload}}" != "":
+              if controls_payload_json != "":
                   controls_payload_data = json.loads(controls_payload_json)
                   controls_alignments_info = [ControlsAlignmentInfo(**c) for c in
                                               controls_payload_data]
