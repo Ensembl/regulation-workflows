@@ -135,6 +135,15 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
+          - name: get-same-run-type-controls
+            depends: check-if-any-controls-present.Succeeded
+            when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == true"
+            template: identify-same-run-type-controls
+            arguments:
+              parameters:
+                - name: task-controls
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
+
           - name: get-genrich-input-filenames-formatted
             depends: check-work-avoidance-consistency.Succeeded
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
@@ -552,6 +561,150 @@ spec:
                   value: "6000m"
                 - name: memory-limit
                   value: "20Gi"
+
+
+    - name: identify-same-run-type-controls
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: task-controls
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import logging
+          import sys
+          import json
+          from pathlib import Path
+          from pprint import pformat
+          from typing import (
+              List,
+              Optional,
+          )
+          from collections import defaultdict
+          from pydantic import BaseModel
+          
+          logging.basicConfig(
+              format="[ %(asctime)s ] — [ %(funcName)s:%(lineno)d ] — %(message)s",
+              level=logging.INFO, datefmt="%Y-%m-%d",
+              handlers=[logging.StreamHandler(sys.stdout)],
+          )
+          
+          
+          class ReadFileSetAlignment(BaseModel):
+              run_type: Optional[str] = None
+              basename: str
+              filename: str
+              s3_key: str
+              file_size: int
+              md5sum: str
+          
+          
+          class ControlsAlignmentInfo(BaseModel):
+              run_type: str
+              filename: str
+          
+          
+          class ControlMergeTask(BaseModel):
+              unmerged_alignments: List[ReadFileSetAlignment]
+              merged_alignment_info: ControlsAlignmentInfo
+          
+          
+          def main() -> int:
+              task_controls_json = """{{inputs.parameters.task-controls}}"""
+              task_controls_data = json.loads(task_controls_json)
+          
+              merge_controls = "false"
+          
+              run_type_controls_alignments = defaultdict(list)
+              for c in task_controls_data:
+                  run_type_controls_alignments[c['run_type']].append(
+                      ReadFileSetAlignment(**c)
+                  )
+          
+              control_merge_tasks = []
+              updated_controls = []
+              for r_t, c_alignments in run_type_controls_alignments.items():
+                  if len(c_alignments) > 1:
+                      merge_controls = "true"
+          
+                      filename_bits = [Path(c_alignment.filename).stem for c_alignment
+                                       in c_alignments]
+                      filename_merged = f"{'-'.join(filename_bits)}.bam"
+          
+                      merged_alignment_info = ControlsAlignmentInfo(
+                          run_type=r_t,
+                          filename=filename_merged
+                      )
+          
+                      updated_controls.append(merged_alignment_info.dict())
+          
+                      control_merge_tasks.append(
+                          ControlMergeTask(
+                              unmerged_alignments=c_alignments,
+                              merged_alignment_info=merged_alignment_info,
+                          ).dict()
+                      )
+                  else:
+                      updated_controls.append(
+                          ControlsAlignmentInfo(
+                              run_type=r_t,
+                              filename=f"{c_alignments[0].filename}"
+                          ).dict()
+                      )
+          
+              with open("merge_controls.txt", 'w') as f:
+                  f.write(merge_controls)
+          
+              with open("controls_alignments_info.json", 'w') as f:
+                  logging.info(
+                      f"Updated controls info:\n"
+                      f"{pformat(updated_controls)}"
+                  )
+                  f.write(json.dumps(updated_controls))
+          
+              with open("control_merge_tasks.json", 'w') as f:
+                  logging.info(
+                      f"Merge controls tasks:\n"
+                      f"{pformat(control_merge_tasks)}"
+                  )
+                  f.write(json.dumps(control_merge_tasks))
+          
+              return 0
+          
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+      
+      
+      outputs:
+        parameters:
+          - name: merge-controls
+            valueFrom:
+              path: merge_controls.txt
+          - name: controls_alignments_info
+            valueFrom:
+              path: controls_alignments_info.json
+          - name: control_merge_tasks
+            valueFrom:
+              path: control_merge_tasks.json
+    #
+    #
+    #    - name: merge-controls
+    #      retryStrategy:
+    #        limit: "5"
+    #        backoff:
+    #          duration: "10s"
+    #          factor: "2"
+    #        retryPolicy: "OnError"
+    #      inputs:
+    #        parameters:
+    #          - name: controls-to-merge
 
 
     - name: edit-genrich-input-filenames-formatted
