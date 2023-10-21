@@ -2,9 +2,9 @@ apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: genrich-values-v1-submittable
-  annotations:
-    workflows.argoproj.io/description: |
-      Generate Genrich files for signal generation and Genrich re-runs
+#  annotations:
+#    workflows.argoproj.io/description: |
+#      Generate Genrich files for signal generation and Genrich re-runs
 spec:
   entrypoint: genrich-values
   imagePullSecrets:
@@ -514,11 +514,11 @@ spec:
             arguments:
               parameters:
                 - name: unmerged-filenames
-                  value: "{{=toJson(jsonpath(item.unmerged_alignments, '$.filename'))}}"
+                  value: "{{=sprig.join(' ', map(jsonpath(item.unmerged_alignments, '$.filename'), { 'so_queryname_' + # }))}}"
                 - name: pvc-name
                   value: "{{inputs.parameters.pvc-name}}"
                 - name: merged-filename
-                  value: "{{=jsonpath(item.merged_alignment_info, '$.filename')}}"
+                  value: "so_queryname_{{=jsonpath(item.merged_alignment_info, '$.filename')}}"
 
             withParam: "{{inputs.parameters.controls-merge-tasks}}"
 
@@ -545,23 +545,18 @@ spec:
         imagePullPolicy: Always
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
-               && echo {{inputs.parameters.unmerged-filenames}} \
-               && echo {{inputs.parameters.merged-filename}} \
-               && readarray -t  unmerged_filenames_arr < <(echo '{{inputs.parameters.unmerged-filenames}}' | jq -r .[]) \
-               && declare -p unmerged_filenames_arr \
-               && echo ${unmerged_filenames_arr[@]} \
                && rm -f {{inputs.parameters.merged-filename}} \
                && samtools merge \
                -@ {{inputs.parameters.num-threads}} \
                -n \
                -o - \
-               ${unmerged_filenames_arr[@]} \
+               {{inputs.parameters.unmerged-filenames}} \
                | samtools view \
                -@ {{inputs.parameters.num-threads}} \ 
                -b \
                -o {{inputs.parameters.merged-filename}} \
                && samtools quickcheck {{inputs.parameters.merged-filename}} \
-               && rm -f ${unmerged_filenames_arr[@]} \
+               && rm -f {{inputs.parameters.unmerged-filenames}} \
                && ls -altrh " ]
         volumeMounts:
           - name: workdir
