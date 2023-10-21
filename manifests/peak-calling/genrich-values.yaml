@@ -256,11 +256,25 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{tasks.execute-controls-samtools-sort-tasks.outputs.parameters.pvcs-names}}"
 
+          - name: execute-dag-merge-controls
+            depends: >-
+              get-same-run-type-controls.Succeeded
+              && 
+              copy-from-controls-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc.Succeeded
+            when: "{{tasks.get-same-run-type-controls.outputs.parameters.merge-controls}} == true"
+            template: dag-merge-controls
+            arguments:
+              parameters:
+                - name: controls-merge-tasks
+                  value: "{{tasks.get-same-run-type-controls.outputs.parameters.control-merge-tasks}}"
+                - name: pvc-name
+                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
+
           - name: get-genrich-values-pvcs-size
             depends: >-
               delete-signals-samtools-sort-tasks-pvcs.Succeeded 
               && 
-              ( delete-controls-samtools-sort-tasks-pvcs.Succeeded || execute-controls-samtools-sort-tasks.Skipped )
+              ( execute-dag-merge-controls || execute-controls-samtools-sort-tasks.Skipped )
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size
@@ -487,6 +501,78 @@ spec:
                   value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+
+    - name: dag-merge-controls
+      inputs:
+        parameters:
+          - name: controls-merge-tasks
+          - name: pvc-name
+      dag:
+        tasks:
+          - name: merge-controls
+            template: samtools-merge-controls-cmd
+            arguments:
+              parameters:
+                - name: unmerged-filenames
+                  value: "{{=toJson(jsonpath(item.unmerged_alignments, '$.filename'))}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: merged-filename
+                  value: "{{=jsonpath(item.merged_alignment_info, '$.filename')}}"
+
+            withParam: "{{inputs.parameters.controls-merge-tasks}}"
+
+
+    - name: samtools-merge-controls-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: unmerged-filenames
+          # Destination
+          - name: pvc-name
+          - name: merged-filename
+          - name: num-threads
+            value: "14"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        imagePullPolicy: Always
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+               && echo {{inputs.parameters.unmerged-filenames}} \
+               && echo {{inputs.parameters.merged-filename}} \
+               && readarray -t  unmerged_filenames_arr < <(echo '{{inputs.parameters.unmerged-filenames}}' | jq -r .[]) \
+               && declare -p unmerged_filenames_arr \
+               && echo ${unmerged_filenames_arr[@]} \
+               && rm -f {{inputs.parameters.merged-filename}} \
+               && samtools merge \
+               -@ {{inputs.parameters.num-threads}} \
+               -n \
+               -o - \
+               ${unmerged_filenames_arr[@]} \
+               | samtools view \
+               -@ {{inputs.parameters.num-threads}} \ 
+               -b \
+               -o {{inputs.parameters.merged-filename}} \
+               && samtools quickcheck {{inputs.parameters.merged-filename}} \
+               && rm -f ${unmerged_filenames_arr[@]} \
+               && ls -altrh " ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 13900m
+            memory: 30Gi
+          requests:
+            cpu: 13500m
+            memory: 25Gi
 
 
     - name: dag-samtools-sort-tasks
