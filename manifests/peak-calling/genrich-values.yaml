@@ -556,7 +556,6 @@ spec:
                -b \
                -o {{inputs.parameters.merged-filename}} \
                && samtools quickcheck {{inputs.parameters.merged-filename}} \
-               && rm -f {{inputs.parameters.unmerged-filenames}} \
                && ls -altrh " ]
         volumeMounts:
           - name: workdir
