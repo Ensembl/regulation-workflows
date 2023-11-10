@@ -956,7 +956,7 @@ spec:
                   # TODO: generalize this strategy once RDR migration using runs is done
                   # Temporary fix to finish fish in r111: assume PE150nt
                   if s.run_type == '0':
-                      s._run_type = 'PE150nt'
+                      s.run_type = 'PE150nt'
                   run_type_signal_filename[s.run_type].append(
                       f"so_queryname_{s.filename}"
                       )
