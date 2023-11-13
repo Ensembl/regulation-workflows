@@ -49,6 +49,9 @@ spec:
           - name: genrich-params
             value: ""
 
+          - name: only_genrich_values_without_controls
+            value: "false"
+
           - name: overwrite-results
             value: "false"
           - name: production-run
@@ -82,6 +85,9 @@ spec:
                   value: "{{inputs.parameters.target_name_contains}}"
                 - name: histone_mark_type
                   value: "{{inputs.parameters.histone_mark_type}}"
+
+                - name: only_genrich_values_without_controls
+                  value: "{{inputs.parameters.only_genrich_values_without_controls}}"
 
                 - name: ad_hoc_playground_prefix
                   value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
@@ -199,6 +205,8 @@ spec:
           - name: target_name_contains
           - name: histone_mark_type
 
+          - name: only_genrich_values_without_controls
+
           - name: ad_hoc_playground_prefix
           - name: output_prefix_label
           - name: skip
@@ -222,6 +230,7 @@ spec:
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "only_genrich_values_without_controls": f"{{inputs.parameters.only_genrich_values_without_controls}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
               "skip": f"{{inputs.parameters.skip}}",
