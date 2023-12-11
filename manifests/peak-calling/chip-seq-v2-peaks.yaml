@@ -83,20 +83,41 @@ spec:
                 - name: genrich-params-broad
                   value: "{{inputs.parameters.genrich-params-broad}}"
 
-          #          - name: check-if-outputs-exist
+          #          - name: check-if-outputs-exist-broad-case
+          #            when: "{{=jsonpath(inputs.parameters['task-payload'], '$.broad_peaks')}} == true"
           #            depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
           #            templateRef:
-          #              name: check-s3-object-exists-v1-submittable
-          #              template: check-s3-object-exists
+          #              name: check-if-s3-objects-exist-v1-submittable
+          #              template: check-if-s3-objects-exist
           #            arguments:
           #              parameters:
-          #                - name: s3-key
-          #                  value: "{{item}}"
-          #            withItems:
+          #                - name: s3-keys
+          #                  value: |
+          #                    [
+          #                      "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-peaks-s3-key}}",
+          #                      "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.broad-peaks-s3-key}}",
+          #                      "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.gapped-peaks-s3-key}}"
+          #                    ]
+
+          # TODO: Refactor this part to include check for broad specific outputs
+          - name: check-if-outputs-exist-narrow-case
+            #            when: "{{=jsonpath(inputs.parameters['task-payload'], '$.broad_peaks')}} == false"
+            depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
+            templateRef:
+              name: check-if-s3-objects-exist-v1-submittable
+              template: check-if-s3-objects-exist
+            arguments:
+              parameters:
+                - name: s3-keys
+                  value: |
+                    [
+                      "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.narrow-peaks-s3-key}}"
+                    ]
 
           - name: get-peak-calling-pvc-size
-            #            depends: check-if-outputs-exist.Succeeded
-            depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
+            depends: check-if-outputs-exist-narrow-case.Succeeded
+            when: >-
+              {{tasks.check-if-outputs-exist-narrow-case.outputs.parameters.check-response}} == false
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size

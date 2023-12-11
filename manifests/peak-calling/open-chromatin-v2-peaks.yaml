@@ -70,9 +70,19 @@ spec:
                 - name: genrich-params
                   value: "{{inputs.parameters.genrich-params}}"
 
-          - name: get-peak-calling-pvc-size
-            #            depends: check-if-outputs-exist.Succeeded
+          - name: check-if-outputs-exist
             depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.get-s3-keys-and-set-of-genrich-cmds.outputs.parameters.peaks-s3-key}}"
+
+          - name: get-peak-calling-pvc-size
+            depends: check-if-outputs-exist.Succeeded
+            when: "{{tasks.check-if-outputs-exist.outputs.parameters.s3-object-exists}} == false"
             templateRef:
               name: compute-pvc-size-v1-submittable
               template: compute-pvc-size
