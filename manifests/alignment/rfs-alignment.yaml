@@ -9,10 +9,9 @@ spec:
 
   templates:
     - name: rfs-alignment
-      parallelism: 3
+      parallelism: 1
       inputs:
         parameters:
-          - name: task-payload
           - name: assembly_id
           - name: read_file_set_id
           - name: bowtie2_index_key
@@ -24,18 +23,22 @@ spec:
           - name: kubeconfig-path
           - name: overwrite-results
           - name: force-update-rfs-alignment-task-markers
+        artifacts:
+          - name: task-payload
       dag:
         tasks:
           - name: compute-rfs-alignment-task-marker-name
             templateRef:
-              name: compute-task-marker-name-v1-submittable
+              name: compute-task-marker-name-v2-submittable
               template: compute-task-marker-name
             arguments:
               parameters:
-                - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
                 - name: task-type
                   value: "rfs-alignment"
+              artifacts:
+                - name: task-payload
+                  from: "{{inputs.artifacts.task-payload}}"
+
 
           - name: check-if-task-marker-exists
             depends: compute-rfs-alignment-task-marker-name
@@ -235,7 +238,7 @@ spec:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
                 - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
+                  value: "{{inputs.artifacts.task-payload}}"
 
           - name: delete-run-alignment-pvc
             depends: execute-compute-file-metadata

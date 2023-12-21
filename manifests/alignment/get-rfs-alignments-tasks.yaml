@@ -169,9 +169,10 @@ spec:
               name: rfs-alignment-v1-submittable
               template: rfs-alignment
             arguments:
-              parameters:
+              artifacts:
                 - name: task-payload
-                  value: "{{tasks.wf-task-payload-by-index.outputs.parameters.task-payload}}"
+                  from: "{{tasks.wf-task-payload-by-index.outputs.artifacts.task-payload}}"
+              parameters:
                 - name: assembly_id
                   value: >-
                     {{=
