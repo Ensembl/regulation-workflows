@@ -12,6 +12,7 @@ resources:
   - alignment/run-alignment-pe.yaml
   - alignment/run-alignment-se.yaml
   - alignment/rfs-alignments.yaml
+  - alignment/rfs-alignment.yaml
   - alignment/merge-run-alignments.yaml
   - alignment/get-rfs-alignments-tasks.yaml
   - alignment/check-integrity.yaml
