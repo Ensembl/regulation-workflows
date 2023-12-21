@@ -59,6 +59,7 @@ resources:
   - helpers/get-request-from-reg-pipelines-api-v2.yaml
   - helpers/delete-request-from-reg-pipelines-api.yaml
   - helpers/compute-task-marker-name.yaml
+  - helpers/compute-task-marker-name-v2.yaml
   - helpers/resolve-work-avoidance.yaml
   - helpers/update-task-marker.yaml
   - helpers/copy-s3-prefix-objects-to-pvc.yaml
