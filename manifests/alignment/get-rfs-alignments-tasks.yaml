@@ -166,7 +166,7 @@ spec:
           - name: submit-rfs-alignment
             depends: wf-task-payload-by-index.Succeeded
             templateRef:
-              name: rfs-alignment-v1-submittable
+              name: rfs-alignment-v2-submittable
               template: rfs-alignment
             arguments:
               artifacts:
@@ -205,16 +205,6 @@ spec:
                           '$.bowtie2_index_basename'
                       )
                     }}
-                - name: read_file_set
-                  value: >-
-                    {{=
-                      toJson(
-                        jsonpath(
-                            tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
-                            '$.read_file_set'
-                        )
-                      )
-                    }}
                 - name: samtools_stats_output_key
                   value: >-
                     {{=
@@ -245,8 +235,6 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: force-update-rfs-alignment-task-markers
                   value: "false"
-
-
 
 
 
