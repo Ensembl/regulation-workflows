@@ -62,6 +62,7 @@ resources:
   - helpers/compute-task-marker-name-v2.yaml
   - helpers/resolve-work-avoidance.yaml
   - helpers/update-task-marker.yaml
+  - helpers/update-task-marker-v2.yaml
   - helpers/copy-s3-prefix-objects-to-pvc.yaml
   - helpers/copy-s3-object-to-pvc.yaml
   - helpers/cp-s3-object-to-s3.yaml

@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: update-task-marker-v2-submittable
+spec:
+  entrypoint: update-task-marker
+  imagePullSecrets:
+    - name: ghcr-pull-token
+
+  templates:
+    - name: update-task-marker
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: task-marker-s3-key
+        artifacts:
+          - name: task-payload
+            path: /tmp/task-payload
+
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        workingDir: /mnt/vol
+        command: [ python ]
+        source: |
+          from pathlib import Path
+          import json
+          import sys
+
+          def main() -> int:
+
+            with open('/tmp/task-payload') as f:
+              task_data = json.load(f)
+          
+            with open("task_marker.json", mode="w") as f:
+              json.dump(task_data, f, indent=2, sort_keys=True)
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+      outputs:
+        artifacts:
+          - name: task-marker
+            path: /mnt/vol/task_marker.json
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.task-marker-s3-key}}"
