@@ -265,9 +265,19 @@ spec:
           - name: kubeconfig-path
       dag:
         tasks:
+          - name: expose-run-payload-fields-as-params
+            templateRef:
+              name: expose-payload-fields-as-params-v1-submittable
+              template: expose-payload-fields-as-params
+            arguments:
+              artifacts:
+                - name: payload
+                  from: "{{inputs.artifacts.run-payload}}"
+
           - name: execute-pe-alignment
+            depends: expose-run-payload-fields-as-params
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
-            when: "true == {{=jsonpath(inputs.parameters.run_alignment_params, '$.paired') == true}}"
+            when: "true == {{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.paired') == true}}"
             templateRef:
               name: run-alignment-pe-v1-submittable
               template: run-alignment
@@ -277,41 +287,42 @@ spec:
                   value: "{{inputs.parameters.run_alignment_params}}"
                 # Input file
                 - name: first_read_file_key
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_key')}}"
+                  value: "{{=jsonpath(tasks[expose-run-payload-fields-as-params'].payload, '$.first_read_file_key')}}"
                 - name: second_read_file_key
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_key')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.second_read_file_key')}}"
                 - name: first_read_file_name
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_name')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_name')}}"
                 - name: second_read_file_name
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_name')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.second_read_file_name')}}"
                 - name: first_read_file_basename
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_basename')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_basename')}}"
                 - name: second_read_file_basename
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.second_read_file_basename')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.second_read_file_basename')}}"
                 - name: bowtie2_index_key
                   value: "{{inputs.parameters.bowtie2_index_key}}"
                 - name: bowtie2_index_basename
                   value: "{{inputs.parameters.bowtie2_index_basename}}"
                 # Output related
                 - name: total_read_files_size
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.total_read_files_size')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.total_read_files_size')}}"
                 - name: read_files_output_prefix
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.read_files_output_prefix')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.read_files_output_prefix')}}"
                 - name: fastqc_outdir
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_outdir')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.fastqc_outdir')}}"
                 - name: fastqc_output_prefix
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_output_prefix')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.fastqc_output_prefix')}}"
                 - name: output_prefix
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_prefix')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.output_prefix')}}"
                 - name: output_filename
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.output_filename')}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
           - name: execute-se-alignment
+            depends: expose-run-payload-fields-as-params
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
-            when: "true == {{=jsonpath(inputs.parameters.run_alignment_params, '$.paired') == false}}"
+            when: "true == {{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.paired') == false}}"
             templateRef:
               name: run-alignment-se-v1-submittable
               template: run-alignment
@@ -321,28 +332,28 @@ spec:
                   value: "{{inputs.parameters.run_alignment_params}}"
                 # Input file
                 - name: first_read_file_key
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_key')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_key')}}"
                 - name: first_read_file_name
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_name')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_name')}}"
                 - name: first_read_file_basename
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.first_read_file_basename')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_basename')}}"
                 - name: bowtie2_index_key
                   value: "{{inputs.parameters.bowtie2_index_key}}"
                 - name: bowtie2_index_basename
                   value: "{{inputs.parameters.bowtie2_index_basename}}"
                 # Output related
                 - name: total_read_files_size
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.total_read_files_size')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.total_read_files_size')}}"
                 - name: read_files_output_prefix
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.read_files_output_prefix')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.read_files_output_prefix')}}"
                 - name: fastqc_outdir
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_outdir')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.fastqc_outdir')}}"
                 - name: fastqc_output_prefix
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.fastqc_output_prefix')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.fastqc_output_prefix')}}"
                 - name: output_prefix
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_prefix')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.output_prefix')}}"
                 - name: output_filename
-                  value: "{{=jsonpath(inputs.parameters.run_alignment_params, '$.output_filename')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.output_filename')}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path

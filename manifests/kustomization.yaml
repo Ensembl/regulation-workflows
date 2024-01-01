@@ -75,3 +75,4 @@ resources:
   - helpers/post-results-to-reg-pipelines-api.yaml
   - helpers/analysis-file-post-request-payload.yaml
   - helpers/get-wf-task-payload-by-index.yaml
+  - helpers/expose-payload-fields-as-params.yaml

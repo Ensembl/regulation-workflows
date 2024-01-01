@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: expose-payload-fields-as-params-v1-submittable
+spec:
+  entrypoint: expose-payload-fields-as-params
+
+  templates:
+    - name: expose-payload-fields-as-params
+      inputs:
+        artifacts:
+          - name: payload
+            path: /tmp/payload.json
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import json
+          
+          def main() -> int:
+          
+            with open('/tmp/payload.json') as f:
+              payload_data = json.load(f)
+          
+            with open('/tmp/payload', 'w') as f:
+              f.write(json.dumps(payload_data))
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        parameters:
+          - name: payload
+            valueFrom:
+              path: /tmp/payload
+
