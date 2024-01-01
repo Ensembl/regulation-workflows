@@ -3,7 +3,7 @@ kind: WorkflowTemplate
 #kind: Workflow
 metadata:
   #  generateName: run-alignment-
-  name: run-alignment-pe-v1-submittable
+  name: run-alignment-pe-v2-submittable
 spec:
   entrypoint: run-alignment
   #  hooks:
@@ -23,7 +23,6 @@ spec:
     - name: run-alignment
       inputs:
         parameters:
-          - name: task-payload
           # Input file
           - name: first_read_file_key
           - name: second_read_file_key
@@ -43,19 +42,21 @@ spec:
           # Others
           - name: overwrite-results
           - name: kubeconfig-path
-
+        artifacts:
+          - name: run-payload
       dag:
         tasks:
           - name: compute-run-alignment-task-marker-name
             templateRef:
-              name: compute-task-marker-name-v1-submittable
+              name: compute-task-marker-name-v2-submittable
               template: compute-task-marker-name
             arguments:
               parameters:
-                - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
                 - name: task-type
                   value: "tr-alignment"
+              artifacts:
+                - name: task-payload
+                  from: "{{inputs.artifacts.run-payload}}"
 
           - name: check-if-task-marker-exists
             depends: compute-run-alignment-task-marker-name
@@ -236,8 +237,8 @@ spec:
               parameters:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-run-alignment-task-marker-name.outputs.result}}"
-                - name: task-payload
-                  value: "{{inputs.parameters.task-payload}}"
+                - name: run-payload
+                  value: "{{inputs.parameters.run-payload}}"
 
           - name: delete-run-alignment-pvc
             depends: execute-bowtie2-cmd
