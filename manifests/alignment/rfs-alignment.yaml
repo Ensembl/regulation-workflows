@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: rfs-alignment-v1-submittable
+  name: rfs-alignment-v2-submittable
 spec:
   entrypoint: rfs-alignment
   imagePullSecrets:
@@ -16,7 +16,6 @@ spec:
           - name: read_file_set_id
           - name: bowtie2_index_key
           - name: bowtie2_index_basename
-          - name: read_file_set
           - name: samtools_stats_output_key
           - name: output_key
           - name: associated_read_files_size
@@ -38,7 +37,6 @@ spec:
               artifacts:
                 - name: task-payload
                   from: "{{inputs.artifacts.task-payload}}"
-
 
           - name: check-if-task-marker-exists
             depends: compute-rfs-alignment-task-marker-name
@@ -73,10 +71,18 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
-          - name: execute-runs-alignment
+          - name: get-run-alignments-payload-info
             depends: check-work-avoidance-consistency.Succeeded
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
-            template: run-alignment
+            template: get-run-alignments-payload
+            arguments:
+              artifacts:
+                - name: task-payload
+                  from: "{{inputs.artifacts.task-payload}}"
+
+          - name: execute-runs-alignment
+            depends: get-run-alignments-payload-info
+            template: execute-run-alignments-dag
             arguments:
               parameters:
                 - name: assembly_id
@@ -87,13 +93,18 @@ spec:
                   value: "{{inputs.parameters.bowtie2_index_key}}"
                 - name: bowtie2_index_basename
                   value: "{{inputs.parameters.bowtie2_index_basename}}"
-                - name: run_alignment_params
+                - name: run-index
                   value: "{{item}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
-            withParam: "{{inputs.parameters.read_file_set}}"
+              artifacts:
+                - name: runs-payload
+                  from: "{{tasks.get-run-alignments-payload-info.outputs.artifacts.runs-payload}}"
+            withSequence:
+              count: "{{tasks.get-run-alignments-payload-info.outputs.parameters.number-of-runs}}"
+
 
           - name: get-rfs-alignment-pvc-size
             depends: execute-runs-alignment
@@ -134,7 +145,7 @@ spec:
                 # Warning: Here we assume all rfs run alignments can be found
                 # by themselves under the same prefix in the s3 bucket
                 - name: s3-prefix
-                  value: "{{=jsonpath(inputs.parameters.read_file_set, '$[0].output_prefix')}}"
+                  value: "{{=jsonpath(tasks['get-run-alignments-payload-info'].outputs.parameters['runs-payload'], '$[0].output_prefix')}}"
 
           - name: validate-number-of-alignments-to-merge
             depends: copy-run-alignments-to-rfs-pvc
@@ -148,7 +159,7 @@ spec:
                 - name: pvc-dir
                   value: "so_coordinates_runs_bams"
                 - name: expected-number-of-files
-                  value: "{{=len(jsonpath(inputs.parameters.read_file_set, '$[0:]'))}}"
+                  value: "{{=len(jsonpath(tasks['get-run-alignments-payload-info'].outputs.parameters['runs-payload'], '$[0:]'))}}"
 
           - name: execute-samtools-merge
             depends: validate-number-of-alignments-to-merge
@@ -260,9 +271,10 @@ spec:
           - name: read_file_set_id
           - name: bowtie2_index_key
           - name: bowtie2_index_basename
-          - name: run_alignment_params
           - name: overwrite-results
           - name: kubeconfig-path
+        artifacts:
+          - name: run-payload
       dag:
         tasks:
           - name: expose-run-payload-fields-as-params
@@ -279,12 +291,10 @@ spec:
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
             when: "true == {{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.paired') == true}}"
             templateRef:
-              name: run-alignment-pe-v1-submittable
+              name: run-alignment-pe-v2-submittable
               template: run-alignment
             arguments:
               parameters:
-                - name: task-payload
-                  value: "{{inputs.parameters.run_alignment_params}}"
                 # Input file
                 - name: first_read_file_key
                   value: "{{=jsonpath(tasks[expose-run-payload-fields-as-params'].payload, '$.first_read_file_key')}}"
@@ -319,17 +329,19 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+              artifacts:
+                - name: run-payload
+                  from: "{{inputs.artifacts.run-payload}}"
+
           - name: execute-se-alignment
             depends: expose-run-payload-fields-as-params
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
             when: "true == {{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.paired') == false}}"
             templateRef:
-              name: run-alignment-se-v1-submittable
+              name: run-alignment-se-v2-submittable
               template: run-alignment
             arguments:
               parameters:
-                - name: task-payload
-                  value: "{{inputs.parameters.run_alignment_params}}"
                 # Input file
                 - name: first_read_file_key
                   value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_key')}}"
@@ -358,6 +370,107 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+              artifacts:
+                - name: run-payload
+                  from: "{{inputs.artifacts.run-payload}}"
+
+
+    - name: get-run-alignments-payload
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        artifacts:
+          - name: task-payload
+            path: /tmp/rfs_task_payload.json
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import json
+
+          def main() -> int:
+
+            with open('/tmp/rfs_task_payload.json') as f:
+              payload = json.load(f)
+          
+            with open('/tmp/number_of_runs', 'w') as f:
+              f.write(str(len(payload["read_file_set"])))
+          
+            with open('/tmp/runs_payload.json', 'w') as f:
+              f.write(json.dumps(payload["read_file_set"]))
+          
+            return 0
+
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        parameters:
+          - name: number-of-runs
+            valueFrom:
+              path: /tmp/number_of_runs
+          - name: runs-payload
+            valueFrom:
+              path: /tmp/runs_payload.json
+        artifacts:
+          - name: runs-payload
+            path: /tmp/runs_payload.json
+
+
+    - name: execute-run-alignments-dag
+      inputs:
+        parameters:
+          - name: assembly_id
+          - name: read_file_set_id
+          - name: bowtie2_index_key
+          - name: bowtie2_index_basename
+          - name: run-index
+          - name: overwrite-results
+          - name: kubeconfig-path
+        artifacts:
+          - name: runs-payload
+      dag:
+        tasks:
+          - name: wf-task-payload-by-index
+            templateRef:
+              name: get-wf-task-payload-by-index-v1-submittable
+              template: get-wf-task-payload-by-index
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{inputs.parameters.run-index}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.runs-payload}}"
+
+          - name: submit-run-alignment
+            depends: wf-task-payload-by-index
+            template: run-alignment
+            arguments:
+              parameters:
+                - name: assembly_id
+                  value: "{{inputs.parameters.assembly_id}}"
+                - name: read_file_set_id
+                  value: "{{inputs.parameters.read_file_set_id}}"
+                - name: bowtie2_index_key
+                  value: "{{inputs.parameters.bowtie2_index_key}}"
+                - name: bowtie2_index_basename
+                  value: "{{inputs.parameters.bowtie2_index_basename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+              artifacts:
+                - name: run-payload
+                  from: "{{tasks.wf-task-payload-by-index.outputs.artifacts.task-payload}}"
+
+
+
 
 
     - name: samtools-merge-cmd
