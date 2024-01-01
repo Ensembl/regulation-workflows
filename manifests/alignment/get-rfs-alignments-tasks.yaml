@@ -141,6 +141,13 @@ spec:
               count: "{{inputs.parameters.number-of-tasks}}"
 
     - name: get-rfs-alignment-task-payload-by-index-dag
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: index

@@ -477,6 +477,10 @@ spec:
     - name: samtools-merge-cmd
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
         retryPolicy: "OnError"
       inputs:
         parameters:
@@ -546,6 +550,10 @@ spec:
     - name: samtools-stats-cmd
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
         retryPolicy: "OnError"
       inputs:
         parameters:
@@ -593,6 +601,10 @@ spec:
     - name: post-rfs-alignment
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
         retryPolicy: "OnError"
       inputs:
         parameters:

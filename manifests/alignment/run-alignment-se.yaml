@@ -237,6 +237,10 @@ spec:
     - name: output-info
       retryStrategy:
         limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
         retryPolicy: "OnError"
       inputs:
         parameters:
@@ -320,7 +324,7 @@ spec:
           duration: "10s"
           factor: "2"
           maxDuration: "6h"
-        retryPolicy: "Always"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: pvc-name
