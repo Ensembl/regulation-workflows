@@ -203,14 +203,15 @@ spec:
             depends: "execute-bowtie2-cmd || check-work-avoidance-consistency.Failed"
             when: "{{tasks.execute-bowtie2-cmd.status}} == Succeeded"
             templateRef:
-              name: update-task-marker-v1-submittable
+              name: update-task-marker-v2-submittable
               template: update-task-marker
             arguments:
               parameters:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-run-alignment-task-marker-name.outputs.result}}"
-                - name: run-payload
-                  value: "{{inputs.parameters.run-payload}}"
+              artifacts:
+                - name: task-payload
+                  from: "{{inputs.artifacts.run-payload}}"
 
           - name: delete-run-alignment-pvc
             depends: execute-bowtie2-cmd

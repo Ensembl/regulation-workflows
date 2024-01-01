@@ -242,14 +242,15 @@ spec:
               && {{tasks.check-work-avoidance-consistency.status}} == Failed ) 
               || {{tasks.execute-post-rfs-alignment.status}} == Succeeded )
             templateRef:
-              name: update-task-marker-v1-submittable
+              name: update-task-marker-v2-submittable
               template: update-task-marker
             arguments:
               parameters:
                 - name: task-marker-s3-key
                   value: "{{tasks.compute-rfs-alignment-task-marker-name.outputs.result}}"
+              artifacts:
                 - name: task-payload
-                  value: "{{inputs.artifacts.task-payload}}"
+                  from: "{{inputs.artifacts.task-payload}}"
 
           - name: delete-run-alignment-pvc
             depends: execute-compute-file-metadata
