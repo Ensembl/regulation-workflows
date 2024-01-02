@@ -81,7 +81,7 @@ spec:
                   from: "{{inputs.artifacts.task-payload}}"
 
           - name: execute-runs-alignment
-            depends: get-run-alignments-payload-info
+            depends: get-run-alignments-payload-info.Succeeded
             template: execute-run-alignments-dag
             arguments:
               parameters:
