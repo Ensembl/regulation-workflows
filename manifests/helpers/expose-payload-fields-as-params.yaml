@@ -7,6 +7,13 @@ spec:
 
   templates:
     - name: expose-payload-fields-as-params
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
       inputs:
         artifacts:
           - name: payload

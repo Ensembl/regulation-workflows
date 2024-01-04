@@ -7,6 +7,13 @@ spec:
 
   templates:
     - name: get-wf-task-payload-by-index
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: index
