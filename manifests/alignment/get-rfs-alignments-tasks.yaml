@@ -7,7 +7,7 @@ spec:
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
-    strategy: OnPodSuccess
+    strategy: OnPodCompletion
 
   templates:
     - name: get-rfs-alignments-tasks-dag
