@@ -298,7 +298,7 @@ spec:
               parameters:
                 # Input file
                 - name: first_read_file_key
-                  value: "{{=jsonpath(tasks[expose-run-payload-fields-as-params'].payload, '$.first_read_file_key')}}"
+                  value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.first_read_file_key')}}"
                 - name: second_read_file_key
                   value: "{{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.second_read_file_key')}}"
                 - name: first_read_file_name
