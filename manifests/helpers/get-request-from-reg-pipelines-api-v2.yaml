@@ -7,6 +7,13 @@ spec:
 
   templates:
     - name: get-request-from-reg-pipelines-api
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: url
@@ -14,24 +21,24 @@ spec:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
         source: |
-            import sys
-            import json
-            from urllib.request import urlopen
-
-            def main() -> int:
-
-              with urlopen("{{inputs.parameters.url}}") as response:
-                payload = json.load(response)
-
-              with open('/tmp/items', 'w') as f:
-                f.write(json.dumps(payload))
-              with open('/tmp/count', 'w') as f:
-                f.write(f'{len(payload)}')
-
-              return 0
+          import sys
+          import json
+          from urllib.request import urlopen
           
-            if __name__ == '__main__':
-              sys.exit(main())
+          def main() -> int:
+          
+            with urlopen("{{inputs.parameters.url}}") as response:
+              payload = json.load(response)
+          
+            with open('/tmp/items', 'w') as f:
+              f.write(json.dumps(payload))
+            with open('/tmp/count', 'w') as f:
+              f.write(f'{len(payload)}')
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
       outputs:
         artifacts:
           - name: items
