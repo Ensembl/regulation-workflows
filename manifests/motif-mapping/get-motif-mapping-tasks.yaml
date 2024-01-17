@@ -97,17 +97,22 @@ spec:
               parameters:
                 - name: url
                   value: "{{tasks.get-motif-mapping-tasks-url.outputs.result}}"
+
           - name: submit-motif-mapping-tasks
             depends: "mock-api-request"
             template: motif-mapping-tasks-dag
             arguments:
               parameters:
-                - name: motif-mapping-tasks
-                  value: "{{tasks.mock-api-request.outputs.result}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: count
+                  value: "{{tasks.mock-api-request.outputs.parameters.count}}"
+              artifacts:
+                - name: items
+                  from: "{{tasks.mock-api-request.outputs.artifacts.items}}"
+
     - name: compute-get-motif-mapping-tasks-url
       inputs:
         parameters:
@@ -170,15 +175,24 @@ spec:
       inputs:
         parameters:
           - name: url
+      outputs:
+        artifacts:
+          - name: items
+            path: /tmp/items
+        parameters:
+          - name: count
+            valueFrom:
+              path: /tmp/count
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [python]
         source: |
           import sys
+          import json
 
           def main() -> int:
 
-            print(
+            payload = json.loads(
               """
               [
                 {
@@ -213,6 +227,11 @@ spec:
               """
             )
 
+            with open('/tmp/items', 'w') as f:
+              f.write(json.dumps(payload))
+            with open('/tmp/count', 'w') as f:
+              f.write(f'{len(payload)}')
+
             return 0
 
           if __name__ == '__main__':
@@ -221,36 +240,124 @@ spec:
       parallelism: 20
       inputs:
         parameters:
-          - name: motif-mapping-tasks
           - name: overwrite-results
           - name: kubeconfig-path
+          - name: count
+        artifacts:
+          - name: items
       dag:
         tasks:
+          - name: submit-get-wf-task-payload-by-index-dag 
+            template: get-wf-task-payload-by-index-dag
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{item}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.items}}"
+            withSequence:
+              count: "{{inputs.parameters.count}}"
+
+    - name: get-wf-task-payload-by-index-dag
+      inputs:
+        parameters:
+          - name: index
+          - name: kubeconfig-path
+          - name: overwrite-results
+        artifacts:
+          - name: items
+
+      dag:
+        tasks:
+          - name: submit-get-wf-task-payload-by-index
+            templateRef: 
+              name: get-wf-task-payload-by-index-v1-submittable
+              template: get-wf-task-payload-by-index 
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{inputs.parameters.index}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.items}}"
           - name: submit-motif-mapping-by-target
+            depends: submit-get-wf-task-payload-by-index
             template: motif-mapping-by-target-dag
             arguments:
               parameters:
                 - name: task-payload
-                  value: "{{item}}"
+                  value: "{{tasks.submit-get-wf-task-payload-by-index.outputs.parameters.task-payload}}"
                 - name: target-name
-                  value: "{{item.target_name}}"
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.target_name'
+                      )
+                    }}
                 - name: assembly-id
-                  value: "{{item.assembly_id}}"
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.assembly_id'
+                      )
+                    }}
                 - name: genome-s3-key
-                  value: "{{item.genome_s3_key}}"
-                - name: bm-s3-key
-                  value: "{{item.bm_s3_key}}"
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.genome_s3_key'
+                      )
+                    }}
                 - name: out-s3-key
-                  value: "{{item.out_s3_prefix}}{{item.out_basename}}"
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.out_s3_prefix'
+                      )
+                    }}{{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.out_basename'
+                      )
+                    }}
+
+                - name: bm-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.bm_s3_key'
+                      )
+                    }}
                 - name: experiments
-                  value: "{{item.experiments}}"
+                  value: >-
+                    {{=
+                      toJson(
+                        jsonpath(
+                          tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.experiments'
+                        )
+                      )
+                    }}
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: force-update-task-markers
                   value: "false"
-            withParam: "{{inputs.parameters.motif-mapping-tasks}}"
+
+
+
+
     - name: motif-mapping-by-target-dag
       inputs:
         parameters:
@@ -262,8 +369,9 @@ spec:
           - name: bm-s3-key
           - name: experiments
           - name: overwrite-results
-          - name: kubeconfig-path
+          - name: kubeconfig-path 
           - name: force-update-task-markers
+            value: "false"
       dag:
         tasks:
           - name: get-motif-mapping-pvc-size
