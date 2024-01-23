@@ -127,8 +127,8 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            memory: 58Gi
+            memory: 42Gi
             cpu: 13900m
           requests:
-            memory: 40Gi
+            memory: 38Gi
             cpu: 12900m
