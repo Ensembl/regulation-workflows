@@ -9,7 +9,7 @@ spec:
 
   templates:
     - name: rfs-alignment
-      parallelism: 1
+      parallelism: 4
       inputs:
         parameters:
           - name: assembly_id
