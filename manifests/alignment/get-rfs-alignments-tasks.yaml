@@ -23,6 +23,8 @@ spec:
             value: ""
           - name: experiment_name_contains
             value: ""
+          - name: target_type
+            value: ""
           - name: epigenome_group_id
             value: ""
           - name: skip
@@ -60,6 +62,8 @@ spec:
                   value: "{{inputs.parameters.epigenome_name_contains}}"
                 - name: experiment_name_contains
                   value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: target_type
+                  value: "{{inputs.parameters.target_type}}"
                 - name: epigenome_group_id
                   value: "{{inputs.parameters.epigenome_group_id}}"
                 - name: skip

@@ -24,6 +24,7 @@ spec:
           - name: species_name
           - name: epigenome_name_contains
           - name: experiment_name_contains
+          - name: target_type
           - name: epigenome_group_id
           - name: skip
           - name: limit
@@ -47,6 +48,7 @@ spec:
               "species_name": f"{{inputs.parameters.species_name}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "target_type": f"{{inputs.parameters.target_type}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "exclude_tasks_with_registered_results": f"{{inputs.parameters.exclude_tasks_with_registered_results}}"
             }
