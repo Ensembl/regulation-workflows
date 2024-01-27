@@ -25,7 +25,7 @@ spec:
           - name: output_filename
           # Other Parameters
           - name: num_threads
-            value: "13"
+            value: "9"
       dag:
         tasks:
           - name: execute-bowtie2-cmd-pvc-callable
@@ -135,7 +135,7 @@ spec:
         resources:
           limits:
             memory: 42Gi
-            cpu: 13900m
+            cpu: 9900m
           requests:
             memory: 38Gi
-            cpu: 12900m
+            cpu: 8900m
