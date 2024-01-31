@@ -21,7 +21,7 @@ spec:
           - name: items
             path: /results/items
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/regulation-wf-python:3.11.7
         command: [ python ]
         source: |
           import sys
