@@ -18,6 +18,8 @@ spec:
         parameters:
           - name: url
       script:
+        securityContext:
+          readOnlyRootFilesystem: false
         image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/regulation-wf-python:3.11.7
         command: [ python ]
         source: |
