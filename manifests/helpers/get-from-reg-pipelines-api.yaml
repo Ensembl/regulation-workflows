@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-from-reg-pipelines-api-v1-submittable
+spec:
+  entrypoint: get-from-reg-pipelines-api
+
+  templates:
+    - name: get-from-reg-pipelines-api
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: url
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [ python ]
+        source: |
+          import sys
+          import json
+          from urllib.request import urlopen
+          
+          def main() -> int:
+          
+            with urlopen("{{inputs.parameters.url}}") as response:
+              payload = json.load(response)
+          
+            with open('/results/items', 'w') as f:
+              f.write(json.dumps(payload))
+            with open('/results/count', 'w') as f:
+              f.write(f'{len(payload)}')
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        artifacts:
+          - name: items
+            path: /results/items
+        parameters:
+          - name: count
+            valueFrom:
+              path: /results/count
