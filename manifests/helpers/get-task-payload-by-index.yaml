@@ -33,7 +33,7 @@ spec:
           
             with open('/results/items') as f:
               payload = json.load(f)
-            with open('/results/task-payload', 'w') as f:
+            with open('/results/task-payload.json', 'w') as f:
               f.write(json.dumps(payload[{{inputs.parameters.index}}]))
           
             return 0
@@ -44,8 +44,14 @@ spec:
         parameters:
           - name: task-payload
             valueFrom:
-              path: /results/task-payload
+              path: /results/task-payload.json
+          - name: task-payload-artifact-ref
+            value: "tests/task-payload/{{workflow.name}}/{{pod.name}}/rfs-alg-task-payload.json"
         artifacts:
           - name: task-payload
-            path: /results/task-payload
+            path: /results/task-payload.json
+            s3:
+              key: "tests/task-payload/{{workflow.name}}/{{pod.name}}/rfs-alg-task-payload.json"
+            archive:
+              none: { }
 
