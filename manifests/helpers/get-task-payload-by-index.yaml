@@ -19,7 +19,7 @@ spec:
           - name: index
         artifacts:
           - name: items
-            path: /results/items
+            path: /home/ensreg/workdir/items.json
       script:
         securityContext:
           readOnlyRootFilesystem: false
@@ -28,13 +28,19 @@ spec:
         source: |
           import sys
           import json
+          import os
           
           def main() -> int:
           
-            with open('/results/items') as f:
+          
+            os.system('ls -altrh')
+            os.system('pwd')
+          
+            with open('{{inputs.artifacts.items.path}}') as f:
               payload = json.load(f)
-            with open('/results/task-payload.json', 'w') as f:
-              f.write(json.dumps(payload[{{inputs.parameters.index}}]))
+          
+            with open('{{outputs.artifacts.task-payload.path}}', 'w') as f:
+              f.write(json.dumps(payload[{{inputs.parameters.index}}], indent=2))
           
             return 0
           
@@ -44,12 +50,12 @@ spec:
         parameters:
           - name: task-payload
             valueFrom:
-              path: /results/task-payload.json
+              path: task-payload.json
           - name: task-payload-artifact-ref
             value: "tests/task-payload/{{workflow.name}}/{{pod.name}}/rfs-alg-task-payload.json"
         artifacts:
           - name: task-payload
-            path: /results/task-payload.json
+            path: task-payload.json
             s3:
               key: "tests/task-payload/{{workflow.name}}/{{pod.name}}/rfs-alg-task-payload.json"
             archive:
