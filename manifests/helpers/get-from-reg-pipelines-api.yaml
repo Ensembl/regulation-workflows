@@ -34,7 +34,7 @@ spec:
               payload = json.load(response)
           
             os.system('pwd')
-            os.system('ls -altrh /home/ensreg/workdir')
+            os.system('ls -altrh .')
           
             with open('{{outputs.artifacts.items.path}}', 'w') as f:
               f.write(json.dumps(payload))
@@ -49,8 +49,8 @@ spec:
       outputs:
         artifacts:
           - name: items
-            path: /home/ensreg/workdir/items.json
+            path: items.json
         parameters:
           - name: count
             valueFrom:
-              path: /home/ensreg/workdir/count
+              path: count
