@@ -22,7 +22,15 @@ spec:
             path: /home/ensreg/workdir/items.json
       script:
         securityContext:
+          runAsNonRoot: true
+          runAsUser: 8737
+          runAsGroup: 8737
+          privileged: false
           readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/regulation-wf-python:3.11.7
         command: [ python ]
         source: |
@@ -35,6 +43,7 @@ spec:
           
             os.system('ls -altrh')
             os.system('pwd')
+            os.system('whoami')
           
             with open('{{inputs.artifacts.items.path}}') as f:
               payload = json.load(f)
