@@ -6,6 +6,12 @@ spec:
   entrypoint: rfs-alignment
   imagePullSecrets:
     - name: ghcr-pull-token
+    - name: ebi-gcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 8737
 
   templates:
     - name: rfs-alignment
@@ -13,6 +19,8 @@ spec:
         artifacts:
           - name: task-payload
         parameters:
+          - name: parent-wf-name
+            value: ""
           - name: kubeconfig-path
           - name: overwrite-results
       dag:
@@ -31,8 +39,8 @@ spec:
           - name: task-payload
       dag:
         tasks:
-          - name: validate-rfs-alg-payload
-            template: private-validate-rfs-alg-payload
+          - name: validate-rfs-aln-payload
+            template: private-validate-rfs-aln-payload
             arguments:
               artifacts:
                 - name: task-payload
@@ -40,87 +48,83 @@ spec:
       outputs:
         parameters:
           - name: assembly_id
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                  tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
-                  '$.assembly_id'
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
+                    '$.assembly_id'
                 )
-              }}
           - name: read_file_set_id
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                    tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
                     '$.read_file_set_id'
                 )
-              }}
           - name: bowtie2_index_key
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                    tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
                     '$.bowtie2_index_key'
                 )
-              }}
           - name: bowtie2_index_basename
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                    tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
                     '$.bowtie2_index_basename'
                 )
-              }}
           - name: samtools_stats_output_key
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                    tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
                     '$.samtools_stats_output_key'
                 )
-              }}
           - name: output_key
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                    tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
                     '$.output_key'
                 )
-              }}
           - name: associated_read_files_size
-            value: >-
-              {{=
+            valueFrom:
+              expression: >-
                 jsonpath(
-                    tasks['validate-rfs-alg-payload'].outputs.parameters['validated-task-payload'], 
+                    tasks['validate-rfs-aln-payload'].outputs.parameters['validated-task-payload'],
                     '$.associated_read_files_size'
                 )
-              }}
 
 
-    - name: private-validate-rfs-alg-payload
+    - name: private-validate-rfs-aln-payload
       inputs:
         artifacts:
           - name: task-payload
-            path: /results/task_payload.json
+            path: /home/ensreg/workdir/task_payload.json
       script:
         securityContext:
           readOnlyRootFilesystem: false
         image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/regulation-wf-python:3.11.7
         command: [ python ]
         source: |
+          import os
           import sys
           import json
 
           def main() -> int:
+          
+            os.system('ls -altrh .')
+            os.system('whoami')
 
-            with open('/results/task_payload.json') as f:
+            with open('{{inputs.artifacts.task-payload.path}}') as f:
               payload = json.load(f)
           
             # TODO: Validate the payload
 
-            with open('/results/validated_task_payload.json', 'w') as f:
+            with open('validated_task_payload.json', 'w') as f:
               f.write(json.dumps(payload))
-
 
             return 0
 
@@ -130,5 +134,5 @@ spec:
         parameters:
           - name: validated-task-payload
             valueFrom:
-              path: /results/validated_task_payload.json
+              path: validated_task_payload.json
 
