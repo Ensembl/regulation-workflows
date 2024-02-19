@@ -14,7 +14,7 @@ spec:
           - name: filename
           - name: bt2_index_base
           - name: threads
-            value: "14"
+            value: "8"
         artifacts:
           - name: my-reference-genome-fasta
             path: /results/{{inputs.parameters.filename}}
@@ -29,10 +29,10 @@ spec:
         {{inputs.parameters.bt2_index_base}}" ]
         resources:
           requests:
-            cpu: 13500m
+            cpu: 7900m
             memory: 28Gi
           limits:
-            cpu: 13900m
+            cpu: 8900m
             memory: 30Gi
       outputs:
         artifacts:
@@ -40,3 +40,5 @@ spec:
             path: /results/
             s3:
               key: "{{inputs.parameters.prefix}}{{inputs.parameters.bt2_index_base}}.tar.gz"
+
+# TODO: Package index outputs into a tarball and only store the .tar.gz file in S3
