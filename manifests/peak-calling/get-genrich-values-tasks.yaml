@@ -35,6 +35,8 @@ spec:
             value: ""
           - name: min_replicate_count
             value: ""
+          - name: max_replicate_count
+            value: ""
           - name: exclude_tasks_missing_control
             value: ""
           - name: exclude_controls_from_tasks
@@ -89,6 +91,8 @@ spec:
                   value: "{{inputs.parameters.histone_mark_type}}"
                 - name: min_replicate_count
                   value: "{{inputs.parameters.min_replicate_count}}"
+                - name: max_replicate_count
+                  value: "{{inputs.parameters.max_replicate_count}}"
                 - name: exclude_tasks_missing_control
                   value: "{{inputs.parameters.exclude_tasks_missing_control}}"
                 - name: exclude_controls_from_tasks
@@ -157,6 +161,7 @@ spec:
           - name: target_name_contains
           - name: histone_mark_type
           - name: min_replicate_count
+          - name: max_replicate_count
           - name: exclude_tasks_missing_control
           - name: exclude_controls_from_tasks
 
@@ -185,6 +190,7 @@ spec:
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
               "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
+              "max_replicate_count": f"{{inputs.parameters.max_replicate_count}}",
               "exclude_tasks_missing_control": f"{{inputs.parameters.exclude_tasks_missing_control}}",
               "exclude_controls_from_tasks": f"{{inputs.parameters.exclude_controls_from_tasks}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
