@@ -534,7 +534,7 @@ spec:
           - name: pvc-name
           - name: merged-filename
           - name: num-threads
-            value: "14"
+            value: "8"
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -562,10 +562,10 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 13900m
+            cpu: 8100m
             memory: 30Gi
           requests:
-            cpu: 13500m
+            cpu: 7800m
             memory: 25Gi
 
 
