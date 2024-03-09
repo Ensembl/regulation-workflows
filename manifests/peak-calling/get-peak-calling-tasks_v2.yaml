@@ -27,6 +27,8 @@ spec:
             value: ""
           - name: experiment_name_contains
             value: ""
+          - name: s3_object_key_contains
+            value: ""
           - name: target_name_contains
             value: ""
           - name: histone_mark_type
@@ -84,6 +86,8 @@ spec:
                   value: "{{inputs.parameters.epigenome_name_contains}}"
                 - name: experiment_name_contains
                   value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: s3_object_key_contains
+                  value: "{{inputs.parameters.s3_object_key_contains}}"
                 - name: target_name_contains
                   value: "{{inputs.parameters.target_name_contains}}"
                 - name: histone_mark_type
@@ -208,6 +212,7 @@ spec:
           - name: experiment_type
           - name: epigenome_name_contains
           - name: experiment_name_contains
+          - name: s3_object_key_contains
           - name: target_name_contains
           - name: histone_mark_type
           - name: min_replicate_count
@@ -235,6 +240,7 @@ spec:
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "s3_object_key_contains": f"{{inputs.parameters.s3_object_key_contains}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
               "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
