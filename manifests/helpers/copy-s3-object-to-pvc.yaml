@@ -29,7 +29,7 @@ spec:
 
     - name: copy-s3-object-to-pvc
       retryStrategy:
-        limit: "5"
+        limit: "7"
         backoff:
           duration: "10s"
           factor: "2"
