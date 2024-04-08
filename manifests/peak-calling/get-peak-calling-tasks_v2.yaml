@@ -204,6 +204,13 @@ spec:
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: compute-get-peak-calling-tasks-v2-url
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: svc-name
