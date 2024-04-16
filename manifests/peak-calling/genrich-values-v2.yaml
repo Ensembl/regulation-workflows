@@ -160,8 +160,7 @@ spec:
           - name: test-merge-tasks-in-when
             depends: >-
               get-genrich-inputs-with-controls.Succeeded
-            #            when: "{{=tasks.get-genrich-inputs-with-controls.outputs.parameters['merge-tasks'] != '[]'}}"
-            when: "!{{=sprig.empty(tasks[get-genrich-inputs-with-controls].outputs.parameters['merge-tasks'])}}"
+            when: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks-present}} == true"
             template: dag-merge-controls
             arguments:
               parameters:
@@ -249,7 +248,13 @@ spec:
               get-genrich-inputs-with-controls.Succeeded
               &&
               copy-from-controls-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc.Succeeded
-            when: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks}} != '[]'"
+            # TODO: This could be inferred from the merge_tasks list being empty or not.
+            # However, performing this check using expr and/or sprig is not working for 'when'
+            # checks. Related issue: https://github.com/argoproj/argo-workflows/issues/7576
+            # Attempts:
+            # when: "{{=tasks.get-genrich-inputs-with-controls.outputs.parameters['merge-tasks'] != '[]'}}"
+            # when: "!{{=sprig.empty(tasks[get-genrich-inputs-with-controls].outputs.parameters['merge-tasks'])}}"
+            when: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks-present}} == true"
             template: dag-merge-controls
             arguments:
               parameters:
@@ -1093,6 +1098,12 @@ spec:
               with open("merged_tasks.json", "w") as f:
                   f.write(json.dumps([t.dict() for t in merge_tasks]))
           
+              # TODO: This could be inferred from the merge_tasks list being empty or not.
+              # However, performing this check using expr and/or sprig is not working for 'when'
+              # checks. Related issue: https://github.com/argoproj/argo-workflows/issues/7576
+              with open("merged_tasks_present.txt", "w") as f:
+                  f.write("true" if merge_tasks else "false")
+          
               return 0
           
           
@@ -1110,3 +1121,9 @@ spec:
           - name: merge-tasks
             valueFrom:
               path: merged_tasks.json
+          # TODO: This could be inferred from the merge_tasks list being empty or not.
+          # However, performing this check using expr and/or sprig is not working for 'when'
+          # checks. Related issue: https://github.com/argoproj/argo-workflows/issues/7576
+          - name: merge-tasks-present
+            valueFrom:
+              path: merged_tasks_present.txt
