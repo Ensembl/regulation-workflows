@@ -157,19 +157,6 @@ spec:
                 - name: controls-payload
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
 
-          - name: test-merge-tasks-in-when
-            depends: >-
-              get-genrich-inputs-with-controls.Succeeded
-            when: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks-present}} == true"
-            template: dag-merge-controls
-            arguments:
-              parameters:
-                - name: controls-merge-tasks
-                  value: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks}}"
-                - name: pvc-name
-                  value: "non-existent-pvc"
-
-
           - name: get-peak-calling-pvc-size
             depends: >-
               ( ( get-genrich-inputs-only-signals.Succeeded
