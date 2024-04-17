@@ -100,10 +100,6 @@ spec:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
 
-          #          - name: resolve-genrich-inputs
-          #            depends: check-work-avoidance-consistency.Succeeded
-          #            when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
-          #            template: resolve-genrich-inputs
 
           - name: execute-signals-samtools-sort-tasks
             depends: check-work-avoidance-consistency.Succeeded
@@ -140,58 +136,31 @@ spec:
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
-          - name: get-same-run-type-controls
+          - name: get-genrich-inputs-only-signals
+            depends: check-if-any-controls-present.Succeeded
+            when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == false"
+            template: resolve-genrich-inputs
+            arguments:
+              parameters:
+                - name: signals-payload
+                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
+
+
+          - name: get-genrich-inputs-with-controls
             depends: check-if-any-controls-present.Succeeded
             when: "{{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == true"
-            template: identify-same-run-type-controls
-            arguments:
-              parameters:
-                - name: task-controls
-                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
-
-          - name: get-genrich-input-filenames-formatted-no-controls
-            depends: check-work-avoidance-consistency.Succeeded && get-same-run-type-controls.Skipped
-            when: >-
-              ( {{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false
-              && {{tasks.check-if-any-controls-present.outputs.parameters.controls-present}} == false )
-            template: edit-genrich-input-filenames-formatted
-            arguments:
-              parameters:
-                - name: signals-payload
-                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
-
-          - name: get-genrich-input-filenames-formatted
-            depends: check-work-avoidance-consistency.Succeeded && get-same-run-type-controls.Succeeded
-            when: >-
-              ( {{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false
-              &&  {{tasks.get-same-run-type-controls.outputs.parameters.merge-controls}} == false )
-            template: edit-genrich-input-filenames-formatted
+            template: resolve-genrich-inputs
             arguments:
               parameters:
                 - name: signals-payload
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
                 - name: controls-payload
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
-
-
-          - name: get-genrich-input-filenames-formatted-merged-controls
-            depends: check-work-avoidance-consistency.Succeeded && get-same-run-type-controls.Succeeded
-            when: >-
-              ( {{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false
-              && {{tasks.get-same-run-type-controls.outputs.parameters.merge-controls}} == true )
-            template: edit-genrich-input-filenames-formatted
-            arguments:
-              parameters:
-                - name: signals-payload
-                  value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
-                - name: controls-payload
-                  value: "{{tasks.get-same-run-type-controls.outputs.parameters.controls-alignments-info}}"
 
           - name: get-peak-calling-pvc-size
             depends: >-
-              ( ( get-genrich-input-filenames-formatted-no-controls.Succeeded
-               || get-genrich-input-filenames-formatted.Succeeded 
-               || get-genrich-input-filenames-formatted-merged-controls.Succeeded )
+              ( ( get-genrich-inputs-only-signals.Succeeded
+               || get-genrich-inputs-with-controls.Succeeded )
                && execute-signals-samtools-sort-tasks.Succeeded )
             templateRef:
               name: compute-pvc-size-v1-submittable
@@ -263,15 +232,15 @@ spec:
 
           - name: execute-dag-merge-controls
             depends: >-
-              get-same-run-type-controls.Succeeded
-              && 
+              get-genrich-inputs-with-controls.Succeeded
+              &&
               copy-from-controls-samtools-sort-tasks-pvcs-to-peak-calling-task-pvc.Succeeded
-            when: "{{tasks.get-same-run-type-controls.outputs.parameters.merge-controls}} == true"
+            when: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks}} != '[]'"
             template: dag-merge-controls
             arguments:
               parameters:
                 - name: controls-merge-tasks
-                  value: "{{tasks.get-same-run-type-controls.outputs.parameters.control-merge-tasks}}"
+                  value: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.merge-tasks}}"
                 - name: pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
 
@@ -316,7 +285,7 @@ spec:
 
           - name: execute-genrich-no-controls
             depends: >-
-              get-genrich-input-filenames-formatted-no-controls.Succeeded 
+              get-genrich-inputs-only-signals.Succeeded 
               && create-pq-values-pvc.Succeeded 
               && create-pileups-pvc.Succeeded
             templateRef:
@@ -325,9 +294,9 @@ spec:
             arguments:
               parameters:
                 - name: signal_files_formatted_str
-                  value: "{{tasks.get-genrich-input-filenames-formatted-no-controls.outputs.parameters.signals_files_formatted_str}}"
+                  value: "{{tasks.get-genrich-inputs-only-signals.outputs.parameters.signals_files_formatted_str}}"
                 - name: control_files_formatted_str
-                  value: "{{tasks.get-genrich-input-filenames-formatted-no-controls.outputs.parameters.controls_files_formatted_str}}"
+                  value: "{{tasks.get-genrich-inputs-only-signals.outputs.parameters.controls_files_formatted_str}}"
                 - name: chipmentation
                   value: "{{inputs.parameters.chipmentation}}"
                 - name: out_pileups_filename
@@ -353,7 +322,7 @@ spec:
 
           - name: execute-genrich
             depends: >-
-              get-genrich-input-filenames-formatted.Succeeded 
+              get-genrich-inputs-with-controls.Succeeded 
               && create-pq-values-pvc.Succeeded 
               && create-pileups-pvc.Succeeded
             templateRef:
@@ -362,46 +331,9 @@ spec:
             arguments:
               parameters:
                 - name: signal_files_formatted_str
-                  value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.signals_files_formatted_str}}"
+                  value: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.signals_files_formatted_str}}"
                 - name: control_files_formatted_str
-                  value: "{{tasks.get-genrich-input-filenames-formatted.outputs.parameters.controls_files_formatted_str}}"
-                - name: chipmentation
-                  value: "{{inputs.parameters.chipmentation}}"
-                - name: out_pileups_filename
-                  value: "pileups-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
-                - name: out_pq_values_filename
-                  value: "pq-values-{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}.txt"
-                - name: out_s3_prefix
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_s3_prefix')}}"
-                - name: out_basename
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.out_basename')}}"
-                - name: experiment-type
-                  value: "{{=jsonpath(inputs.parameters['task-payload'], '$.experiment_type')}}"
-                - name: alignments-pvc
-                  value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-                - name: pq-values-pvc
-                  value: "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
-                - name: pileups-pvc
-                  value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
-                - name: masked-regions-s3-key
-                  value: "{{inputs.parameters.masked-regions-s3-key}}"
-                - name: masked-regions-filename
-                  value: "{{=sprig.base(inputs.parameters['masked-regions-s3-key'])}}"
-
-          - name: execute-genrich-merged-controls
-            depends: >-
-              get-genrich-input-filenames-formatted-merged-controls.Succeeded 
-              && create-pq-values-pvc.Succeeded 
-              && create-pileups-pvc.Succeeded
-            templateRef:
-              name: genrich-values-cmd-v1-submittable
-              template: dag-genrich-values-cmd
-            arguments:
-              parameters:
-                - name: signal_files_formatted_str
-                  value: "{{tasks.get-genrich-input-filenames-formatted-merged-controls.outputs.parameters.signals_files_formatted_str}}"
-                - name: control_files_formatted_str
-                  value: "{{tasks.get-genrich-input-filenames-formatted-merged-controls.outputs.parameters.controls_files_formatted_str}}"
+                  value: "{{tasks.get-genrich-inputs-with-controls.outputs.parameters.controls_files_formatted_str}}"
                 - name: chipmentation
                   value: "{{inputs.parameters.chipmentation}}"
                 - name: out_pileups_filename
@@ -429,7 +361,6 @@ spec:
             depends: >-
               execute-genrich-no-controls.Succeeded
               || execute-genrich.Succeeded
-              || execute-genrich-merged-controls.Succeeded
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
@@ -444,7 +375,6 @@ spec:
             depends: >-
               execute-genrich-no-controls.Succeeded
               || execute-genrich.Succeeded
-              || execute-genrich-merged-controls.Succeeded
             template: dag-output-files-post-processing
             arguments:
               parameters:
@@ -518,13 +448,12 @@ spec:
             template: samtools-merge-controls-cmd
             arguments:
               parameters:
-                - name: unmerged-filenames
-                  value: "{{=sprig.join(' ', map(jsonpath(item.unmerged_alignments, '$.filename'), { 'so_queryname_' + # }))}}"
+                - name: alignments-filenames
+                  value: "{{=sprig.join(' ', map(jsonpath(item.alignments, '$.filename'), { 'so_queryname_' + # }))}}"
                 - name: pvc-name
                   value: "{{inputs.parameters.pvc-name}}"
-                - name: merged-filename
-                  value: "so_queryname_{{=jsonpath(item.merged_alignment_info, '$.filename')}}"
-
+                - name: merged-alignment-filename
+                  value: "so_queryname_{{=jsonpath(item.merged_alignment, '$.filename')}}"
             withParam: "{{inputs.parameters.controls-merge-tasks}}"
 
 
@@ -534,10 +463,12 @@ spec:
         retryPolicy: "OnError"
       inputs:
         parameters:
-          - name: unmerged-filenames
+          # Source
+          - name: alignments-filenames
           # Destination
           - name: pvc-name
-          - name: merged-filename
+          - name: merged-alignment-filename
+
           - name: num-threads
             value: "8"
       volumes:
@@ -550,17 +481,17 @@ spec:
         imagePullPolicy: Always
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
-               && rm -f {{inputs.parameters.merged-filename}} \
+               && rm -f {{inputs.parameters.merged-alignment-filename}} \
                && samtools merge \
                -@ {{inputs.parameters.num-threads}} \
                -n \
                -o - \
-               {{inputs.parameters.unmerged-filenames}} \
+               {{inputs.parameters.alignments-filenames}} \
                | samtools view \
                -@ {{inputs.parameters.num-threads}} \ 
                -b \
-               -o {{inputs.parameters.merged-filename}} \
-               && samtools quickcheck {{inputs.parameters.merged-filename}} \
+               -o {{inputs.parameters.merged-alignment-filename}} \
+               && samtools quickcheck {{inputs.parameters.merged-alignment-filename}} \
                && ls -altrh " ]
         volumeMounts:
           - name: workdir
@@ -761,256 +692,391 @@ spec:
                 - name: memory-limit
                   value: "20Gi"
 
-
-    - name: identify-same-run-type-controls
-      retryStrategy:
-        limit: "5"
-        backoff:
-          duration: "10s"
-          factor: "2"
-        retryPolicy: "OnError"
-      inputs:
-        parameters:
-          - name: task-controls
-      script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
-        command: [ python ]
-        source: |
-          import logging
-          import sys
-          import json
-          from pathlib import Path
-          from pprint import pformat
-          from typing import (
-              List,
-              Optional,
-          )
-          from collections import defaultdict
-          from pydantic import BaseModel
-          
-          logging.basicConfig(
-              format="[ %(asctime)s ] — [ %(funcName)s:%(lineno)d ] — %(message)s",
-              level=logging.INFO, datefmt="%Y-%m-%d",
-              handlers=[logging.StreamHandler(sys.stdout)],
-          )
-          
-          
-          class ReadFileSetAlignment(BaseModel):
-              run_type: Optional[str] = None
-              basename: str
-              filename: str
-              s3_key: str
-              file_size: int
-              md5sum: str
-          
-          
-          class ControlsAlignmentInfo(BaseModel):
-              run_type: str
-              filename: str
-          
-          
-          class ControlMergeTask(BaseModel):
-              unmerged_alignments: List[ReadFileSetAlignment]
-              merged_alignment_info: ControlsAlignmentInfo
-          
-          
-          def main() -> int:
-              task_controls_json = """{{inputs.parameters.task-controls}}"""
-              task_controls_data = json.loads(task_controls_json)
-          
-              merge_controls = "false"
-          
-              run_type_controls_alignments = defaultdict(list)
-              for c in task_controls_data:
-                  run_type_controls_alignments[c['run_type']].append(
-                      ReadFileSetAlignment(**c)
-                  )
-          
-              control_merge_tasks = []
-              updated_controls = []
-              for r_t, c_alignments in run_type_controls_alignments.items():
-                  if len(c_alignments) > 1:
-                      merge_controls = "true"
-          
-                      filename_bits = [Path(c_alignment.filename).stem for c_alignment
-                                       in c_alignments]
-                      filename_merged = f"{'-'.join(filename_bits)}.bam"
-          
-                      merged_alignment_info = ControlsAlignmentInfo(
-                          run_type=r_t,
-                          filename=filename_merged
-                      )
-          
-                      updated_controls.append(merged_alignment_info.dict())
-          
-                      control_merge_tasks.append(
-                          ControlMergeTask(
-                              unmerged_alignments=c_alignments,
-                              merged_alignment_info=merged_alignment_info,
-                          ).dict()
-                      )
-                  else:
-                      updated_controls.append(
-                          ControlsAlignmentInfo(
-                              run_type=r_t,
-                              filename=f"{c_alignments[0].filename}"
-                          ).dict()
-                      )
-          
-              with open("merge_controls.txt", 'w') as f:
-                  f.write(merge_controls)
-          
-              with open("controls_alignments_info.json", 'w') as f:
-                  logging.info(
-                      f"Updated controls info:\n"
-                      f"{pformat(updated_controls)}"
-                  )
-                  f.write(json.dumps(updated_controls))
-          
-              with open("control_merge_tasks.json", 'w') as f:
-                  logging.info(
-                      f"Merge controls tasks:\n"
-                      f"{pformat(control_merge_tasks)}"
-                  )
-                  f.write(json.dumps(control_merge_tasks))
-          
-              return 0
-          
-          
-          if __name__ == '__main__':
-              sys.exit(main())
-      
-      
-      outputs:
-        parameters:
-          - name: merge-controls
-            valueFrom:
-              path: merge_controls.txt
-          - name: controls-alignments-info
-            valueFrom:
-              path: controls_alignments_info.json
-          - name: control-merge-tasks
-            valueFrom:
-              path: control_merge_tasks.json
-    #
-    #
-    #    - name: merge-controls
-    #      retryStrategy:
-    #        limit: "5"
-    #        backoff:
-    #          duration: "10s"
-    #          factor: "2"
-    #        retryPolicy: "OnError"
-    #      inputs:
-    #        parameters:
-    #          - name: controls-to-merge
-
-
-    - name: edit-genrich-input-filenames-formatted
-      retryStrategy:
-        limit: "5"
-        backoff:
-          duration: "10s"
-          factor: "2"
-        retryPolicy: "OnError"
+    - name: resolve-genrich-inputs
       inputs:
         parameters:
           - name: signals-payload
           - name: controls-payload
             value: ""
+          - name: similarity-threshold
+            value: "0.1"
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
+        imagePullPolicy: Always
         command: [ python ]
         source: |
-          import sys
           import json
+          import logging
+          import operator
+          import re
+          import sys
           from collections import defaultdict
-          from pprint import pprint
+          from functools import partial
+          from pathlib import Path
+          from typing import (
+              Any,
+          )
           
           from pydantic import BaseModel
+          from rich.logging import RichHandler
+          from rich.pretty import pretty_repr
+          
+          custom_pretty_repr = partial(pretty_repr, indent_size=2)
           
           
-          class SignalAlignmentInfo(BaseModel):
+          def _setup_logging():
+              logging.basicConfig(
+                  format="[ %(asctime)s ] — [ %(funcName)s:%(lineno)d ] — %("
+                  "message)s",
+                  level=logging.INFO,
+                  datefmt="%Y-%m-%d %H:%M:%S",
+                  handlers=[
+                      RichHandler(
+                          rich_tracebacks=True,
+                          tracebacks_show_locals=True,
+                          show_time=False,
+                      )
+                  ],
+              )
+          
+          
+          def get_avg_read_length_from_run_type_str(run_type_str: str) -> int | None:
+              try:
+                  return int(
+                      re.search(
+                          r"([0-9]+)",
+                          run_type_str,
+                      ).group(0)
+                  )
+              except TypeError:
+                  return None
+          
+          
+          def get_library_type_from_run_type_str(run_type_str: str) -> str | None:
+              if run_type_str.startswith("PE"):
+                  return "PE"
+              elif run_type_str.startswith("SE"):
+                  return "SE"
+              else:
+                  raise ValueError("Unknown library type")
+          
+          
+          def get_merged_controls_filename(filenames: list[str]) -> str:
+              filename_bits = [Path(f_n).stem for f_n in filenames]
+          
+              return f"{'-'.join(filename_bits)}.bam"
+          
+          
+          def relative_distance(a: int, b: int) -> float:
+              return abs(a - b) / max(a, b)
+          
+          
+          def group_read_lengths_by_similarity(
+              numbers: list[int],
+              threshold: float = 0.1,
+          ) -> list[list[int]]:
+              numbers.sort()
+          
+              # Initialize the first group
+              groups = [[numbers[0]]]
+          
+              for number in numbers[1:]:
+                  # Calculate the relative distance to the last number in the current
+                  # group
+                  distance = relative_distance(number, groups[-1][-1])
+          
+                  if distance <= threshold:
+                      groups[-1].append(number)
+                  else:
+                      groups.append([number])
+          
+              return groups
+          
+          
+          class RunTypeCategory(BaseModel):
+              library_type: str
+              interval: tuple[int, int]
+          
+              @property
+              def run_type_category(self) -> str:
+                  if self.interval[0] != self.interval[1]:
+                      return (
+                          f"{self.library_type}{self.interval[0]}-{self.interval[1]}nt"
+                      )
+          
+                  return f"{self.library_type}{self.interval[0]}nt"
+          
+          
+          class AlignmentInfo(BaseModel):
               run_type: str
               filename: str
           
+              @property
+              def library_type(self) -> str:
+                  return get_library_type_from_run_type_str(self.run_type)
           
-          class ControlsAlignmentInfo(BaseModel):
-              run_type: str
-              filename: str
+              @property
+              def avg_read_length(self) -> int:
+                  return get_avg_read_length_from_run_type_str(self.run_type)
+          
+          
+          class SignalControlPair(BaseModel):
+              signal: AlignmentInfo
+              control: AlignmentInfo | None
+          
+          
+          class MergeAlignmentTask(BaseModel):
+              alignments: list[AlignmentInfo]
+              merged_alignment: AlignmentInfo | None
+          
+          
+          def get_run_types_categories(
+              alignments: list[AlignmentInfo],
+          ) -> list[RunTypeCategory]:
+              """
+              Identify run types categories for a list of alignments
+              """
+              run_types_categories: list[RunTypeCategory] = []
+              library_type_aln: dict[str, AlignmentInfo | Any] = defaultdict(list)
+          
+              for aln in alignments:
+                  library_type_aln[aln.library_type].append(aln)
+          
+              for library_type, alignments in library_type_aln.items():
+                  groups = group_read_lengths_by_similarity(
+                      [aln.avg_read_length for aln in alignments]
+                  )
+                  for g in groups:
+                      run_types_categories.append(
+                          RunTypeCategory(
+                              library_type=library_type,
+                              interval=(min(g), max(g)),
+                          )
+                      )
+          
+              return run_types_categories
+          
+          
+          def resolve_controls(
+              control_alignments: list[AlignmentInfo],
+              controls_run_type_categories: list[RunTypeCategory],
+          ) -> tuple[dict[str, AlignmentInfo], list[MergeAlignmentTask]]:
+              """
+              Merge control names based on run type categories
+              """
+              run_types_category_control_filenames: dict[
+                  str, list[AlignmentInfo]
+              ] = defaultdict(list)
+          
+              run_type_category_final_control_aln: dict[str, AlignmentInfo] = {}
+          
+              for c in control_alignments:
+                  for rtc in controls_run_type_categories:
+                      if (
+                          rtc.interval[0] <= c.avg_read_length <= rtc.interval[1]
+                          and c.library_type == rtc.library_type
+                      ):
+                          run_types_category_control_filenames[
+                              rtc.run_type_category
+                          ].append(c)
+          
+              merged_tasks = []
+              for (
+                  run_type_category,
+                  c_alignments,
+              ) in run_types_category_control_filenames.items():
+                  if len(c_alignments) > 1:
+                      # Important to sort the alignments by avg_read_length and
+                      # filename to ensure reproducibility
+                      c_alignments.sort(
+                          key=operator.attrgetter(
+                              "library_type",
+                              "avg_read_length",
+                              "filename",
+                          )
+                      )
+                      filename_bits = [
+                          Path(c_aln.filename).stem for c_aln in c_alignments
+                      ]
+                      filename_merged = f"{'-'.join(filename_bits)}.bam"
+          
+                      merged_tasks.append(
+                          MergeAlignmentTask(
+                              alignments=c_alignments,
+                              merged_alignment=AlignmentInfo(
+                                  filename=filename_merged, run_type=run_type_category
+                              ),
+                          )
+                      )
+                      run_type_category_final_control_aln[
+                          run_type_category
+                      ] = AlignmentInfo(
+                          filename=filename_merged,
+                          run_type=run_type_category,
+                      )
+          
+                  else:
+                      assert (
+                          len(c_alignments) == 1
+                      ), "More than one control alignment not expected here"
+                      run_type_category_final_control_aln[run_type_category] = (
+                          c_alignments
+                      )[0]
+          
+              return run_type_category_final_control_aln, merged_tasks
+          
+          
+          def map_signals_to_controls(
+              signal_alignments: list[AlignmentInfo],
+              control_run_types_categories: list[RunTypeCategory],
+              run_type_category_final_control_alignments: dict[str, AlignmentInfo],
+              similarity_threshold: float = 0.1,
+          ) -> list[SignalControlPair]:
+              """
+              Map signals to controls
+              """
+          
+              signal_control_pairs: list[SignalControlPair] = []
+          
+              for s in signal_alignments:
+                  control_found = False
+                  for rtc in control_run_types_categories:
+                      if (
+                          (rtc.interval[0] <= s.avg_read_length <= rtc.interval[1])
+                          or (
+                              relative_distance(s.avg_read_length, rtc.interval[0])
+                              <= similarity_threshold
+                              or relative_distance(s.avg_read_length, rtc.interval[1])
+                              <= similarity_threshold
+                          )
+                      ) and s.library_type == rtc.library_type:
+                          signal_control_pairs.append(
+                              SignalControlPair(
+                                  signal=s,
+                                  control=run_type_category_final_control_alignments[
+                                      rtc.run_type_category
+                                  ],
+                              )
+                          )
+                          control_found = True
+                          break
+                  if not control_found:
+                      signal_control_pairs.append(
+                          SignalControlPair(
+                              signal=s,
+                              control=None,
+                          )
+                      )
+          
+              return signal_control_pairs
           
           
           def main() -> int:
+              _setup_logging()
+          
+              similarity_threshold = "{{inputs.parameters.similarity-threshold}}"
               signals_payload_json = """{{inputs.parameters.signals-payload}}"""
-              signals_payload_data = json.loads(signals_payload_json)
-          
-              signals_alignments_info = [SignalAlignmentInfo(**s) for s in
-                                         signals_payload_data]
-          
               controls_payload_json = """{{inputs.parameters.controls-payload}}"""
           
-              if controls_payload_json != "":
-                  controls_payload_data = json.loads(controls_payload_json)
-                  controls_alignments_info = [ControlsAlignmentInfo(**c) for c in
-                                              controls_payload_data]
+              similarity_threshold = float(similarity_threshold)
+          
+              signals_payload_data = json.loads(signals_payload_json)
+          
+              logging.info(
+                  f"signals_payload_data:\n"
+                  f"{custom_pretty_repr(signals_payload_data)}"
+              )
+          
+              signal_alignments = [AlignmentInfo(**s) for s in signals_payload_data]
+          
+              # Important to sort the alignments by avg_read_length and
+              # filename to ensure reproducibility
+              signal_alignments.sort(
+                  key=operator.attrgetter(
+                      "library_type",
+                      "avg_read_length",
+                      "filename",
+                  )
+              )
+          
+              logging.info(
+                  f"signal_alignments:\n{custom_pretty_repr(signal_alignments)}"
+              )
+          
+              controls_payload_data = json.loads(controls_payload_json)
+          
+              logging.info(
+                  f"controls_payload_data:\n{custom_pretty_repr(controls_payload_data)}"
+              )
+          
+              control_alignments = [AlignmentInfo(**c) for c in controls_payload_data]
+              logging.info(
+                  f"control_alignments:\n{custom_pretty_repr(control_alignments)}"
+              )
+          
+              if control_alignments:
+                  control_run_types_categories = get_run_types_categories(
+                      control_alignments
+                  )
+          
+                  logging.info(
+                      f"control_run_types_categories:\n"
+                      f"{custom_pretty_repr(control_run_types_categories)}"
+                  )
+          
+                  run_type_category_final_control_aln, merge_tasks = resolve_controls(
+                      control_alignments,
+                      control_run_types_categories,
+                  )
+                  logging.info(
+                      f"run_type_category_final_control_aln:\n"
+                      f" {custom_pretty_repr(run_type_category_final_control_aln)}"
+                  )
+                  logging.info(f"merge_tasks:\n{custom_pretty_repr(merge_tasks)}")
+                  signal_control_pairs = map_signals_to_controls(
+                      signal_alignments,
+                      control_run_types_categories,
+                      run_type_category_final_control_aln,
+                      similarity_threshold=similarity_threshold,
+                  )
+          
+                  logging.info(
+                      f"signal_control_pairs:\n"
+                      f"{custom_pretty_repr(signal_control_pairs)}"
+                  )
+          
+                  signals_formatted = [
+                      f"so_queryname_{p.signal.filename}" for p in signal_control_pairs
+                  ]
+                  controls_formatted = [
+                      f"so_queryname_{p.control.filename}" if p.control else "null"
+                      for p in signal_control_pairs
+                  ]
               else:
-                  controls_alignments_info = []
+                  signals_formatted = [
+                      f"so_queryname_{s.filename}" for s in signal_alignments
+                  ]
+                  controls_formatted = ["null" for _ in signal_alignments]
           
-              run_type_signal_filename = defaultdict(list)
-              for s in signals_alignments_info:
-                  # TODO: generalize this strategy once RDR migration using runs is done
-                  # Temporary fix to finish fish in r111: assume PE150nt
-                  if s.run_type == '0':
-                      s.run_type = 'PE150nt'
-                  run_type_signal_filename[s.run_type].append(
-                      f"so_queryname_{s.filename}"
-                      )
+                  merge_tasks = []
           
-              run_type_control_filename = {}
-              controls_run_types = []
+              with open("signals_files_formatted_str.txt", "w") as f:
+                  f.write(",".join(signals_formatted))
           
-              for c in controls_alignments_info:
-                  # TODO: generalize this strategy once RDR migration using runs is done
-                  # Temporary fix to finish fish in r111: assume PE150nt
-                  if c.run_type == '0':
-                      c.run_type = 'PE150nt'
-                  controls_run_types.append(c.run_type)
-                  run_type_control_filename[
-                      c.run_type] = f"so_queryname_{c.filename}"
+              with open("controls_files_formatted_str.txt", "w") as f:
+                  f.write(
+                      '""'
+                      if all(c == "null" for c in controls_formatted)
+                      else ",".join(controls_formatted)
+                  )
           
-              assert len(set(controls_run_types)) == len(
-                  controls_run_types
-                  ), "Duplicate run types in controls"
-          
-              signals_filenames_sorted = []
-              controls_filenames_sorted = []
-              for r_t, s_vals in run_type_signal_filename.items():
-                  signals_filenames_sorted.extend(s_vals)
-                  print(f"r_t: {r_t}, s_vals: {s_vals}")
-          
-                  if r_t in run_type_control_filename.keys():
-                      controls_filenames_sorted.extend(
-                          [run_type_control_filename[r_t]] * len(s_vals)
-                          )
-                  else:
-                      controls_filenames_sorted.extend(["null"] * len(s_vals))
-          
-              pprint(f"signals_formatted: {','.join(signals_filenames_sorted)}")
-              pprint(f"controls_formatted: {','.join(controls_filenames_sorted)}")
-          
-              with open("signals_files_formatted_str.txt", 'w') as f:
-                  f.write(','.join(signals_filenames_sorted))
-          
-              with open("controls_files_formatted_str.txt", 'w') as f:
-                  if run_type_control_filename:
-                      f.write(','.join(controls_filenames_sorted))
-                  else:
-                      f.write('')
+              with open("merged_tasks.json", "w") as f:
+                  f.write(json.dumps([t.dict() for t in merge_tasks]))
           
               return 0
           
           
-          if __name__ == '__main__':
+          if __name__ == "__main__":
               sys.exit(main())
 
       outputs:
@@ -1021,3 +1087,6 @@ spec:
           - name: controls_files_formatted_str
             valueFrom:
               path: controls_files_formatted_str.txt
+          - name: merge-tasks
+            valueFrom:
+              path: merged_tasks.json
