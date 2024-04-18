@@ -19,6 +19,8 @@ spec:
         parameters:
           - name: peak-calling-tasks
           - name: masked-regions-s3-key
+          - name: controls-mapping-threshold
+            value: "0.1"
           - name: chipmentation
           - name: overwrite-results
           - name: kubeconfig-path
@@ -36,6 +38,8 @@ spec:
                   value: "{{inputs.parameters.masked-regions-s3-key}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
+                - name: controls-mapping-threshold
+                  value: "{{inputs.parameters.controls-mapping-threshold}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.peak-calling-tasks}}"
@@ -47,6 +51,7 @@ spec:
         parameters:
           - name: task-payload
           - name: masked-regions-s3-key
+          - name: controls-mapping-threshold
           - name: chipmentation
           - name: overwrite-results
           - name: kubeconfig-path
@@ -144,6 +149,8 @@ spec:
               parameters:
                 - name: signals-payload
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
+                - name: similarity-threshold
+                  value: "{{inputs.parameters.controls-mapping-threshold}}"
 
 
           - name: get-genrich-inputs-with-controls
@@ -156,6 +163,8 @@ spec:
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.signals'))}}"
                 - name: controls-payload
                   value: "{{=toJson(jsonpath(inputs.parameters['task-payload'], '$.controls'))}}"
+                - name: similarity-threshold
+                  value: "{{inputs.parameters.controls-mapping-threshold}}"
 
           - name: get-peak-calling-pvc-size
             depends: >-
