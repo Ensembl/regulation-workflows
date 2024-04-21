@@ -20,7 +20,6 @@ spec:
           - name: peak-calling-tasks
           - name: masked-regions-s3-key
           - name: controls-mapping-threshold
-            value: "0.1"
           - name: chipmentation
           - name: overwrite-results
           - name: kubeconfig-path
@@ -1024,7 +1023,10 @@ spec:
                   f"signal_alignments:\n{custom_pretty_repr(signal_alignments)}"
               )
           
-              controls_payload_data = json.loads(controls_payload_json)
+              if controls_payload_json:
+                controls_payload_data = json.loads(controls_payload_json)
+              else:
+                controls_payload_data = []
           
               logging.info(
                   f"controls_payload_data:\n{custom_pretty_repr(controls_payload_data)}"
