@@ -238,8 +238,148 @@ spec:
                             "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-imr-90-from-experiment-encsr000efm_q_0_1.bed"
                         }
                     ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "ELF1",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf1-gm12878-from-experiment-encsr000bmb_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf1-gm12878-from-experiment-encsr841ndx_p_0_1.bed"
+                        }
+                    ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "TBX21",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tbx21-gm12878-from-experiment-encsr739ihn_p_0_1.bed"
+                        }
+                    ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "GATA3",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-gata3-a549-from-experiment-encsr000bti_q_0_1.bed"
+                        }
+                    ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "MAX",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-a549-from-experiment-encsr000btj_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-a549-from-experiment-encsr000dyg_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-gm12878-from-experiment-encsr000dzf_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-h1-from-experiment-encsr000bsj_q_0_1.bed"
+                        }
+                    ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "PAX5",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12878-from-experiment-encsr000bhd_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12878-from-experiment-encsr000bhj_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12891-from-experiment-encsr000bjh_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12892-from-experiment-encsr000bji_q_0_1.bed"
+                        }
+                    ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "RFX5",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-rfx5-a549-from-experiment-encsr064ljn_p_0_1.bed"
+                        }
+                    ]
+                },
+                {
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "TCF3",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tcf3-gm12878-from-experiment-encsr000bqt_q_0_1.bed"
+                        }
+                    ]
                 }
-            ]
+              ]
               """
             )
 
@@ -1029,7 +1169,7 @@ spec:
             "ls -altrh \
              && bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b peaks-{{inputs.parameters.target-name-1}}.merged.sorted.bed > moods_peaks_intersect.sorted.bed \
              && ls -altrh \
-             && if [ '{{inputs.parameters.target-name-2}}' != '' ]; then bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b peaks-{{inputs.parameters.target-name-2}}.merged.sorted.bed >> moods_peaks_intersect.sorted.bed;  ls -altrh;  sort -k1,1 -k2,2n moods_peaks_intersect.sorted.bed | uniq -c; sort -k1,1 -k2,2n moods_peaks_intersect.sorted.bed | uniq -c | grep -v '^ *1 ' | sort -k 2,2 -k3,3n | awk '{ $1=\"\"; print $0 }' > moods_peaks_intersect.sorted.bed; fi \
+             && if [ '{{inputs.parameters.target-name-2}}' != '' ]; then bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b peaks-{{inputs.parameters.target-name-2}}.merged.sorted.bed >> moods_peaks_intersect.sorted.bed;  ls -altrh; sort -k1,1 -k2,2n moods_peaks_intersect.sorted.bed | uniq -c | grep -v '^ *1 ' | sort -k 2,2 -k3,3n | awk '{ $1=\"\"; print $0 }' > moods_peaks_intersect.sorted.bed; fi \
              && ls -altrh"
           ]
       outputs:
@@ -1040,12 +1180,12 @@ spec:
               none: {}
             s3:
               key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-validated-motifs_p_{{inputs.parameters.pval}}.bed"
-          - name: "moods-output"
-            path: "/mnt/vol/moods.sorted.bed"
-            archive:
-              none: {}
-            s3: 
-              key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-moods-motifs_p_{{inputs.parameters.pval}}.bed"
+          # - name: "moods-output"
+          #   path: "/mnt/vol/moods.sorted.bed"
+          #   archive:
+          #     none: {}
+          #   s3: 
+          #     key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-moods-motifs_p_{{inputs.parameters.pval}}.bed"
           # - name: "merged-peaks"
           #   path: "/mnt/vol/peaks.merged.sorted.bed"
           #   archive:
