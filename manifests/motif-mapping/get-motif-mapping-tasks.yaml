@@ -214,1756 +214,32 @@ spec:
               """
               [
                 {
-                  "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                  "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                  "bm_s3_key": "plins/selex/GRCh38.json",
-                  "target_name": "CTCF",
-                  "out_basename": "ctcf-validated-motifs",
-                  "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                  "experiments": [
-                    
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-22rv1-from-experiment-encsr847xge_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-22rv1-from-experiment-encsr857pbv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr000bhv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr000bhw_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr000dpf_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr000dyd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr035oxa_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr130tqm_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr173iea_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr249joh_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr287uxs_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr336vbv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr384kpp_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr414cqb_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr432axe_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr553uwg_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr851sok_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-from-experiment-encsr876uzd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-m-58-y-dexamethasone_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a549-m-58-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-a673-f-15-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-adrenal-gland-from-experiment-encsr188xcx_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-ag04449-from-experiment-encsr000dpg_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-ag04450-m-12-w_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-ag09309-from-experiment-encsr000dpp_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-ag09319-from-experiment-encsr000dps_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-ag10803-from-experiment-encsr000dpv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-astrocyte-of-the-cerebellum-from-experiment-encsr000dsz_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-astrocyte-of-the-spinal-cord-from-experiment-encsr000dsu_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-astrocyte_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-b-cell-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-be2c-from-experiment-encsr000dqd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-bipolar-neuron-from-experiment-encsr619iue_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-bipolar-neuron-m-53-y-doxycycline-hyclate_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-bj-m_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-brain-from-experiment-encsr467eqp_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-brain-from-experiment-encsr930sot_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-brain-microvascular-endothelial-cell-from-experiment-encsr000dta_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-bronchial-epithelial-cell_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-c4-2b-from-experiment-encsr460lgh_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-caco-2-from-experiment-encsr000dqn_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-cardiac-muscle-cell-from-experiment-encsr000dti_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-cd14-positive-monocyte-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-chondrocyte-from-experiment-encsr190bza_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-choroid-plexus-epithelial-cell-from-experiment-encsr000dtl_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-d721med-from-experiment-encsr000dmy_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-dnd-41-m-13-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-dohh2-m-60-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-dorsolateral-prefrontal-cortex-from-experiment-encsr351swl_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-dorsolateral-prefrontal-cortex-from-experiment-encsr705dnm_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-endodermal-cell-from-experiment-encsr398ret_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-endothelial-cell-of-umbilical-vein-from-experiment-encsr000dvp_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-epithelial-cell-of-esophagus-from-experiment-encsr000dtr_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-epithelial-cell-of-prostate-from-experiment-encsr196hom_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-epithelial-cell-of-proximal-tubule-from-experiment-encsr000dxd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-dermis_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-lung-from-experiment-encsr000ano_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-lung_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-mammary-gland-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-pulmonary-artery-from-experiment-encsr000dux_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-the-aortic-adventitia-from-experiment-encsr000dpy_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-villous-mesenchyme-from-experiment-encsr000dvq_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-foreskin-fibroblast-m_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-foreskin-keratinocyte-from-experiment-encsr036egv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-foreskin-keratinocyte-from-experiment-encsr812fnu_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-foreskin-keratinocyte-from-experiment-encsr817htj_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gastrocnemius-medialis-from-experiment-encsr355alw_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm06990-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm10248-from-experiment-encsr000dkp_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm10266-from-experiment-encsr000dkr_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12864-from-experiment-encsr000drb_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12865-from-experiment-encsr000dre_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12872-from-experiment-encsr000drn_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12873-from-experiment-encsr000drp_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12874-from-experiment-encsr000drr_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12875-from-experiment-encsr000dru_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12878-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12878-from-experiment-encsr000akb_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm12878-from-experiment-encsr000drz_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm13976-from-experiment-encsr000dkz_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm13977-from-experiment-encsr000dlb_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm20000-from-experiment-encsr000dlg_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm23338-from-experiment-encsr987gxt_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gm23338-m-53-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-h1-m_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-h54-from-experiment-encsr000dkn_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-h9-f-5-d_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hct116-from-experiment-encsr000bse_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hct116-from-experiment-encsr000dto_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hct116-m-48-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hek293-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hek293-from-experiment-encsr000dtw_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hela-s3-f-31-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hela-s3-from-experiment-encsr000dub_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hepatocyte-f-5-d_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hepg2-from-experiment-encsr000ama_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hepg2-from-experiment-encsr000bie_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hepg2-from-experiment-encsr000dug_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hepg2-m-15-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hff-myc-from-experiment-encsr000dum_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-hffc6-from-experiment-encsr163uln_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-imr-90-from-experiment-encsr000efi_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-ishikawa-from-experiment-encsr000bqe_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-k562-f-53-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-k562-from-experiment-encsr000ako_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-k562-from-experiment-encsr000bpj_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-k562-from-experiment-encsr000dwe_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-keratinocyte-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-keratinocyte-from-experiment-encsr000alj_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-keratinocyte-from-experiment-encsr000dwx_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-kidney-epithelial-cell_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-kidney-from-experiment-encsr000dmc_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-kms-11-f-67-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-left-ventricle-myocardium-inferior-from-experiment-encsr068hee_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-liver-from-experiment-encsr254yrm_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-lncap-clone-fgc-from-experiment-encsr000dme_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-lncap-clone-fgc-from-experiment-encsr000dmf_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-lncap-from-experiment-encsr315nac_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-lncap-from-experiment-encsr673wzl_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-loucy-f-38-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-lung-from-experiment-encsr000dmh_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mammary-epithelial-cell-f_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mammary-epithelial-cell-from-experiment-encsr000alv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-f-69-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000ahd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000dml_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000dmo_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000dmr_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000dms_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000dmv_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mcf-7-from-experiment-encsr000dwh_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mm-1s-f-42-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-myotube_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-nci-h929-f-62-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-nephron-progenitor-cell-from-experiment-encsr799gjd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-neural-cell-m_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-neural-crest-cell-from-experiment-encsr218mvt_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-neural-progenitor-cell-f-5-d_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-neural-progenitor-cell-from-experiment-encsr260fas_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-neutrophil_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-oci-ly1-m-44-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-oci-ly3-m-52-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-oci-ly7-m-48-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-osteoblast_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-osteocyte-from-experiment-encsr300dwm_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-panc1-m-56-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-pancreas-from-experiment-encsr000dnd_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-pc-3-m-62-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-pc-9_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-prostate-gland-from-experiment-encsr230ort_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-retinal-pigment-epithelial-cell-from-experiment-encsr000dvi_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-rwpe1-from-experiment-encsr303gfi_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-rwpe2-from-experiment-encsr856jjb_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-sk-n-sh-f-4-y-all-trans-retinoic-acid_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-sk-n-sh-f-4-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-sk-n-sh-from-experiment-encsr000dxq_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-sk-n-sh-from-experiment-encsr000eic_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-skeletal-muscle-myoblast_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-smooth-muscle-cell-f-5-d_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-f-53-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-from-experiment-encsr000dni_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-from-experiment-encsr225ygx_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-from-experiment-encsr595bpr_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-m-37-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-su-dhl-6-m-43-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-t47d-from-experiment-encsr000bno_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-f-51-y_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-from-experiment-encsr236ygf_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-from-experiment-encsr608wps_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-from-experiment-encsr907bes_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-type-b-pancreatic-cell-from-experiment-encsr458pyq_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-vcap-from-experiment-encsr265are_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-weri-rb-1-from-experiment-encsr000dxw_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    },
-
-                    {
-                        "epigenome_name": "A549 (m, 58 y, dexamethasone)",
-                        "experiment_name": "ChIP-seq (CTCF): A549 (m, 58 y, dexamethasone)",
-                        "experiment_id": "0ba337e7-5465-4694-8954-01d5c0ec3bd8",
-                        "experiment_type": "chip_seq",
-                        "peaks_s3_key": "peaks/Homo_sapiens/GRCh38/exp/r113/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-wi38-from-experiment-encsr000dyb_q_0_1.bed",
-                        "peaks_file_size": 2701671,
-                        "peaks_md5sum": "3e5c8efc05796f7365f15133bcfa514a"
-                    }
-                  ]
+                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                    "bm_s3_key": "plins/selex/GRCh38.json",
+                    "target_name_1": "TEAD4",
+                    "target_name_2": "CEBPB",
+                    "out_basename": "ctcf-validated-motifs",
+                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                    "experiments": [
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-a549-from-experiment-encsr000bub_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-a549-from-experiment-encsr000dyi_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-h1-from-experiment-encsr000ebv_q_0_1.bed"
+                        },
+                        {
+                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-imr-90-from-experiment-encsr000efm_q_0_1.bed"
+                        }
+                    ]
                 }
-              ]
+            ]
               """
             )
 
@@ -2036,12 +312,20 @@ spec:
               parameters:
                 - name: task-payload
                   value: "{{tasks.submit-get-wf-task-payload-by-index.outputs.parameters.task-payload}}"
-                - name: target-name
+                - name: target-name-1
                   value: >-
                     {{=
                       jsonpath(
                         tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
-                        '$.target_name'
+                        '$.target_name_1'
+                      )
+                    }}
+                - name: target-name-2
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.target_name_2'
                       )
                     }}
                 - name: assembly-id
@@ -2106,7 +390,8 @@ spec:
       inputs:
         parameters:
           - name: task-payload
-          - name: target-name
+          - name: target-name-1
+          - name: target-name-2
           - name: assembly-id
           - name: genome-s3-key
           - name: out-s3-key
@@ -2175,8 +460,10 @@ spec:
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
                 - name: bm-filename
                   value: "{{=sprig.base(inputs.parameters['bm-s3-key'])}}"
-                - name: target-name
-                  value: "{{inputs.parameters.target-name}}"
+                - name: target-name-1
+                  value: "{{inputs.parameters.target-name-1}}"
+                - name: target-name-2
+                  value: "{{inputs.parameters.target-name-2}}"
           - name: unzip-genome-file
             depends: copy-genome-file-from-s3-to-pvc
             template: unzip-genome-file-cmd
@@ -2187,14 +474,17 @@ spec:
                 - name: filename
                   value: "{{=sprig.base(inputs.parameters['genome-s3-key'])}}"
           - name: run-moods
+            when: "{{tasks.filter-bms-by-target.outputs.result}} == True"
             depends: (filter-bms-by-target && unzip-genome-file)
             template: run-moods-cmd
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
-                - name: target-name
-                  value: "{{inputs.parameters.target-name}}"
+                - name: target-name-1
+                  value: "{{inputs.parameters.target-name-1}}"
+                - name: target-name-2
+                  value: "{{inputs.parameters.target-name-2}}"
                 - name: genome-file
                   value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['genome-s3-key']), sprig.base(inputs.parameters['genome-s3-key']))}}"
                 - name: pval
@@ -2236,7 +526,7 @@ spec:
                   value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['genome-s3-key']), sprig.base(inputs.parameters['genome-s3-key']))}}"
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
-          ##########################################################################################
+          # ##########################################################################################
           - name: convert-moods-output-to-sorted-bed
             depends: (remove-bms-file-from-pvc && remove-genome-file-from-pvc && remove-compressed-genome-file-from-pvc)
             template: convert-moods-output-to-sorted-bed-cmd
@@ -2244,13 +534,15 @@ spec:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
-                - name: moods-output-file
-                  value: "{{inputs.parameters.target-name}}.csv"
+                - name: target-name-1
+                  value: "{{inputs.parameters.target-name-1}}"
+                - name: target-name-2
+                  value: "{{inputs.parameters.target-name-2}}"
                 - name: out-s3-key
                   value: "{{inputs.parameters.out-s3-key}}"
-          #################################### Clean PVC (pt. 2) ###################################
-          # - Moods output raw file
-          # - Moods unsorted bed file
+          # #################################### Clean PVC (pt. 2) ###################################
+          # # - Moods output raw file
+          # # - Moods unsorted bed file
           - name: remove-moods-raw-output-file-from-pvc
             depends: convert-moods-output-to-sorted-bed
             templateRef:
@@ -2259,7 +551,7 @@ spec:
             arguments:
               parameters:
                 - name: file-path
-                  value: "{{inputs.parameters.target-name}}.csv"
+                  value: "{{inputs.parameters.target-name-1}}.csv"
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
           - name: remove-moods-bed-output-file-from-pvc
@@ -2273,7 +565,7 @@ spec:
                   value: "moods.bed"
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
-          ##########################################################################################
+          # ##########################################################################################
           - name: copy-peaks-from-s3-dag
             depends: (remove-moods-bed-output-file-from-pvc && remove-moods-raw-output-file-from-pvc)
             template: copy-peaks-from-s3
@@ -2281,8 +573,6 @@ spec:
               parameters:
                 - name: task-payload
                   value: "{{item}}"
-                - name: experiment-name
-                  value: "{{item.experiment_name}}"
                 - name: peaks-s3-key
                   value: "{{item.peaks_s3_key}}"
                 - name: pvc-name
@@ -2305,6 +595,10 @@ spec:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: target-name-1
+                  value: "{{inputs.parameters.target-name-1}}"
+                - name: target-name-2
+                  value: "{{inputs.parameters.target-name-2}}"
           - name: remove-peaks-from-pvc
             depends: merge-peaks-files
             template: remove-peaks-from-pvc-cmd
@@ -2317,8 +611,6 @@ spec:
             template: run-bedtools-intersect-cmd
             arguments:
               parameters:
-                - name: peaks-file
-                  value: "peaks.merged.sorted.bed"
                 - name: moods-file
                   value: "moods.sorted.bed"
                 - name: pvc-name
@@ -2326,9 +618,14 @@ spec:
                 - name: out-s3-key
                   value: "{{inputs.parameters.out-s3-key}}"
                 - name: pval
-                  value: "{{inputs.parameters.pval}}"
+                  value: "{{=sprig.replace(inputs.parameters['pval'], '.', '_')}}"
+                - name: target-name-1
+                  value: "{{inputs.parameters.target-name-1}}"
+                - name: target-name-2
+                  value: "{{inputs.parameters.target-name-2}}"
           - name: delete-motif-mapping-pvc
-            depends: run-bedtools-intersect
+            depends: "run-bedtools-intersect || filter-bms-by-target"
+            when: "{{tasks.convert-moods-output-to-sorted-bed.status}} == Succeeded || {{tasks.filter-bms-by-target.outputs.result}} == False"
             templateRef:
               name: delete-patch-pvc-kubectl-v1-submittable
               template: delete-patch-pvc-kubectl
@@ -2347,7 +644,8 @@ spec:
         retryPolicy: "Always"
       inputs:
         parameters:
-          - name: target-name
+          - name: target-name-1
+          - name: target-name-2
           - name: bm-filename
           - name: pvc-name
       volumes:
@@ -2363,30 +661,37 @@ spec:
         source: |
           import sys
           import json
-          from os import listdir
+          from pathlib import Path
       
           def main() -> int:
 
             with open(f"/mnt/vol/{{inputs.parameters.bm-filename}}") as f:
               bml = json.load(f)
 
-            tf_bms = [
-              bm for bm in bml["bms"] if f"{{inputs.parameters.target-name}}" in bm["symbol"]
-            ]
+            if not f"{{inputs.parameters.target-name-2}}":
+              tf_bms = [
+                bm for bm in bml["bms"] if f"{{inputs.parameters.target-name-1}}" in bm["symbol"] if len(bm["symbol"]) == 1
+              ]
+            else:
+              tf_bms = [
+                bm for bm in bml["bms"] if f"{{inputs.parameters.target-name-1}}" in bm["symbol"] and f"{{inputs.parameters.target-name-2}}" in bm["symbol"] 
+              ]
+              
             
             for bm in tf_bms:
               for pfm in bm["pfms"]:
                 for rep in pfm["representative_frequencies"]:
-                  with open(f"/mnt/vol/{rep['representative']}.pfm", "w") as f:
+                  with open(f"/mnt/vol/{'_'.join(bm['symbol'])}__{rep['representative']}.pfm", "w") as f:
                     for x in rep["frequencies"]:
                       f.write("\t".join(str(i) for i in x) + "\n")
 
-            print(listdir("/mnt/vol"))
+            print(bool(list(Path("/mnt/vol").glob("*pfm"))))
 
             return 0
 
           if __name__ == '__main__':
             sys.exit(main())
+
 
     - name: unzip-genome-file-cmd
       retryStrategy:
@@ -2408,7 +713,7 @@ spec:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-bash:latest
         command: [bash, -c, -ue, -o, xtrace]
-        args: ["ls -altrh && gunzip -k {{inputs.parameters.filename}} && ls -altrh"]
+        args: ["ls -altrh && gunzip -f -k {{inputs.parameters.filename}} && ls -altrh"]
         volumeMounts:
           - name: workdir
             mountPath: /mnt/vol
@@ -2416,7 +721,8 @@ spec:
       inputs:
         parameters:
           - name: pvc-name
-          - name: target-name
+          - name: target-name-1
+          - name: target-name-2
           - name: genome-file
           - name: pval
       retryStrategy:
@@ -2446,16 +752,18 @@ spec:
             memory: 20Gi
         args: [
             "ls -altrh \
-             && moods-dna.py -m *.pfm -s {{inputs.parameters.genome-file}} -p {{inputs.parameters.pval}} >{{inputs.parameters.target-name}}.csv
+             && if [ '{{inputs.parameters.target-name-2}}' = '' ]; then moods-dna.py -m *.pfm -s {{inputs.parameters.genome-file}} -p {{inputs.parameters.pval}} >{{inputs.parameters.target-name-1}}.csv; else moods-dna.py -m *.pfm -s {{inputs.parameters.genome-file}} -p {{inputs.parameters.pval}} >{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}.csv; fi \
              && ls -altrh"
           ]
+          
     - name: convert-moods-output-to-sorted-bed-cmd
       retryStrategy:
         limit: "5"
         retryPolicy: "Always"
       inputs:
         parameters:
-          - name: moods-output-file
+          - name: target-name-1
+          - name: target-name-2
           - name: pvc-name
           - name: out-s3-key
       volumes:
@@ -2468,7 +776,7 @@ spec:
         command: [bash, -c, -ue, -o, xtrace]
         args: ["
             ls -altrh \
-            && awk 'BEGIN{FS=\",\"; OFS=\"\t\"}; { split($1, contig_info, \" \"); len=length($6); print contig_info[1],$3+1,$3+len,$5\"_\"contig_info[3],\"1000\",$4}' {{inputs.parameters.moods-output-file}} > moods.bed \
+            && if [ '{{inputs.parameters.target-name-2}}' = '' ]; then awk 'BEGIN{FS=\",\"; OFS=\"\t\"}; { split($1, contig_info, \" \"); len=length($6); print contig_info[1],$3+1,$3+len,$5\";\"contig_info[3]\";\"$2,\"1000\",$4}' {{inputs.parameters.target-name-1}}.csv > moods.bed; else awk 'BEGIN{FS=\",\"; OFS=\"\t\"}; { split($1, contig_info, \" \"); len=length($6); print contig_info[1],$3+1,$3+len,$5\";\"contig_info[3]\";\"$2,\"1000\",$4}' {{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}.csv > moods.bed; fi \
             && bedSort moods.bed moods.sorted.bed \
             && ls -altrh"
           ]
@@ -2486,7 +794,6 @@ spec:
       inputs:
         parameters:
           - name: task-payload
-          - name: experiment-name
           - name: peaks-s3-key
           - name: pvc-name
       dag:
@@ -2624,6 +931,8 @@ spec:
       inputs:
         parameters:
           - name: pvc-name
+          - name: target-name-1
+          - name: target-name-2
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -2634,9 +943,11 @@ spec:
         command: [bash, -c, -ue, -o, xtrace]
         args: [
             "ls -altrh \
-             && cat *-peaks-*.bed | \
+             && tf1=`echo '{{inputs.parameters.target-name-1}}' | tr '[:upper:]' '[:lower:]'` \
+             && cat *-peaks-*-$tf1-*.bed | \
              bedtools sort | \
-             bedtools merge > peaks.merged.sorted.bed \
+             bedtools merge > peaks-{{inputs.parameters.target-name-1}}.merged.sorted.bed \
+             && if [ '{{inputs.parameters.target-name-2}}' != '' ]; then tf2=`echo '{{inputs.parameters.target-name-2}}' | tr '[:upper:]' '[:lower:]'`; cat *-peaks-*-$tf2-*.bed | bedtools sort |  bedtools merge > peaks-{{inputs.parameters.target-name-2}}.merged.sorted.bed; fi \
              && ls -altrh"
           ]
         volumeMounts:
@@ -2683,10 +994,11 @@ spec:
     - name: run-bedtools-intersect-cmd
       inputs:
         parameters:
-          - name: peaks-file
           - name: moods-file
           - name: pvc-name
           - name: out-s3-key
+          - name: target-name-1
+          - name: target-name-2
           - name: pval
       retryStrategy:
         limit: "5"
@@ -2715,7 +1027,9 @@ spec:
             memory: 20Gi
         args: [
             "ls -altrh \
-             && bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b {{inputs.parameters.peaks-file}} > moods_peaks_intersect.sorted.bed \
+             && bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b peaks-{{inputs.parameters.target-name-1}}.merged.sorted.bed > moods_peaks_intersect.sorted.bed \
+             && ls -altrh \
+             && if [ '{{inputs.parameters.target-name-2}}' != '' ]; then bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b peaks-{{inputs.parameters.target-name-2}}.merged.sorted.bed >> moods_peaks_intersect.sorted.bed;  ls -altrh;  sort -k1,1 -k2,2n moods_peaks_intersect.sorted.bed | uniq -c; sort -k1,1 -k2,2n moods_peaks_intersect.sorted.bed | uniq -c | grep -v '^ *1 ' | sort -k 2,2 -k3,3n | awk '{ $1=\"\"; print $0 }' > moods_peaks_intersect.sorted.bed; fi \
              && ls -altrh"
           ]
       outputs:
@@ -2725,16 +1039,16 @@ spec:
             archive:
               none: {}
             s3:
-              key: "{{inputs.parameters.out-s3-key}}.bed"
+              key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-validated-motifs_p_{{inputs.parameters.pval}}.bed"
           - name: "moods-output"
             path: "/mnt/vol/moods.sorted.bed"
             archive:
               none: {}
             s3: 
-              key: "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/moods-output-ctcf-motifs.bed"
-          - name: "merged-peaks"
-            path: "/mnt/vol/peaks.merged.sorted.bed"
-            archive:
-              none: {}
-            s3: 
-              key: "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/ctcf-merged-peaks.bed"
+              key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-moods-motifs_p_{{inputs.parameters.pval}}.bed"
+          # - name: "merged-peaks"
+          #   path: "/mnt/vol/peaks.merged.sorted.bed"
+          #   archive:
+          #     none: {}
+          #   s3: 
+          #     key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-merged-peaks_p_{{inputs.parameters.pval}}.bed"
