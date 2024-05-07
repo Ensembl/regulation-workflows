@@ -211,176 +211,827 @@ spec:
           def main() -> int:
 
             payload = json.loads(
-              """
-              [
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "CEBPB",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-a549-from-experiment-encsr000bub_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-a549-from-experiment-encsr000dyi_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-h1-from-experiment-encsr000ebv_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-imr-90-from-experiment-encsr000efm_q_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "ELF1",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf1-gm12878-from-experiment-encsr000bmb_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf1-gm12878-from-experiment-encsr841ndx_p_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "TBX21",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tbx21-gm12878-from-experiment-encsr739ihn_p_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "GATA3",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-gata3-a549-from-experiment-encsr000bti_q_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "MAX",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-a549-from-experiment-encsr000btj_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-a549-from-experiment-encsr000dyg_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-gm12878-from-experiment-encsr000dzf_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-h1-from-experiment-encsr000bsj_q_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "PAX5",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12878-from-experiment-encsr000bhd_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12878-from-experiment-encsr000bhj_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12891-from-experiment-encsr000bjh_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12892-from-experiment-encsr000bji_q_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "RFX5",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-rfx5-a549-from-experiment-encsr064ljn_p_0_1.bed"
-                        }
-                    ]
-                },
-                {
-                    "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
-                    "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
-                    "bm_s3_key": "plins/selex/GRCh38.json",
-                    "target_name_1": "TEAD4",
-                    "target_name_2": "TCF3",
-                    "out_basename": "ctcf-validated-motifs",
-                    "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
-                    "experiments": [
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
-                        },
-                        {
-                            "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tcf3-gm12878-from-experiment-encsr000bqt_q_0_1.bed"
-                        }
-                    ]
-                }
-              ]
-              """
+            """
+            
+                [
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "FOS",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-fos-endothelial-cell-of-umbilical-vein-from-experiment-encsr000evu_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-fos-imr-90-from-experiment-encsr124aig_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "ATF7",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-atf7-gm12878-from-experiment-encsr014ycr_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "JUN",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-jun-a549-from-experiment-encsr192pbj_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "BACH1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-bach1-gm12878-from-experiment-encsr636mku_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-bach1-h1-from-experiment-encsr000ebq_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "USF1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-usf1-h1-from-experiment-encsr000biu_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "SREBF2",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-srebf2-a549-from-experiment-encsr638qyo_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "CEBPB",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-a549-from-experiment-encsr000bub_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-a549-from-experiment-encsr000dyi_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-h1-from-experiment-encsr000ebv_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-cebpb-imr-90-from-experiment-encsr000efm_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "TEAD4",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tead4-h1-from-experiment-encsr000bry_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "MAX",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-a549-from-experiment-encsr000btj_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-a549-from-experiment-encsr000dyg_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-gm12878-from-experiment-encsr000dzf_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-max-h1-from-experiment-encsr000bsj_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "CTCF",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-adrenal-gland-from-experiment-encsr188xcx_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-astrocyte-of-the-cerebellum-from-experiment-encsr000dsz_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-astrocyte-of-the-spinal-cord-from-experiment-encsr000dsu_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-astrocyte_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-b-cell-f_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-brain-from-experiment-encsr467eqp_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-brain-from-experiment-encsr930sot_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-brain-microvascular-endothelial-cell-from-experiment-encsr000dta_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-bronchial-epithelial-cell_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-cardiac-muscle-cell-from-experiment-encsr000dti_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-cd14-positive-monocyte-f_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-choroid-plexus-epithelial-cell-from-experiment-encsr000dtl_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-dorsolateral-prefrontal-cortex-from-experiment-encsr351swl_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-dorsolateral-prefrontal-cortex-from-experiment-encsr705dnm_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-endothelial-cell-of-umbilical-vein-from-experiment-encsr000dvp_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-epithelial-cell-of-esophagus-from-experiment-encsr000dtr_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-epithelial-cell-of-prostate-from-experiment-encsr196hom_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-epithelial-cell-of-proximal-tubule-from-experiment-encsr000dxd_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-dermis_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-lung-from-experiment-encsr000ano_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-lung_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-mammary-gland-f_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-pulmonary-artery-from-experiment-encsr000dux_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-the-aortic-adventitia-from-experiment-encsr000dpy_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-fibroblast-of-villous-mesenchyme-from-experiment-encsr000dvq_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-foreskin-fibroblast-m_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-foreskin-keratinocyte-from-experiment-encsr817htj_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-gastrocnemius-medialis-from-experiment-encsr355alw_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-keratinocyte-f_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-keratinocyte-from-experiment-encsr000alj_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-keratinocyte-from-experiment-encsr000dwx_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-kidney-epithelial-cell_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-kidney-from-experiment-encsr000dmc_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-lung-from-experiment-encsr000dmh_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mammary-epithelial-cell-f_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-mammary-epithelial-cell-from-experiment-encsr000alv_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-neutrophil_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-osteoblast_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-pancreas-from-experiment-encsr000dnd_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-prostate-gland-from-experiment-encsr230ort_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-retinal-pigment-epithelial-cell-from-experiment-encsr000dvi_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-skeletal-muscle-myoblast_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-f-53-y_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-from-experiment-encsr000dni_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-from-experiment-encsr225ygx_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-from-experiment-encsr595bpr_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-spleen-m-37-y_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-f-51-y_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-from-experiment-encsr236ygf_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-from-experiment-encsr608wps_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ctcf-transverse-colon-from-experiment-encsr907bes_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "E2F8",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-e2f8-gm12878-from-experiment-encsr793hvl_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "EBF1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ebf1-gm12878-from-experiment-encsr000bgu_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-ebf1-gm12878-from-experiment-encsr000dzq_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "EGR1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-egr1-gm12878-from-experiment-encsr000bmq_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "ELF1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf1-gm12878-from-experiment-encsr000bmb_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf1-gm12878-from-experiment-encsr841ndx_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "ELF4",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-elf4-hek293t-from-experiment-encsr778qly_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "TBX21",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tbx21-gm12878-from-experiment-encsr739ihn_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "ETV6",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-etv6-gm12878-from-experiment-encsr597vgc_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "FOXA1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-foxa1-hek293t-from-experiment-encsr094who_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "GABPA",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-gabpa-h1-from-experiment-encsr000biw_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "GATA1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-gata1-erythroblast-from-experiment-encsr000exp_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "GATA3",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-gata3-a549-from-experiment-encsr000bti_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "HNF4A",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-hnf4a-liver-from-experiment-encsr445qrf_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "IRF3",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-irf3-gm12878-from-experiment-encsr408jqo_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "IRF5",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-irf5-gm12878-from-experiment-encsr976tbc_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "IRF4",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-irf4-gm12878-from-experiment-encsr000bgy_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "SP1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-sp1-h1-from-experiment-encsr000bir_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-sp1-hek293t-from-experiment-encsr906pei_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-sp1-liver-from-experiment-encsr386yih_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "LEF1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-lef1-hek293t-from-experiment-encsr240xwm_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "MAFK",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-mafk-a549-from-experiment-encsr541wqi_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-mafk-h1-from-experiment-encsr000ebs_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-mafk-imr-90-from-experiment-encsr000efh_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "MEF2A",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-mef2a-gm12878-from-experiment-encsr000bkb_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "MEF2B",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-mef2b-gm12878-from-experiment-encsr177vfs_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "PKNOX1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pknox1-gm12878-from-experiment-encsr711xny_p_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pknox1-hek293t-from-experiment-encsr233fag_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "NR2F1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-nr2f1-gm12878-from-experiment-encsr514vyd_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "RXRA",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-rxra-liver-from-experiment-encsr352qsb_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "NRF1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-nrf1-gm12878-from-experiment-encsr000dzo_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-nrf1-h1-from-experiment-encsr000ecc_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "PAX5",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12878-from-experiment-encsr000bhd_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12878-from-experiment-encsr000bhj_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12891-from-experiment-encsr000bjh_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pax5-gm12892-from-experiment-encsr000bji_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "POU2F2",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pou2f2-gm12878-from-experiment-encsr000bgp_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-pou2f2-gm12891-from-experiment-encsr000bii_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "RFX5",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-rfx5-a549-from-experiment-encsr064ljn_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "RUNX3",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-runx3-gm12878-from-experiment-encsr000bri_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "SPI1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-spi1-gm12878-from-experiment-encsr000bgq_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-spi1-gm12891-from-experiment-encsr000bij_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "SRF",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-srf-gm12878-from-experiment-encsr000bge_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-srf-gm12878-from-experiment-encsr000bmi_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-srf-gm12878-from-experiment-encsr041xml_p_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "TCF3",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-tcf3-gm12878-from-experiment-encsr000bqt_q_0_1.bed"
+                            }
+                        ]
+                    },
+                    {
+                        "assembly_id": "73b274e2-7884-49b7-b721-d7a147086448",
+                        "genome_s3_key": "reference-genome-bowtie2-index/Homo_sapiens/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz",
+                        "bm_s3_key": "plins/selex/GRCh38.json",
+                        "target_name_1": "YY1",
+                        "target_name_2": "",
+                        "out_basename": "ctcf-validated-motifs",
+                        "out_s3_prefix": "plins/motifs/Homo_sapiens/GRCh38/exp/{{inputs.parameters.pval}}/",
+                        "experiments": [
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-yy1-gm12891-from-experiment-encsr000bkj_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-yy1-gm12892-from-experiment-encsr000blt_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-yy1-h1-from-experiment-encsr000bkd_q_0_1.bed"
+                            },
+                            {
+                                "peaks_s3_key": "gmerino/113/TF_peaks_postQC/chip-seq-narrow-peaks-GRCh38-chip-seq-yy1-liver-from-experiment-encsr994ylz_q_0_1.bed"
+                            }
+                        ]
+                    }
+                ]              
+            """
             )
 
             with open('/tmp/items', 'w') as f:
@@ -1179,7 +1830,7 @@ spec:
             archive:
               none: {}
             s3:
-              key: "motifs/Homo_sapiens/GRCh38/exp/r113/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-validated-motifs_p_{{inputs.parameters.pval}}.bed"
+              key: "motifs/Homo_sapiens/GRCh38/exp/r113-v2/{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}/chip-seq-{{inputs.parameters.target-name-1}}_{{inputs.parameters.target-name-2}}-validated-motifs_p_{{inputs.parameters.pval}}.bed"
           # - name: "moods-output"
           #   path: "/mnt/vol/moods.sorted.bed"
           #   archive:
