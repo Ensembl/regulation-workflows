@@ -94,14 +94,14 @@ spec:
 
           - name: submit-get-request-from-reg-pipelines-api
             depends: "get-signal-tasks-url"
-            templateRef: 
+            templateRef:
               name: get-request-from-reg-pipelines-api-v2-submittable
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
                 - name: url
                   value: "{{tasks.get-signal-tasks-url.outputs.result}}"
-          
+
           - name: submit-signal-tasks
             depends: "submit-get-request-from-reg-pipelines-api"
             template: signal-tasks-dag
@@ -187,7 +187,7 @@ spec:
 
 
     - name: signal-tasks-dag
-      parallelism: 20
+      parallelism: 30
       inputs:
         parameters:
           - name: overwrite-results
@@ -196,10 +196,10 @@ spec:
           - name: count
         artifacts:
           - name: items
-               
+
       dag:
         tasks:
-          - name: submit-get-wf-task-payload-by-index-dag 
+          - name: submit-get-wf-task-payload-by-index-dag
             template: get-wf-task-payload-by-index-dag
             arguments:
               parameters:
@@ -230,9 +230,9 @@ spec:
       dag:
         tasks:
           - name: submit-get-wf-task-payload-by-index
-            templateRef: 
+            templateRef:
               name: get-wf-task-payload-by-index-v1-submittable
-              template: get-wf-task-payload-by-index 
+              template: get-wf-task-payload-by-index
             arguments:
               parameters:
                 - name: index
