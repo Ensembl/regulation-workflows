@@ -30,7 +30,11 @@ spec:
             value: ""
           - name: epigenome_name_contains
             value: ""
+          - name: epigenome_name
+            value: ""
           - name: experiment_name_contains
+            value: ""
+          - name: experiment_name
             value: ""
           - name: target_name_contains
             value: ""
@@ -75,8 +79,12 @@ spec:
                   value: "{{inputs.parameters.experiment_type}}"
                 - name: epigenome_name_contains
                   value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: epigenome_name
+                  value: "{{inputs.parameters.epigenome_name}}"
                 - name: experiment_name_contains
                   value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: experiment_name
+                  value: "{{inputs.parameters.experiment_name}}"
                 - name: target_name_contains
                   value: "{{inputs.parameters.target_name_contains}}"
                 - name: histone_mark_type
@@ -130,7 +138,9 @@ spec:
           - name: epigenome_group_id
           - name: experiment_type
           - name: epigenome_name_contains
+          - name: epigenome_name
           - name: experiment_name_contains
+          - name: experiment_name
           - name: target_name_contains
           - name: histone_mark_type
           - name: ad_hoc_playground_prefix
@@ -153,7 +163,9 @@ spec:
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "epigenome_name": f"{{inputs.parameters.epigenome_name}}",
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "experiment_name": f"{{inputs.parameters.experiment_name}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
