@@ -402,7 +402,7 @@ spec:
                 - name: associated_files_size
                   value: "{{inputs.parameters.pq-values-file-size}}"
                 - name: size_factor
-                  value: "5"
+                  value: "7"
 
           - name: create-signal-pvc
             depends: "get-signal-pvc-size.Succeeded"
