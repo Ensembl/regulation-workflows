@@ -43,7 +43,7 @@ spec:
                   value: "{{inputs.parameters.pvc-name}}"
                 - name: offset
                   value: "1"
-          
+
           - name: create-bed-from-q-values
             template: create-bed-from-pq-values-cmd
             when: >-
@@ -83,7 +83,7 @@ spec:
                   value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['pq-values-filename']), sprig.base(inputs.parameters['pq-values-filename']))}}.bed"
                 - name: pvc-name
                   value: "{{inputs.parameters.pvc-name}}"
-          
+
           - name: remove-intermediate-sorted-bed-file-from-pvc
             depends: "convert-bed-to-bigwig.Succeeded"
             templateRef:
@@ -169,10 +169,10 @@ spec:
         resources:
           limits:
             cpu: 2900m
-            memory: 116Gi
+            memory: 245Gi
           requests:
             cpu: 2500m
-            memory: 110Gi
+            memory: 180Gi
 
 
     - name: convert-bed-to-bigwig-cmd
