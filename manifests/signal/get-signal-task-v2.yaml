@@ -30,7 +30,11 @@ spec:
             value: ""
           - name: epigenome_name_contains
             value: ""
+          - name: epigenome_name
+            value: ""
           - name: experiment_name_contains
+            value: ""
+          - name: experiment_name
             value: ""
           - name: target_name_contains
             value: ""
@@ -75,8 +79,12 @@ spec:
                   value: "{{inputs.parameters.experiment_type}}"
                 - name: epigenome_name_contains
                   value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: epigenome_name
+                  value: "{{inputs.parameters.epigenome_name}}"
                 - name: experiment_name_contains
                   value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: experiment_name
+                  value: "{{inputs.parameters.experiment_name}}"
                 - name: target_name_contains
                   value: "{{inputs.parameters.target_name_contains}}"
                 - name: histone_mark_type
@@ -94,14 +102,14 @@ spec:
 
           - name: submit-get-request-from-reg-pipelines-api
             depends: "get-signal-tasks-url"
-            templateRef: 
+            templateRef:
               name: get-request-from-reg-pipelines-api-v2-submittable
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
                 - name: url
                   value: "{{tasks.get-signal-tasks-url.outputs.result}}"
-          
+
           - name: submit-signal-tasks
             depends: "submit-get-request-from-reg-pipelines-api"
             template: signal-tasks-dag
@@ -130,7 +138,9 @@ spec:
           - name: epigenome_group_id
           - name: experiment_type
           - name: epigenome_name_contains
+          - name: epigenome_name
           - name: experiment_name_contains
+          - name: experiment_name
           - name: target_name_contains
           - name: histone_mark_type
           - name: ad_hoc_playground_prefix
@@ -153,7 +163,9 @@ spec:
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "epigenome_name": f"{{inputs.parameters.epigenome_name}}",
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "experiment_name": f"{{inputs.parameters.experiment_name}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
@@ -187,7 +199,7 @@ spec:
 
 
     - name: signal-tasks-dag
-      parallelism: 20
+      parallelism: 30
       inputs:
         parameters:
           - name: overwrite-results
@@ -196,10 +208,10 @@ spec:
           - name: count
         artifacts:
           - name: items
-               
+
       dag:
         tasks:
-          - name: submit-get-wf-task-payload-by-index-dag 
+          - name: submit-get-wf-task-payload-by-index-dag
             template: get-wf-task-payload-by-index-dag
             arguments:
               parameters:
@@ -230,9 +242,9 @@ spec:
       dag:
         tasks:
           - name: submit-get-wf-task-payload-by-index
-            templateRef: 
+            templateRef:
               name: get-wf-task-payload-by-index-v1-submittable
-              template: get-wf-task-payload-by-index 
+              template: get-wf-task-payload-by-index
             arguments:
               parameters:
                 - name: index
@@ -390,7 +402,7 @@ spec:
                 - name: associated_files_size
                   value: "{{inputs.parameters.pq-values-file-size}}"
                 - name: size_factor
-                  value: "5"
+                  value: "7"
 
           - name: create-signal-pvc
             depends: "get-signal-pvc-size.Succeeded"

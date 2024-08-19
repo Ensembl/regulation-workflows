@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-from-reg-pipelines-api-v1-submittable
+spec:
+  entrypoint: get-from-reg-pipelines-api
+
+  templates:
+    - name: get-from-reg-pipelines-api
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: url
+      script:
+        securityContext:
+          readOnlyRootFilesystem: false
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/regulation-wf-python:3.11.7
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import json
+          from urllib.request import urlopen
+          
+          def main() -> int:
+          
+            with urlopen("{{inputs.parameters.url}}") as response:
+              payload = json.load(response)
+          
+            os.system('pwd')
+            os.system('ls -altrh .')
+          
+            with open('{{outputs.artifacts.items.path}}', 'w') as f:
+              f.write(json.dumps(payload))
+          
+            with open('{{outputs.parameters.count.path}}', 'w') as f:
+              f.write(f'{len(payload)}')
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        artifacts:
+          - name: items
+            path: items.json
+        parameters:
+          - name: count
+            valueFrom:
+              path: count

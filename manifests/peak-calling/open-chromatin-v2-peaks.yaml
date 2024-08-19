@@ -13,7 +13,7 @@ spec:
 
   templates:
     - name: peak-calling-open-chromatin
-      parallelism: 20
+      parallelism: 50
       inputs:
         parameters:
           - name: peak-calling-tasks
@@ -91,7 +91,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.pq_values_file_size')}}"
                 - name: size_factor
-                  value: "1.8"
+                  value: "2.8"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded

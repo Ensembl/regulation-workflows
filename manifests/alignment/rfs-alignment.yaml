@@ -9,7 +9,7 @@ spec:
 
   templates:
     - name: rfs-alignment
-      parallelism: 1
+      parallelism: 4
       inputs:
         parameters:
           - name: assembly_id
@@ -490,7 +490,7 @@ spec:
           - name: output-basename
           - name: output-key
           - name: num-threads
-            value: "13"
+            value: "9"
       volumes:
         - name: workdir
           persistentVolumeClaim:
@@ -516,10 +516,10 @@ spec:
             mountPath: /mnt/vol
         resources:
           limits:
-            cpu: 13900m
+            cpu: 9900m
             memory: 30Gi
           requests:
-            cpu: 12900m
+            cpu: 8900m
             memory: 25Gi
 
 

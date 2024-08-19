@@ -13,7 +13,7 @@ spec:
 
   templates:
     - name: peak-calling-chip-seq
-      parallelism: 15
+      parallelism: 50
       inputs:
         parameters:
           - name: peak-calling-tasks
@@ -83,7 +83,7 @@ spec:
                 - name: genrich-params-broad
                   value: "{{inputs.parameters.genrich-params-broad}}"
 
-          #          - name: check-if-outputs-exist-broad-case
+          #          -  name: check-if-outputs-exist-broad-case
           #            when: "{{=jsonpath(inputs.parameters['task-payload'], '$.broad_peaks')}} == true"
           #            depends: get-s3-keys-and-set-of-genrich-cmds.Succeeded
           #            templateRef:
@@ -126,7 +126,7 @@ spec:
                 - name: associated_files_size
                   value: "{{=jsonpath(inputs.parameters['task-payload'], '$.pq_values_file_size')}}"
                 - name: size_factor
-                  value: "1.8"
+                  value: "2.8"
 
           - name: create-peak-calling-pvc
             depends: get-peak-calling-pvc-size.Succeeded
@@ -533,6 +533,14 @@ spec:
               {{=sprig.base(inputs.parameters['broad-peaks-s3-key'])}} \
               {{=sprig.base(inputs.parameters['narrow-peaks-s3-key'])}} \
               {{=sprig.base(inputs.parameters['gapped-peaks-s3-key'])}}" ]
+        resources:
+          limits:
+            cpu: 1200m
+            memory: 10Gi
+          requests:
+            cpu: 900m
+            memory: 1Gi
+
       outputs:
         artifacts:
           - name: gapped_peaks_file

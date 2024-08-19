@@ -8,7 +8,7 @@ spec:
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
-    strategy: OnPodSuccess
+    strategy: OnPodCompletion
 
   templates:
     - name: get-genrich-values-tasks-dag
@@ -23,6 +23,8 @@ spec:
 
           - name: experiment_type
             value: ""
+          - name: target_type
+            value: ""
           - name: epigenome_name_contains
             value: ""
           - name: experiment_name_contains
@@ -32,6 +34,8 @@ spec:
           - name: histone_mark_type
             value: ""
           - name: min_replicate_count
+            value: ""
+          - name: max_replicate_count
             value: ""
           - name: exclude_tasks_missing_control
             value: ""
@@ -75,6 +79,8 @@ spec:
 
                 - name: experiment_type
                   value: "{{inputs.parameters.experiment_type}}"
+                - name: target_type
+                  value: "{{inputs.parameters.target_type}}"
                 - name: epigenome_name_contains
                   value: "{{inputs.parameters.epigenome_name_contains}}"
                 - name: experiment_name_contains
@@ -85,6 +91,8 @@ spec:
                   value: "{{inputs.parameters.histone_mark_type}}"
                 - name: min_replicate_count
                   value: "{{inputs.parameters.min_replicate_count}}"
+                - name: max_replicate_count
+                  value: "{{inputs.parameters.max_replicate_count}}"
                 - name: exclude_tasks_missing_control
                   value: "{{inputs.parameters.exclude_tasks_missing_control}}"
                 - name: exclude_controls_from_tasks
@@ -147,11 +155,13 @@ spec:
           - name: epigenome_group_id
 
           - name: experiment_type
+          - name: target_type
           - name: epigenome_name_contains
           - name: experiment_name_contains
           - name: target_name_contains
           - name: histone_mark_type
           - name: min_replicate_count
+          - name: max_replicate_count
           - name: exclude_tasks_missing_control
           - name: exclude_controls_from_tasks
 
@@ -174,11 +184,13 @@ spec:
               "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "target_type": f"{{inputs.parameters.target_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
               "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
+              "max_replicate_count": f"{{inputs.parameters.max_replicate_count}}",
               "exclude_tasks_missing_control": f"{{inputs.parameters.exclude_tasks_missing_control}}",
               "exclude_controls_from_tasks": f"{{inputs.parameters.exclude_controls_from_tasks}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",

@@ -1,0 +1,72 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-task-payload-by-index-v1-submittable
+spec:
+  entrypoint: get-task-payload-by-index
+
+  templates:
+    - name: get-task-payload-by-index
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: index
+        artifacts:
+          - name: items
+            path: /home/ensreg/workdir/items.json
+      script:
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 8737
+          runAsGroup: 8737
+          privileged: false
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/regulation-wf-python:3.11.7
+        command: [ python ]
+        source: |
+          import sys
+          import json
+          import os
+          
+          def main() -> int:
+          
+          
+            os.system('ls -altrh')
+            os.system('pwd')
+            os.system('whoami')
+          
+            with open('{{inputs.artifacts.items.path}}') as f:
+              payload = json.load(f)
+          
+            with open('{{outputs.artifacts.task-payload.path}}', 'w') as f:
+              f.write(json.dumps(payload[{{inputs.parameters.index}}], indent=2))
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        parameters:
+          - name: task-payload
+            valueFrom:
+              path: task-payload.json
+          - name: task-payload-artifact-ref
+            value: "tests/task-payload/{{workflow.name}}/{{pod.name}}/rfs-alg-task-payload.json"
+        artifacts:
+          - name: task-payload
+            path: task-payload.json
+            s3:
+              key: "tests/task-payload/{{workflow.name}}/{{pod.name}}/rfs-alg-task-payload.json"
+            archive:
+              none: { }
+

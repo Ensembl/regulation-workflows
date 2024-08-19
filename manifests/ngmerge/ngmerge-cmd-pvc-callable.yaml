@@ -28,7 +28,7 @@ spec:
           - name: out_prefix
           # Other Parameters
           - name: num_threads
-            value: "12"
+            value: "9"
       container:
         workingDir: /mnt/vol
         image: ghcr.io/daugo/ensembl-reg-ngmerge:latest
@@ -50,7 +50,7 @@ spec:
         resources:
           limits:
             memory: 27Gi
-            cpu: 13900m
+            cpu: 9900m
           requests:
             memory: 21Gi
-            cpu: 12900m
+            cpu: 8900m

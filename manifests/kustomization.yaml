@@ -13,6 +13,7 @@ resources:
   - alignment/run-alignment-se.yaml
   - alignment/rfs-alignments.yaml
   - alignment/rfs-alignment.yaml
+  - alignment/rfs-alignment-v3.yaml
   - alignment/merge-run-alignments.yaml
   - alignment/get-rfs-alignments-tasks.yaml
   - alignment/check-integrity.yaml
@@ -30,6 +31,7 @@ resources:
   - peak-calling/genrich-controls-pvc-callable.yaml
   - peak-calling/genrich-values-cmd.yaml
   - peak-calling/genrich-values.yaml
+  - peak-calling/genrich-values-v2.yaml
   - peak-calling/chip-seq-genrich-values-cmd.yaml
   - peak-calling/open-chromatin-genrich-values-cmd.yaml
   - export-peak/bed-to-bigbed.yaml
@@ -57,6 +59,7 @@ resources:
   - helpers/decompress-tgz-pvc-callable_v2.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml
   - helpers/get-request-from-reg-pipelines-api-v2.yaml
+  - helpers/get-from-reg-pipelines-api.yaml
   - helpers/delete-request-from-reg-pipelines-api.yaml
   - helpers/compute-task-marker-name.yaml
   - helpers/compute-task-marker-name-v2.yaml
@@ -76,4 +79,5 @@ resources:
   - helpers/post-results-to-reg-pipelines-api.yaml
   - helpers/analysis-file-post-request-payload.yaml
   - helpers/get-wf-task-payload-by-index.yaml
+  - helpers/get-task-payload-by-index.yaml
   - helpers/expose-payload-fields-as-params.yaml

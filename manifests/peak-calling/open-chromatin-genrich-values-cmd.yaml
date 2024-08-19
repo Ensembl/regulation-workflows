@@ -69,10 +69,10 @@ spec:
 
         resources:
           limits:
-            cpu: 4900m
-            memory: 116Gi
+            cpu: 1900m
+            memory: 120Gi
           requests:
-            cpu: 4700m
+            cpu: 900m
             memory: 110Gi
         volumeMounts:
           - name: workdir
