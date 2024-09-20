@@ -55,6 +55,8 @@ spec:
           - name: chipmentation
             value: "false"
           - name: masked-regions-s3-key
+          - name: controls-mapping-threshold
+            value: "0.1"
 
           - name: overwrite-results
             value: "false"
@@ -123,7 +125,8 @@ spec:
           - name: submit-genrich-values-tasks
             depends: "execute-get-genrich-values-tasks"
             templateRef:
-              name: genrich-values-v1-submittable
+              name: genrich-values-v2-submittable
+              #              name: genrich-values-v1-submittable
               template: genrich-values
             arguments:
               parameters:
@@ -133,6 +136,8 @@ spec:
                   value: "{{inputs.parameters.masked-regions-s3-key}}"
                 - name: chipmentation
                   value: "{{inputs.parameters.chipmentation}}"
+                - name: controls-mapping-threshold
+                  value: "{{inputs.parameters.controls-mapping-threshold}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
