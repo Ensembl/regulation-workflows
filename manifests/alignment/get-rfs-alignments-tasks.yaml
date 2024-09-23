@@ -33,8 +33,6 @@ spec:
             value: "20"
           - name: skip-execution
             value: "false"
-          - name: check-integrity
-            value: "false"
           - name: overwrite-results
             value: "false"
           - name: exclude_tasks_with_registered_results
@@ -100,19 +98,6 @@ spec:
                 - name: items
                   from: "{{tasks.execute-get-rfs-alignments-tasks.outputs.artifacts.items}}"
 
-
-          - name: check-integrity-rfs-alignments-integrity
-            when: "{{inputs.parameters.check-integrity}} == true"
-            depends: "execute-get-rfs-alignments-tasks && (submit-rfs-alignment-tasks.Succeeded || submit-rfs-alignment-tasks.Skipped)"
-            templateRef:
-              name: check-integrity-rfs-alignments-v1-submittable
-              template: check-rfs-alignments
-            arguments:
-              parameters:
-                - name: read_file_sets_alignment_tasks
-                  value: "{{tasks.execute-get-rfs-alignments-tasks.outputs.result}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
 
     - name: rfs-alignment-tasks
