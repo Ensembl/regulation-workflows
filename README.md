@@ -26,8 +26,7 @@ e.g., [Workflow](https://argo-workflows.readthedocs.io/en/latest/workflow-concep
 A-Wfs' CRDs enable the definition of complex/robust data flows in a declarative way while providing
 workflow-engine-expected features (e.g., [retry strategies](https://argo-workflows.readthedocs.io/en/latest/retries/),
 [conditional execution](https://argo-workflows.readthedocs.io/en/latest/walk-through/conditionals/), parallelisation and
-resource allocation control). All our primary processing
-data is designed and implemented to take advantage
+resource allocation control). All our primary analysis data processing is designed and implemented to take advantage
 of [A-Wfs cloud-native design principles](https://argo-workflows.readthedocs.io/en/latest/architecture/) and the
 distributed computing architecture that k8s enables.
 
@@ -86,7 +85,8 @@ have a set of quality-checked results, we label them as ready to handover. We ha
 dedicated application that allows us to export the relevant metadata to the Ensembl-release Compatible DBs (one per
 species), prepare relevant results, and copy these results to Ensembl public facing data directories (FTP site).
 
-To manage the deployment of the necessary components in k8s, we use ArgoCD. ArgoCD helps to declaratively define the
+To manage the deployment of the necessary components in k8s, we use [ArgoCD](https://argo-cd.readthedocs.io/en/stable/).
+ArgoCD helps to declaratively define the
 desired state of the k8s cluster and the applications running in it. We have a dedicated repository to keep track of
 configuration files. To successfully and efficiently run the more critical tasks in our workflows, it is
 necessary to modify Argo Workflows default configuration. This is to enable long-running tasks that take multiple hours
@@ -120,10 +120,9 @@ resource usage profile. Separating them allows us to scale independently and bet
 submitting work in batches. For example, in OpenStack, we can allocate a Kubernetes node group with the execution
 profile that best fits the requirements for each workflow type.
 
-Additionally, splitting the work in these modules allows us to iterate and deliver faster. For example, we can start
-processing the data and generate alignment files from the short-read-mapping workflow before having clarity on the best
-set of parameters for a species/dataset. As we gain more insights from the data, we can then iterate on the peak-calling
-workflow.
+Splitting the work in these modules allows us to iterate and deliver faster. For example, we can start
+processing the data and generate alignment files from the short-read-mapping workflow while still defining the
+best set of parameters for peak-calling when introducing a species/dataset.
 
 Bellow we describe the main workflows that we have implemented so far.
 
