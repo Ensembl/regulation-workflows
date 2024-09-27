@@ -96,12 +96,16 @@ design patterns we have found useful when orchestrating the processing of our pr
 For more details about the components that integrate with our workflows, please refer to the documentation in their
 respective repositories:
 
-- [workflows](https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates) (You are here)
+- [workflows](https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates) (You are here; README in progress)
+- [workflow-containers](https://gitlab.ebi.ac.uk/ensreg/workflows/container-images) (Update of image definitions:
+  pending)
 - [RDR](https://gitlab.ebi.ac.uk/ensreg/rdr)
 - [registration-client](https://gitlab.ebi.ac.uk/ensreg/regulation-registration-client)
-- [rdr-api](https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines) (README Out of Date)
-- [workflow-containers](https://gitlab.ebi.ac.uk/ensreg/workflow-containers)
-- [k8s-config](https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines-cd)
+- [rdr-api](https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines) (README Out of Date; pending deletion of code/config
+  that has been moved to other repositories)
+- [k8s-config](https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines-cd) (README, recently updated; more updates in
+  progress)
+- [release-handover](https://gitlab.ebi.ac.uk/ensreg/handover)
 
 *Note: There are plans to move, rename, and change the visibility of some of these repositories.*
 
