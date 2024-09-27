@@ -1,3 +1,5 @@
+<div style="text-align: justify">
+
 # Ensembl Regulation Workflows
 
 Cloud-native approach to orchestrate the data processing of sequencing reads from genomic assays (ATAC-seq,
@@ -149,6 +151,6 @@ Bellow we describe the main workflows that we have implemented so far.
 
 #### Patterns specific to our use case
 
-
+</div>
 
 
