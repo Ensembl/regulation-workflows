@@ -473,10 +473,11 @@ spec:
                   -X \
                   -f /mnt/vol_pq_values/{{inputs.parameters.out_pq_values_filename}} \
                   -k /mnt/vol_pileups/{{inputs.parameters.out_pileups_filename}} \
-                  -r
-                  -q 0.1
-                  -s 20
-                  -e MT
+                  -r \
+                  -y \
+                  -q 0.1 \
+                  -s 20 \
+                  -e MT \
                   -v
                 ) \
                 && if [[ {{inputs.parameters.chipmentation}} == 'true' ]]; then GENRICH_ARGS_1st_RUN+=(-j); fi \
