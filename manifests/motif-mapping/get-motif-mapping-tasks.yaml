@@ -1,0 +1,896 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: get-motif-mapping-tasks-
+spec:
+  entrypoint: get-motif-mapping-tasks-dag
+  imagePullSecrets:
+    - name: ghcr-pull-token
+  podGC:
+    strategy: OnPodSuccess
+  templates:
+    - name: get-motif-mapping-tasks-dag
+      inputs:
+        parameters:
+          - name: species_name
+            value: ""
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: target_name_contains
+            value: ""
+          - name: ad_hoc_playground_prefix
+            value: ""
+          - name: output_prefix_label
+            value: ""
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+          - name: overwrite-results
+            value: "false"
+          - name: pval
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-motif-mapping-tasks-url
+            template: compute-get-motif-mapping-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: target_name_contains
+                  value: "{{inputs.parameters.target_name_contains}}"
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+          - name: submit-get-request-from-reg-pipelines-api
+            depends: "get-motif-mapping-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v2-submittable
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-motif-mapping-tasks-url.outputs.result}}"
+
+          - name: submit-motif-mapping-tasks
+            depends: "submit-get-request-from-reg-pipelines-api"
+            template: motif-mapping-tasks-dag
+            arguments:
+              parameters:
+                - name: count
+                  value: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.parameters.count}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: pval
+                  value: "{{inputs.parameters.pval}}"
+              artifacts:
+                - name: items
+                  from: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.artifacts.items}}"
+
+    - name: compute-get-motif-mapping-tasks-url
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+          - name: species_name
+          - name: assembly_ensembl_accession
+          - name: epigenome_group_id
+          - name: epigenome_name_contains
+          - name: target_name_contains
+          - name: ad_hoc_playground_prefix
+          - name: output_prefix_label
+          - name: skip
+          - name: limit
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        command: [python]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+
+            query_params = {
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "limit": f"{{inputs.parameters.limit}}",
+            }
+
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items()
+                if value
+              ]
+            )
+
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/motif_mapping_tasks"
+                  f"?{parsed_query_params}"
+            )
+
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+    
+    - name: motif-mapping-tasks-dag
+      parallelism: 20
+      inputs:
+        parameters:
+          - name: overwrite-results
+          - name: kubeconfig-path
+          - name: pval
+          - name: count
+        artifacts:
+          - name: items
+      dag:
+        tasks:
+          - name: submit-get-wf-task-payload-by-index-dag 
+            template: get-wf-task-payload-by-index-dag
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{item}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: pval
+                  value: "{{inputs.parameters.pval}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.items}}"
+            withSequence:
+              count: "{{inputs.parameters.count}}"
+
+    - name: get-wf-task-payload-by-index-dag
+      inputs:
+        parameters:
+          - name: index
+          - name: kubeconfig-path
+          - name: overwrite-results
+          - name: pval
+        artifacts:
+          - name: items
+
+      dag:
+        tasks:
+          - name: submit-get-wf-task-payload-by-index
+            templateRef: 
+              name: get-wf-task-payload-by-index-v1-submittable
+              template: get-wf-task-payload-by-index 
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{inputs.parameters.index}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.items}}"
+          - name: submit-motif-mapping-by-target
+            depends: submit-get-wf-task-payload-by-index
+            template: motif-mapping-by-target-dag
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{tasks.submit-get-wf-task-payload-by-index.outputs.parameters.task-payload}}"
+                - name: target-name
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.target_name'
+                      )
+                    }}
+                - name: assembly-id
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.assembly_id'
+                      )
+                    }}
+                - name: genome-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.genome_s3_key'
+                      )
+                    }}
+                - name: out-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.out_s3_prefix'
+                      )
+                    }}{{=
+                      sprig.lower(jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.target_name'
+                      ))
+                    }}-validated-motifs-{{=
+                      sprig.replace('.', '_', sprig.toString(inputs.parameters.pval))  
+                    }}
+                - name: bm-s3-key
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.bm_s3_key'
+                      )
+                    }}
+                - name: experiments
+                  value: >-
+                    {{=
+                      toJson(
+                        jsonpath(
+                          tasks['submit-get-wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.experiments'
+                        )
+                      )
+                    }}
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: force-update-task-markers
+                  value: "false"
+                - name: pval
+                  value: "{{inputs.parameters.pval}}"
+
+    - name: motif-mapping-by-target-dag
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: target-name
+          - name: assembly-id
+          - name: genome-s3-key
+          - name: out-s3-key
+          - name: bm-s3-key
+          - name: experiments
+          - name: overwrite-results
+          - name: kubeconfig-path 
+          - name: pval
+          - name: force-update-task-markers
+            value: "false"
+      dag:
+        tasks:
+          - name: compute-signal-task-marker-name
+            templateRef:
+              name: compute-task-marker-name-v1-submittable
+              template: compute-task-marker-name
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+                - name: task-type
+                  value: "motif-mapping"
+
+          - name: check-if-task-marker-exists
+            depends: compute-signal-task-marker-name
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
+
+          - name: check-if-bigwig-file-already-in-s3-bucket
+            templateRef:
+              name: check-s3-object-exists-v1-submittable
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.out-s3-key}}"
+
+          - name: check-work-avoidance-consistency
+            depends: "check-if-task-marker-exists && check-if-bigwig-file-already-in-s3-bucket"
+            templateRef:
+              name: resolve-work-avoidance-v1-submittable
+              template: resolve-work-avoidance
+            arguments:
+              parameters:
+                - name: marker-exists
+                  value: "{{tasks.check-if-task-marker-exists.outputs.parameters.s3-object-exists}}"
+                - name: output-artifact-exists
+                  value: "{{tasks.check-if-bigwig-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+
+          - name: get-motif-mapping-pvc-size
+            depends: check-work-avoidance-consistency
+            templateRef:
+              name: compute-pvc-size-v1-submittable
+              template: compute-pvc-size
+            arguments:
+              parameters:
+                - name: associated_files_size
+                  value: "881211416"
+                - name: size_factor
+                  value: "25"
+
+          - name: create-motif-mapping-pvc
+            depends: "get-motif-mapping-pvc-size.Succeeded"
+            templateRef:
+              name: create-pvc-kubectl-v1-submittable
+              template: create-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-size
+                  value: "{{tasks.get-motif-mapping-pvc-size.outputs.parameters.pvc-size-formatted}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: copy-genome-file-from-s3-to-pvc
+            depends: create-motif-mapping-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.genome-s3-key}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['genome-s3-key'])}}"
+                - name: pvc-name
+                  value: '{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}'
+
+          - name: copy-bms-file-from-s3-to-pvc
+            depends: create-motif-mapping-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.bm-s3-key}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['bm-s3-key'])}}"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+
+          - name: filter-bms-by-target
+            depends: copy-bms-file-from-s3-to-pvc
+            template: filter-bms-by-target-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: bm-filename
+                  value: "{{=sprig.base(inputs.parameters['bm-s3-key'])}}"
+                - name: target-name
+                  value: "{{inputs.parameters.target-name}}"
+
+          - name: unzip-genome-file
+            depends: copy-genome-file-from-s3-to-pvc
+            template: unzip-genome-file-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['genome-s3-key'])}}"
+
+          - name: run-moods
+            when: "{{tasks.filter-bms-by-target.outputs.result}} == True"
+            depends: (filter-bms-by-target && unzip-genome-file)
+            template: run-moods-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: target-name
+                  value: "{{inputs.parameters.target-name}}"
+                - name: genome-file
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['genome-s3-key']), sprig.base(inputs.parameters['genome-s3-key']))}}"
+                - name: pval
+                  value: "{{inputs.parameters.pval}}"
+
+          #################################### Clean PVC (pt. 1) ###################################
+          # - Genome file
+          # - Compressed genome file
+          # - BMs file
+          - name: remove-bms-file-from-pvc
+            depends: "run-moods.Succeeded"
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "{{=sprig.base(inputs.parameters['bm-s3-key'])}}"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+
+          - name: remove-compressed-genome-file-from-pvc
+            depends: "run-moods.Succeeded"
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "{{=sprig.base(inputs.parameters['genome-s3-key'])}}"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+
+          - name: remove-genome-file-from-pvc
+            depends: "run-moods.Succeeded"
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "{{=sprig.trimSuffix(sprig.ext(inputs.parameters['genome-s3-key']), sprig.base(inputs.parameters['genome-s3-key']))}}"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+          ##########################################################################################
+
+          - name: convert-moods-output-to-sorted-bed
+            depends: (remove-bms-file-from-pvc && remove-genome-file-from-pvc && remove-compressed-genome-file-from-pvc)
+            template: convert-moods-output-to-sorted-bed-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: target-name
+                  value: "{{inputs.parameters.target-name}}"
+                - name: out-s3-key
+                  value: "{{inputs.parameters.out-s3-key}}"
+
+          #################################### Clean PVC (pt. 2) ###################################
+          # - Moods output raw file
+          # - Moods unsorted bed file
+          - name: remove-moods-raw-output-file-from-pvc
+            depends: convert-moods-output-to-sorted-bed
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "{{inputs.parameters.target-name}}.csv"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+
+          - name: remove-moods-bed-output-file-from-pvc
+            depends: convert-moods-output-to-sorted-bed
+            templateRef:
+              name: delete-file-from-pvc-v1-submittable
+              template: delete-file-from-pvc
+            arguments:
+              parameters:
+                - name: file-path
+                  value: "moods.bed"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+          ##########################################################################################
+
+          - name: copy-peaks-from-s3-dag
+            depends: (remove-moods-bed-output-file-from-pvc && remove-moods-raw-output-file-from-pvc)
+            template: copy-peaks-from-s3
+            arguments:
+              parameters:
+                - name: task-payload
+                  value: "{{item}}"
+                - name: peaks-file-s3-key
+                  value: "{{item.peaks_file_s3_key}}"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+            withParam: "{{inputs.parameters.experiments}}"
+  
+          - name: merge-peaks-files
+            depends: copy-peaks-from-s3-dag
+            template: merge-peaks-files-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: target-name
+                  value: "{{inputs.parameters.target-name}}"
+
+          - name: remove-peaks-from-pvc
+            depends: merge-peaks-files
+            template: remove-peaks-from-pvc-cmd
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+
+          - name: run-bedtools-intersect
+            depends: remove-peaks-from-pvc
+            template: run-bedtools-intersect-cmd
+            arguments:
+              parameters:
+                - name: moods-file
+                  value: "moods.sorted.bed"
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: out-s3-key
+                  value: "{{inputs.parameters.out-s3-key}}"
+                - name: pval
+                  value: "{{=sprig.replace(inputs.parameters['pval'], '.', '_')}}"
+                - name: target-name
+                  value: "{{inputs.parameters.target-name}}"
+
+          - name: update-signal-task-marker
+            depends: "run-bedtools-intersect || check-work-avoidance-consistency.Failed"
+            when: >-
+              ( ( {{inputs.parameters.force-update-task-markers}} == true
+              && {{tasks.check-work-avoidance-consistency.status}} == Failed )
+              || {{tasks.convert-moods-output-to-sorted-bed.status}} == Succeeded )
+            templateRef:
+              name: update-task-marker-v1-submittable
+              template: update-task-marker
+            arguments:
+              parameters:
+                - name: task-marker-s3-key
+                  value: "{{tasks.compute-signal-task-marker-name.outputs.result}}"
+                - name: task-payload
+                  value: "{{inputs.parameters.task-payload}}"
+
+          - name: delete-motif-mapping-pvc
+            depends: "run-bedtools-intersect || filter-bms-by-target"
+            when: "{{tasks.convert-moods-output-to-sorted-bed.status}} == Succeeded || {{tasks.filter-bms-by-target.outputs.result}} == False"
+            templateRef:
+              name: delete-patch-pvc-kubectl-v1-submittable
+              template: delete-patch-pvc-kubectl
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+    - name: filter-bms-by-target-cmd
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: target-name
+          - name: bm-filename
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        image: ghcr.io/daugo/ensembl-reg-python:latest
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        command: [python]
+        source: |
+          import sys
+          import json
+          from pathlib import Path
+      
+          def main() -> int:
+
+            with open(f"/mnt/vol/{{inputs.parameters.bm-filename}}") as f:
+              bml = json.load(f)
+
+            tf_bms = [
+              bm for bm in bml["bms"] if f"{{inputs.parameters.target-name}}" in bm["symbol"] if len(bm["symbol"]) == 1
+            ]
+         
+            for bm in tf_bms:
+              for pfm in bm["pfms"]:
+                for rep in pfm["representative_frequencies"]:
+                  with open(f"/mnt/vol/{'_'.join(bm['symbol'])}__{rep['representative']}.pfm", "w") as f:
+                    for x in rep["frequencies"]:
+                      f.write("\t".join(str(i) for i in x) + "\n")
+
+            print(bool(list(Path("/mnt/vol").glob("*pfm"))))
+
+            return 0
+
+          if __name__ == '__main__':
+            sys.exit(main())
+
+    - name: unzip-genome-file-cmd
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [bash, -c, -ue, -o, xtrace]
+        args: ["ls -altrh && gunzip -f -k {{inputs.parameters.filename}} && ls -altrh"]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+    - name: run-moods-cmd
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: target-name
+          - name: genome-file
+          - name: pval
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-moods:latest
+        command: [bash, -c, -ue, -o, xtrace]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 25Gi
+          requests:
+            cpu: 2500m
+            memory: 20Gi
+        args: [
+            "ls -altrh \
+             && moods-dna.py -m *.pfm -s {{inputs.parameters.genome-file}} -p {{inputs.parameters.pval}} >{{inputs.parameters.target-name}}.csv \
+             && ls -altrh"
+          ]
+          
+    - name: convert-moods-output-to-sorted-bed-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: target-name
+          - name: pvc-name
+          - name: out-s3-key
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        command: [bash, -c, -ue, -o, xtrace]
+        args: ["
+            ls -altrh \
+            && awk 'BEGIN{FS=\",\"; OFS=\"\t\"}; { split($1, contig_info, \" \"); len=length($6); print contig_info[1],$3+1,$3+len,$5\";\"contig_info[3]\";\"$2,\"1000\",$4}' {{inputs.parameters.target-name}}.csv > moods.bed \
+            && bedSort moods.bed moods.sorted.bed \
+            && ls -altrh"
+          ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 25Gi
+          requests:
+            cpu: 2500m
+            memory: 20Gi
+    - name: copy-peaks-from-s3
+      inputs:
+        parameters:
+          - name: task-payload
+          - name: peaks-file-s3-key
+          - name: pvc-name
+      dag:
+        tasks:
+          - name: copy-peaks-file-from-s3-to-pvc
+            templateRef:
+              name: s3-object-to-pvc-v1-submittable
+              template: s3-object-to-pvc
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.peaks-file-s3-key}}"
+                - name: filename
+                  value: "{{=sprig.base(inputs.parameters['peaks-file-s3-key'])}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+    
+    - name: remove-peaks-from-pvc-cmd
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && rm -f *-peaks-*.bed \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+    - name: merge-peaks-files-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: target-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedtools:latest
+        command: [bash, -c, -ue, -o, xtrace]
+        args: [
+            "ls -altrh \
+             && tf=`echo '{{inputs.parameters.target-name}}' | tr '[:upper:]' '[:lower:]'` \
+             && cat *-peaks-*-$tf-*.bed | \
+             bedtools sort | \
+             bedtools merge > peaks-{{inputs.parameters.target-name}}.merged.sorted.bed \
+             && ls -altrh"
+          ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 25Gi
+          requests:
+            cpu: 2500m
+            memory: 20Gi
+
+    - name: sort-peaks-file-cmd
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: peaks-file
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        command: [bash, -c, -ue, -o, xtrace]
+        args: [
+            "ls -altrh \
+             && bedSort {{inputs.parameters.peaks-file}} peaks.sorted.bed \
+             && ls -altrh"
+          ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 25Gi
+          requests:
+            cpu: 2500m
+            memory: 20Gi
+
+    - name: run-bedtools-intersect-cmd
+      inputs:
+        parameters:
+          - name: moods-file
+          - name: pvc-name
+          - name: out-s3-key
+          - name: target-name
+          - name: pval
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        imagePullPolicy: Always
+        workingDir: /mnt/vol
+        image: ghcr.io/daugo/ensembl-reg-bedtools:latest
+        command: [bash, -c, -ue, -o, xtrace]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 2900m
+            memory: 25Gi
+          requests:
+            cpu: 2500m
+            memory: 20Gi
+        args: [
+            "ls -altrh \
+             && bedtools intersect -f 1 -wa -names -sorted -a {{inputs.parameters.moods-file}} -b peaks-{{inputs.parameters.target-name}}.merged.sorted.bed > moods_peaks_intersect.sorted.bed \
+             && ls -altrh"
+          ]
+      outputs:
+        artifacts:
+          - name: sorted-bed
+            path: "/mnt/vol/moods_peaks_intersect.sorted.bed"
+            archive:
+              none: {}
+            s3:
+              key: "{{inputs.parameters.out-s3-key}}.bed"
