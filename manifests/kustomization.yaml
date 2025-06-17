@@ -58,6 +58,7 @@ resources:
   - helpers/decompress-tgz-pvc-callable.yaml
   - helpers/decompress-tgz-pvc-callable_v2.yaml
   - helpers/get-request-from-reg-pipelines-api.yaml
+  - helpers/get-request-from-reg-pipelines-api-v1_1.yaml
   - helpers/get-request-from-reg-pipelines-api-v2.yaml
   - helpers/get-from-reg-pipelines-api.yaml
   - helpers/delete-request-from-reg-pipelines-api.yaml

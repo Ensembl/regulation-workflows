@@ -114,7 +114,7 @@ spec:
           - name: execute-get-genrich-values-tasks
             depends: get-genrich-values-tasks-url.Succeeded
             templateRef:
-              name: get-request-from-reg-pipelines-api-v1-submittable
+              name: get-request-from-reg-pipelines-api-v1.1-submittable
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
