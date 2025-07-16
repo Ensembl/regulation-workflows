@@ -29,6 +29,7 @@ spec:
           - name: skip
           - name: limit
           - name: exclude_tasks_with_registered_results
+          - name: group_by_run_type
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
@@ -50,7 +51,8 @@ spec:
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
               "target_type": f"{{inputs.parameters.target_type}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
-              "exclude_tasks_with_registered_results": f"{{inputs.parameters.exclude_tasks_with_registered_results}}"
+              "exclude_tasks_with_registered_results": f"{{inputs.parameters.exclude_tasks_with_registered_results}}",
+              "group_by_run_type": f"{{inputs.parameters.group_by_run_type}}",
             }
 
             parsed_query_params = "".join(

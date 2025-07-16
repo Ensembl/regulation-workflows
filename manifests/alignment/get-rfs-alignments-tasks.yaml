@@ -37,6 +37,8 @@ spec:
             value: "false"
           - name: exclude_tasks_with_registered_results
             value: "false"
+          - name: group_by_run_type
+            value: "false"
           - name: kubeconfig-path
       dag:
         tasks:
@@ -70,6 +72,8 @@ spec:
                   value: "{{inputs.parameters.limit}}"
                 - name: exclude_tasks_with_registered_results
                   value: "{{inputs.parameters.exclude_tasks_with_registered_results}}"
+                - name: group_by_run_type
+                  value: "{{inputs.parameters.group_by_run_type}}"
 
           - name: execute-get-rfs-alignments-tasks
             depends: "get-rfs-alignments-tasks-url"
