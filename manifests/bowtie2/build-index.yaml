@@ -5,7 +5,7 @@ metadata:
 spec:
   entrypoint: build-index
   imagePullSecrets:
-    - name: ghcr-pull-token
+    - name: ebi-gl-cr-pull-token
   templates:
     - name: build-index
       inputs:
@@ -21,8 +21,7 @@ spec:
             s3:
               key: "{{inputs.parameters.prefix}}{{inputs.parameters.filename}}"
       container:
-        image: ghcr.io/daugo/ensembl-reg-bowtie2:latest
-        workingDir: /results/
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bowtie2_samtools:2.4.5_1.15.1
         command: [ bash, -c ]
         args: [ "bowtie2-build --threads {{inputs.parameters.threads}} \
         {{inputs.parameters.filename}} \
@@ -37,8 +36,6 @@ spec:
       outputs:
         artifacts:
           - name: reference-genome-fasta
-            path: /results/
+            path: /home/ensreg/workdir/
             s3:
               key: "{{inputs.parameters.prefix}}{{inputs.parameters.bt2_index_base}}.tar.gz"
-
-# TODO: Package index outputs into a tarball and only store the .tar.gz file in S3
