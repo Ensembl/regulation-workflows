@@ -6,11 +6,6 @@ spec:
   entrypoint: build-index
   imagePullSecrets:
     - name: ebi-gl-cr-pull-token
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 8737
-    runAsGroup: 8737
-    fsGroup: 8737
 
   templates:
     - name: build-index
