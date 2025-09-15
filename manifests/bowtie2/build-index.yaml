@@ -3,32 +3,30 @@ kind: WorkflowTemplate
 metadata:
   name: bowtie2-build-index-v1-submittable
 spec:
-  entrypoint: build-index
-  imagePullSecrets:
-    - name: ebi-gl-cr-pull-token
+  entrypoint: bt2_build-index
 
   templates:
-    - name: build-index
+    - name: bt2_build-index
       inputs:
         parameters:
           - name: in-prefix
-          - name: in-filename
+          - name: reference_in
           - name: out-prefix
-          - name: bt2_index_base
+          - name: bt2_base
           - name: threads
             value: "8"
         artifacts:
-          - name: my-reference-genome-fasta
-            path: /home/ensreg/workdir/{{inputs.parameters.in-filename}}
+          - name: reference_in
+            path: /home/ensreg/workdir/{{inputs.parameters.reference_in}}
             s3:
-              key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.in-filename}}"
+              key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.reference_in}}"
       container:
         image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bowtie2_samtools:2.4.5_1.15.1-a791e928185c
         command: [ bash, -c ]
         args: [ " ls -altrh && \
         bowtie2-build --threads {{inputs.parameters.threads}} \
-        {{inputs.parameters.in-filename}} \
-        {{inputs.parameters.bt2_index_base}}" ]
+        {{inputs.parameters.reference_in}} \
+        {{inputs.parameters.bt2_base}}" ]
         resources:
           requests:
             cpu: 7900m
@@ -41,4 +39,4 @@ spec:
           - name: reference-genome-fasta
             path: /home/ensreg/workdir/
             s3:
-              key: "{{inputs.parameters.out-prefix}}{{inputs.parameters.bt2_index_base}}.tar.gz"
+              key: "{{inputs.parameters.out-prefix}}{{inputs.parameters.bt2_base}}.tar.gz"
