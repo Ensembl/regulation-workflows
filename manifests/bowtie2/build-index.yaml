@@ -22,7 +22,7 @@ spec:
             s3:
               key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.in-filename}}"
       container:
-        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bowtie2_samtools:2.4.5_1.15.1
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bowtie2_samtools:2.4.5_1.15.1-a791e928185c
         command: [ bash, -c ]
         args: [ " ls -altrh && \
         bowtie2-build --threads {{inputs.parameters.threads}} \
