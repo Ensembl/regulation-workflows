@@ -1,9 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bowtie2-build-index-v1-submittable
+  name: bowtie2-build-index-v-0.1.0
 spec:
   entrypoint: bt2_build-index
+  arguments:
+    parameters:
+      - name: workdir
+        value: "/home/ensreg/workdir/"
 
   templates:
     - name: bt2_build-index
@@ -17,16 +21,18 @@ spec:
             value: "8"
         artifacts:
           - name: reference_in
-            path: /home/ensreg/workdir/{{inputs.parameters.reference_in}}
+            path: "{{workflow.parameters.workdir}}{{inputs.parameters.reference_in}}"
             s3:
               key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.reference_in}}"
       container:
         image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bowtie2_samtools:2.4.5_1.15.1-a791e928185c
         command: [ bash, -c ]
-        args: [ " ls -altrh && \
-        bowtie2-build --threads {{inputs.parameters.threads}} \
-        {{inputs.parameters.reference_in}} \
-        {{inputs.parameters.bt2_base}}" ]
+        args:
+          - |
+            ls -altrh && \
+            bowtie2-build --threads {{inputs.parameters.threads}} \
+            {{inputs.parameters.reference_in}} \
+            {{inputs.parameters.bt2_base}}
         resources:
           requests:
             cpu: 7900m
@@ -37,6 +43,6 @@ spec:
       outputs:
         artifacts:
           - name: reference-genome-fasta
-            path: /home/ensreg/workdir/
+            path: "{{workflow.parameters.workdir}}"
             s3:
               key: "{{inputs.parameters.out-prefix}}{{inputs.parameters.bt2_base}}.tar.gz"
