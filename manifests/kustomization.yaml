@@ -6,7 +6,6 @@ resources:
   - fastqc/fastqc-se-cmd-pvc-callable.yaml
   - ngmerge/ngmerge-cmd-pvc-callable.yaml
   - fastp/fastp-se-cmd-pvc-callable.yaml
-  - bowtie2/build/build-index.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable.yaml
   - alignment/run-alignment-pe.yaml
@@ -82,6 +81,14 @@ resources:
   - helpers/get-wf-task-payload-by-index.yaml
   - helpers/get-task-payload-by-index.yaml
   - helpers/expose-payload-fields-as-params.yaml
+  ## Tool Modules
+  - fastp/fastp-se-cmd-pvc-callable-v-0.1.yaml
+  - fastqc/fastqc-pe-cmd-pvc-callable-v-0.1.yaml
+  - fastqc/fastqc-se-cmd-pvc-callable-v-0.1.yaml
+  - ngmerge/ngmerge-cmd-pvc-callable-v-0.1.yaml
+  - bowtie2/build/build-index-v-0.1.yaml
+  - bowtie2/bowtie2-pe-cmd-pvc-callable-v-0.1.yaml
+  - bowtie2/bowtie2-se-cmd-pvc-callable-v-0.1.yaml
   ## Helper Modules
   - helpers/create-pvc-v-0.2.yaml
   - helpers/delete-pvc-v-0.1.0.yaml

@@ -1,13 +1,13 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bowtie2-build-index-v-0.1.0
+  name: bowtie2-build-index-v-0.1.1
 spec:
   entrypoint: bt2_build-index
   arguments:
     parameters:
       - name: workdir
-        value: "/home/ensreg/workdir/"
+        value: "/home/ensreg/workdir"
 
   templates:
     - name: bt2_build-index
@@ -21,7 +21,7 @@ spec:
             value: "8"
         artifacts:
           - name: reference_in
-            path: "{{workflow.parameters.workdir}}{{inputs.parameters.reference_in}}"
+            path: "{{workflow.parameters.workdir}}/{{inputs.parameters.reference_in}}"
             s3:
               key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.reference_in}}"
       container:

@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: fastp-se-cmd-pvc-callable-v-0.1.0
+spec:
+  entrypoint: fastp-cmd-pvc-callable
+
+  templates:
+    - name: fastp-cmd-pvc-callable
+      retryStrategy:
+        limit: "3"
+        retryPolicy: "OnError"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      inputs:
+        parameters:
+          - name: pvc-name
+          # Input file
+          - name: first_read_file_name
+          # Output files
+          - name: out_prefix
+      container:
+        workingDir: /mnt/vol
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        image: ghcr.io/daugo/ensembl-reg-fastp:latest
+        command: [ bash, -c, -uef, -o, xtrace ]
+        args: [ "ls -altrh \
+                && fastp \
+                -i {{inputs.parameters.first_read_file_name}} \
+                -o {{inputs.parameters.out_prefix}}.fastq.gz \
+                --disable_quality_filtering \
+                --disable_length_filtering \
+                --low_complexity_filter \
+                --trim_poly_g \
+                --overrepresentation_analysis \
+                -j {{inputs.parameters.out_prefix}}.json \
+                -h {{inputs.parameters.out_prefix}}.html \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            memory: 5Gi
+            cpu: 1200m
+          requests:
+            memory: 3Gi
+            cpu: 900m
