@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: expose-payload-fields-as-params-v-0.1.0
+spec:
+  entrypoint: expose-payload-fields-as-params
+
+  templates:
+    - name: expose-payload-fields-as-params
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        artifacts:
+          - name: payload
+            path: /tmp/payload.json
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        command: [ python ]
+        source: |
+          import sys
+          import json
+          
+          def main() -> int:
+          
+            with open('/tmp/payload.json') as f:
+              payload_data = json.load(f)
+          
+            with open('/tmp/payload', 'w') as f:
+              f.write(json.dumps(payload_data))
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        parameters:
+          - name: payload
+            valueFrom:
+              path: /tmp/payload
+

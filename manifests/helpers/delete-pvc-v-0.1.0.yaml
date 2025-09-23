@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: delete-pvc-v-0.1.0
+spec:
+  entrypoint: delete-pvc
+
+  templates:
+    - name: delete-pvc
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-name
+      resource:
+        action: delete
+        manifest: |
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: '{{inputs.parameters.pvc-name}}'

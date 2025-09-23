@@ -82,3 +82,17 @@ resources:
   - helpers/get-wf-task-payload-by-index.yaml
   - helpers/get-task-payload-by-index.yaml
   - helpers/expose-payload-fields-as-params.yaml
+  ## Helper Modules
+  - helpers/create-pvc-v-0.2.yaml
+  - helpers/delete-pvc-v-0.1.0.yaml
+  - helpers/compute-pvc-size-v-0.1.yaml
+  - helpers/check-s3-object-exists-v-0.1.yaml
+  - helpers/copy-s3-prefix-objects-to-pvc-v-0.1.yaml
+  - helpers/copy-from-pvc-to-s3-object-v-0.1.yaml
+  - helpers/compute-task-marker-name-v-0.2.yaml
+  - helpers/resolve-work-avoidance-v-0.1.yaml
+  - helpers/update-task-marker-v-0.2.0.yaml
+  - helpers/validate-expected-number-of-files-in-dir-v-0.1.yaml
+  - helpers/get-wf-task-payload-by-index-v-0.1.yaml
+  - helpers/get-request-from-reg-pipelines-api-v-0.2.yaml
+  - helpers/expose-payload-fields-as-params-v-0.1.yaml

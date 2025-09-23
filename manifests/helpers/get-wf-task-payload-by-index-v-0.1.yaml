@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-wf-task-payload-by-index-v-0.1.0
+spec:
+  entrypoint: get-wf-task-payload-by-index
+
+  templates:
+    - name: get-wf-task-payload-by-index
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: index
+        artifacts:
+          - name: items
+            path: /tmp/items
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        command: [ python ]
+        source: |
+          import sys
+          import json
+          
+          def main() -> int:
+          
+            with open('/tmp/items') as f:
+              payload = json.load(f)
+            with open('/tmp/task-payload', 'w') as f:
+              f.write(json.dumps(payload[{{inputs.parameters.index}}]))
+          
+            return 0
+          
+          if __name__ == '__main__':
+            sys.exit(main())
+      outputs:
+        parameters:
+          - name: task-payload
+            valueFrom:
+              path: /tmp/task-payload
+        artifacts:
+          - name: task-payload
+            path: /tmp/task-payload
+   

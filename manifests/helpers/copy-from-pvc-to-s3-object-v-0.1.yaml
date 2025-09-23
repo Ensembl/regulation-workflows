@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: from-pvc-to-s3-object-v-0.1.0
+spec:
+  entrypoint: from-pvc-to-s3-object
+
+  templates:
+    - name: from-pvc-to-s3-object
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: s3-key
+          - name: cpu-limit
+          - name: memory-limit
+      dag:
+        tasks:
+          - name: copy-from-pvc-to-s3-object
+            template: from-pvc-to-s3-object-native
+            arguments:
+              parameters:
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: s3-key
+                  value: "{{inputs.parameters.s3-key}}"
+                - name: cpu-limit
+                  value: "{{inputs.parameters.cpu-limit}}"
+                - name: memory-limit
+                  value: "{{inputs.parameters.memory-limit}}"
+
+    - name: from-pvc-to-s3-object-native
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          # Source
+          - name: pvc-name
+          - name: filename
+          # S3 object location (Destination)
+          - name: s3-key
+          # Resources config for wait container
+          - name: cpu-limit
+          - name: memory-limit
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        workingDir: /mnt/vol/
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        imagePullPolicy: Always
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
+        podSpecPatch: '{ "containers": [ { "name": "wait", "resources": { "limits": { "cpu": "{{input.parameters.cpu-limit}}", "memory": "{{input.parameters.memory-limit}}" } } } ] }'
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        artifacts:
+          - name: output-file
+            path: "/mnt/vol/{{inputs.parameters.filename}}"
+            archive:
+              none: { }
+            s3:
+              key: "{{inputs.parameters.s3-key}}"
+
+
+

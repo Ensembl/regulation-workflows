@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: resolve-work-avoidance-v-0.1.0
+spec:
+  entrypoint: resolve-work-avoidance
+
+  templates:
+    - name: resolve-work-avoidance
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: marker-exists
+          - name: output-artifact-exists
+          - name: overwrite-results
+
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        command: [ python ]
+        source: |
+          from pydantic import BaseModel
+          import sys
+          
+          class WorkAvoidanceResolver(BaseModel):
+            marker_exists: bool
+            output_artifact_exists: bool
+            overwrite_results: bool
+          
+            @property
+            def avoid_work(self) -> str:
+              if self.marker_exists and self.output_artifact_exists:
+                return "true"
+          
+              elif self.marker_exists and not self.output_artifact_exists:
+                raise ValueError("A marker file exists but no output artifact found.\n"
+                                  "Either remove marker and run again or check you are pointing to the right bucket")
+          
+              elif (not self.marker_exists and self.output_artifact_exists)  and not self.overwrite_results:
+                raise ValueError("No marker file found for this task set of parameters\n"
+                                  "However, a output-artifact with the same name exists.\n"
+                                  "Avoiding overwriting (check overwrite-results parameter)")
+          
+              elif (not self.marker_exists and self.output_artifact_exists) and self.overwrite_results:
+                return "false"
+          
+              else:
+                return "false"
+
+          def main() -> int:
+          
+            wa_resolver = WorkAvoidanceResolver(
+              marker_exists = "{{inputs.parameters.marker-exists}}",
+              output_artifact_exists = "{{inputs.parameters.output-artifact-exists}}",
+              overwrite_results = "{{inputs.parameters.overwrite-results}}",
+            )
+
+            with open('avoid_work.txt', 'w') as f:
+              f.write(wa_resolver.avoid_work)
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+
+      outputs:
+        parameters:
+          - name: avoid-work
+            valueFrom:
+              path: avoid_work.txt

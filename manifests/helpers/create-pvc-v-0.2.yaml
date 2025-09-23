@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: create-pvc-v-0.2.0
+spec:
+  entrypoint: create-pvc
+
+  templates:
+    - name: create-pvc
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: pvc-size
+      resource:
+        action: create
+        setOwnerReference: true
+        manifest: |
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: pvc-{{pod.name}}
+          spec:
+            accessModes: ['ReadWriteMany']
+            resources:
+              requests:
+                storage: '{{inputs.parameters.pvc-size}}'
+      outputs:
+        parameters:
+          - name: pvc-name
+            valueFrom:
+              jsonPath: '{.metadata.name}'
+            globalName: pvc-name-global

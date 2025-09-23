@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compute-task-marker-name-v-0.2.0
+spec:
+  entrypoint: compute-task-marker-name
+
+  templates:
+    - name: compute-task-marker-name
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: task-type
+        artifacts:
+          - name: task-payload
+            path: /tmp/task-payload
+
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        command: [ python ]
+        source: |
+          from typing import Dict, Any
+          import hashlib
+          import json
+          import sys
+
+          def dict_hash(dict: Dict[str, Any]) -> str:
+              """MD5 hash of a dictionary."""
+              dict_hash = hashlib.md5()
+
+              # We need to sort arguments so {'a': 1, 'b': 2} is
+              # the same as {'b': 2, 'a': 1}
+              encoded = json.dumps(dict, sort_keys=True).encode()
+              dict_hash.update(encoded)
+              return dict_hash.hexdigest()
+
+          def main() -> int:
+
+
+            task_type = "{{inputs.parameters.task-type}}"
+          
+            with open('/tmp/task-payload') as f:
+              input_data = json.load(f)
+
+            input_parameters_hash = dict_hash(input_data)
+
+            task_marker_path = (
+              'task-markers/'
+              f'{task_type}/'
+              f'{input_parameters_hash}'
+              '.marker'
+            )
+
+            print(task_marker_path)
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
