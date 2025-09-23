@@ -16,7 +16,6 @@ resources:
   - alignment/merge-run-alignments.yaml
   - alignment/get-rfs-alignments-tasks.yaml
   - alignment/check-integrity.yaml
-  - alignment/compute-get-rfs-aligments-tasks-url.yaml
   - peak-calling/atac-seq.yaml
   - peak-calling/chip-seq-se-no-controls.yaml
   - peak-calling/chip-seq.yaml
@@ -103,3 +102,6 @@ resources:
   - helpers/get-wf-task-payload-by-index-v-0.1.yaml
   - helpers/get-request-from-reg-pipelines-api-v-0.2.yaml
   - helpers/expose-payload-fields-as-params-v-0.1.yaml
+
+  - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
+

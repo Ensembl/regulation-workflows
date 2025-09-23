@@ -1,14 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: compute-rfs-alignments-tasks-url-v1-submittable
+  name: compute-rfs-alignment-tasks-url-v-0.1.0
 spec:
-  entrypoint: compute-rfs-alignments-tasks-url
-  imagePullSecrets:
-    - name: ghcr-pull-token
+  entrypoint: compute-rfs-alignment-tasks-url
 
   templates:
-    - name: compute-rfs-alignments-tasks-url
+    - name: compute-rfs-alignment-tasks-url
       retryStrategy:
         limit: "5"
         backoff:
@@ -31,7 +29,7 @@ spec:
           - name: exclude_tasks_with_registered_results
           - name: group_by_run_type
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [ python ]
         source: |
           import sys
