@@ -1,0 +1,233 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-alignment-tasks-v-0.2.0
+spec:
+  entrypoint: get-rfs-alignment-tasks-dag
+
+  templates:
+    - name: get-rfs-alignment-tasks-dag
+      inputs:
+        parameters:
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: experiment_type
+            value: ""
+          - name: species_name
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: experiment_name_contains
+            value: ""
+          - name: target_type
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "20"
+          - name: skip-execution
+            value: "false"
+          - name: overwrite-results
+            value: "false"
+          - name: exclude_tasks_with_registered_results
+            value: "false"
+          - name: group_by_run_type
+            value: "false"
+          - name: kubeconfig-path
+      dag:
+        tasks:
+          - name: get-rfs-alignment-tasks-url
+            templateRef:
+              name: compute-rfs-alignment-tasks-url-v-0.1.0
+              template: compute-rfs-alignment-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: experiment_name_contains
+                  value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: target_type
+                  value: "{{inputs.parameters.target_type}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+                - name: exclude_tasks_with_registered_results
+                  value: "{{inputs.parameters.exclude_tasks_with_registered_results}}"
+                - name: group_by_run_type
+                  value: "{{inputs.parameters.group_by_run_type}}"
+
+          - name: execute-get-rfs-alignment-tasks
+            depends: "get-rfs-alignment-tasks-url"
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v-0.2.0
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-rfs-alignment-tasks-url.outputs.result}}"
+
+
+          - name: submit-rfs-alignment-tasks
+            when: "{{inputs.parameters.skip-execution}} == false"
+            depends: "execute-get-rfs-alignment-tasks"
+            template: rfs-alignment-tasks
+            arguments:
+              parameters:
+                - name: number-of-tasks
+                  value: "{{tasks.execute-get-rfs-alignment-tasks.outputs.parameters.count}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+              artifacts:
+                - name: items
+                  from: "{{tasks.execute-get-rfs-alignment-tasks.outputs.artifacts.items}}"
+
+
+
+    - name: rfs-alignment-tasks
+      parallelism: 25
+      inputs:
+        parameters:
+          - name: number-of-tasks
+          - name: overwrite-results
+            value: "false"
+          - name: kubeconfig-path
+        artifacts:
+          - name: items
+
+      dag:
+        tasks:
+          - name: get-rfs-alignment-task-payload-by-index
+            template: get-rfs-alignment-task-payload-by-index-dag
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{item}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.items}}"
+            withSequence:
+              count: "{{inputs.parameters.number-of-tasks}}"
+
+    - name: get-rfs-alignment-task-payload-by-index-dag
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "24h"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: index
+          - name: overwrite-results
+            value: "false"
+          - name: kubeconfig-path
+        artifacts:
+          - name: items
+      dag:
+        tasks:
+          - name: wf-task-payload-by-index
+            templateRef:
+              name: get-wf-task-payload-by-index-v-0.1.0
+              template: get-wf-task-payload-by-index
+            arguments:
+              parameters:
+                - name: index
+                  value: "{{inputs.parameters.index}}"
+              artifacts:
+                - name: items
+                  from: "{{inputs.artifacts.items}}"
+
+          - name: submit-rfs-alignment
+            depends: wf-task-payload-by-index.Succeeded
+            templateRef:
+              name: rfs-alignment-v-0.2.0
+              template: rfs-alignment
+            arguments:
+              artifacts:
+                - name: task-payload
+                  from: "{{tasks.wf-task-payload-by-index.outputs.artifacts.task-payload}}"
+              parameters:
+                - name: assembly_id
+                  value: >-
+                    {{=
+                      jsonpath(
+                        tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                        '$.assembly_id'
+                      )
+                    }}
+                - name: read_file_set_id
+                  value: >-
+                    {{=
+                      jsonpath(
+                          tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.read_file_set_id'
+                      )
+                    }}
+                - name: bowtie2_index_key
+                  value: >-
+                    {{=
+                      jsonpath(
+                          tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.bowtie2_index_key'
+                      )
+                    }}
+                - name: bowtie2_index_basename
+                  value: >-
+                    {{=
+                      jsonpath(
+                          tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.bowtie2_index_basename'
+                      )
+                    }}
+                - name: samtools_stats_output_key
+                  value: >-
+                    {{=
+                      jsonpath(
+                          tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.samtools_stats_output_key'
+                      )
+                    }}
+                - name: output_key
+                  value: >-
+                    {{=
+                      jsonpath(
+                          tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.output_key'
+                      )
+                    }}
+                - name: associated_read_files_size
+                  value: >-
+                    {{=
+                      jsonpath(
+                          tasks['wf-task-payload-by-index'].outputs.parameters['task-payload'], 
+                          '$.associated_read_files_size'
+                      )
+                    }}
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: force-update-rfs-alignment-task-markers
+                  value: "false"

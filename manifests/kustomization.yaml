@@ -8,14 +8,7 @@ resources:
   - fastp/fastp-se-cmd-pvc-callable.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable.yaml
-  - alignment/run-alignment-pe.yaml
-  - alignment/run-alignment-se.yaml
-  - alignment/rfs-alignments.yaml
-  - alignment/rfs-alignment.yaml
   - alignment/rfs-alignment-v3.yaml
-  - alignment/merge-run-alignments.yaml
-  - alignment/get-rfs-alignments-tasks.yaml
-  - alignment/check-integrity.yaml
   - peak-calling/atac-seq.yaml
   - peak-calling/chip-seq-se-no-controls.yaml
   - peak-calling/chip-seq.yaml
@@ -80,6 +73,8 @@ resources:
   - helpers/get-wf-task-payload-by-index.yaml
   - helpers/get-task-payload-by-index.yaml
   - helpers/expose-payload-fields-as-params.yaml
+  # Versioned workflow templates
+
   ## Tool Modules
   - fastp/fastp-se-cmd-pvc-callable-v-0.1.yaml
   - fastqc/fastqc-pe-cmd-pvc-callable-v-0.1.yaml
@@ -88,6 +83,7 @@ resources:
   - bowtie2/build/build-index-v-0.1.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable-v-0.1.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable-v-0.1.yaml
+
   ## Helper Modules
   - helpers/create-pvc-v-0.2.yaml
   - helpers/delete-pvc-v-0.1.0.yaml
@@ -105,3 +101,8 @@ resources:
 
   - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
 
+  ## Sub-workflows
+  - alignment/get-alignment-tasks.yaml
+  - alignment/rfs-alignment.yaml
+  - alignment/run-alignment-pe.yaml
+  - alignment/run-alignment-se.yaml
