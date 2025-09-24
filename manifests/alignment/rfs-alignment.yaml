@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: rfs-alignment-v-0.2.0
+  name: rfs-alignment-v-0.2.1
 spec:
   entrypoint: rfs-alignment
 
@@ -417,7 +417,6 @@ spec:
           - name: bowtie2_index_basename
           - name: run-index
           - name: overwrite-results
-          - name: kubeconfig-path
         artifacts:
           - name: runs-payload
       dag:
@@ -449,15 +448,9 @@ spec:
                   value: "{{inputs.parameters.bowtie2_index_basename}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
               artifacts:
                 - name: run-payload
                   from: "{{tasks.wf-task-payload-by-index.outputs.artifacts.task-payload}}"
-
-
-
-
 
     - name: samtools-merge-cmd
       retryStrategy:
