@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-alignment-tasks-v-0.2.1
+  name: get-alignment-tasks-v-0.2.2
 spec:
   entrypoint: get-rfs-alignment-tasks-dag
 
@@ -35,7 +35,6 @@ spec:
             value: "false"
           - name: group_by_run_type
             value: "false"
-          - name: kubeconfig-path
       dag:
         tasks:
           - name: get-rfs-alignment-tasks-url
@@ -92,8 +91,6 @@ spec:
                   value: "{{tasks.execute-get-rfs-alignment-tasks.outputs.parameters.count}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
               artifacts:
                 - name: items
                   from: "{{tasks.execute-get-rfs-alignment-tasks.outputs.artifacts.items}}"
@@ -107,7 +104,6 @@ spec:
           - name: number-of-tasks
           - name: overwrite-results
             value: "false"
-          - name: kubeconfig-path
         artifacts:
           - name: items
 
@@ -121,8 +117,6 @@ spec:
                   value: "{{item}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
               artifacts:
                 - name: items
                   from: "{{inputs.artifacts.items}}"
@@ -142,7 +136,6 @@ spec:
           - name: index
           - name: overwrite-results
             value: "false"
-          - name: kubeconfig-path
         artifacts:
           - name: items
       dag:
@@ -225,8 +218,6 @@ spec:
                           '$.associated_read_files_size'
                       )
                     }}
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: force-update-rfs-alignment-task-markers
