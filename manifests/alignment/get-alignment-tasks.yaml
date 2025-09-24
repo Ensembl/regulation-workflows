@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-alignment-tasks-v-0.2.0
+  name: get-alignment-tasks-v-0.2.1
 spec:
   entrypoint: get-rfs-alignment-tasks-dag
 
@@ -162,7 +162,7 @@ spec:
           - name: submit-rfs-alignment
             depends: wf-task-payload-by-index.Succeeded
             templateRef:
-              name: rfs-alignment-v-0.2.0
+              name: rfs-alignment-v-0.2.1
               template: rfs-alignment
             arguments:
               artifacts:
