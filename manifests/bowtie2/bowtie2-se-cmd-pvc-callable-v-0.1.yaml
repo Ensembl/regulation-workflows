@@ -1,14 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bowtie2-se-cmd-pvc-callable-v-0.1.0
+  name: bowtie2-se-cmd-pvc-callable-v-0.1.1
 spec:
   entrypoint: dag-bowtie2-cmd-pvc-callable
-  arguments:
-    parameters:
-      - name: workdir
-        value: "/home/ensreg/workdir"
-
 
   # TODO: Refactor this to use the same template as bowtie2-pe-cmd-pvc-callable.yaml
   templates:
@@ -101,7 +96,7 @@ spec:
           - name: memory-limit
         artifacts:
           - name: bowtie2_index
-            path: "{{workflow.parameters.workdir}}/bwt2_idx"
+            path: "{{workflow.parameters.ENSREG_WORKDIR}}/bwt2_idx"
             s3:
               key: "{{inputs.parameters.bowtie2_index_key}}{{inputs.parameters.bowtie2_index_basename}}.tar.gz"
 
@@ -114,13 +109,13 @@ spec:
         podSpecPatch: '{ "initContainers": [ { "init": "wait", "resources": { "limits": { "cpu": "{{input.parameters.cpu-limit}}", "memory": "{{input.parameters.memory-limit}}" } } } ] }'
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
-              && ls -altrh {{workflow.parameters.workdir}}/bwt2_idx \
+              && ls -altrh {{workflow.parameters.ENSREG_WORKDIR}}/bwt2_idx \
               && bowtie2 \
               --threads {{inputs.parameters.num_threads}} \
               --very-sensitive \
               -k 10 \
               --mm \
-              -x {{workflow.parameters.workdir}}/bwt2_idx/{{inputs.parameters.bowtie2_index_basename}} \
+              -x {{workflow.parameters.ENSREG_WORKDIR}}/bwt2_idx/{{inputs.parameters.bowtie2_index_basename}} \
               -U {{inputs.parameters.first_read_file_name}} \
               | samtools sort \
               -o {{inputs.parameters.output_filename}} \

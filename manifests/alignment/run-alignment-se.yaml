@@ -175,7 +175,7 @@ spec:
           - name: execute-bowtie2-cmd
             depends: execute-fastqc-cmd-for-noAdapt-read-files
             templateRef:
-              name: bowtie2-se-cmd-pvc-callable-v-0.1.0
+              name: bowtie2-se-cmd-pvc-callable-v-0.1.1
               template: dag-bowtie2-cmd-pvc-callable
             arguments:
               parameters:

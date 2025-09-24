@@ -1,13 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bowtie2-build-index-v-0.1.1
+  name: bowtie2-build-index-v-0.1.2
 spec:
   entrypoint: bt2_build-index
-  arguments:
-    parameters:
-      - name: workdir
-        value: "/home/ensreg/workdir"
 
   templates:
     - name: bt2_build-index
@@ -21,7 +17,7 @@ spec:
             value: "8"
         artifacts:
           - name: reference_in
-            path: "{{workflow.parameters.workdir}}/{{inputs.parameters.reference_in}}"
+            path: "{{workflow.parameters.ENSREG_WORKDIR}}/{{inputs.parameters.reference_in}}"
             s3:
               key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.reference_in}}"
       container:
@@ -43,6 +39,6 @@ spec:
       outputs:
         artifacts:
           - name: reference-genome-fasta
-            path: "{{workflow.parameters.workdir}}"
+            path: "{{workflow.parameters.ENSREG_WORKDIR}}"
             s3:
               key: "{{inputs.parameters.out-prefix}}{{inputs.parameters.bt2_base}}.tar.gz"
