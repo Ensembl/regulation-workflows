@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bowtie2-build-index-v-0.1.2
+  name: bowtie2-build-index-v-0.1.3
 spec:
   entrypoint: bt2_build-index
 
@@ -17,7 +17,7 @@ spec:
             value: "8"
         artifacts:
           - name: reference_in
-            path: "{{workflow.parameters.ENSREG_WORKDIR}}/{{inputs.parameters.reference_in}}"
+            path: "/home/ensreg/workdir/{{inputs.parameters.reference_in}}"
             s3:
               key: "{{inputs.parameters.in-prefix}}{{inputs.parameters.reference_in}}"
       container:
@@ -39,6 +39,6 @@ spec:
       outputs:
         artifacts:
           - name: reference-genome-fasta
-            path: "{{workflow.parameters.ENSREG_WORKDIR}}"
+            path: "/home/ensreg/workdir"
             s3:
               key: "{{inputs.parameters.out-prefix}}{{inputs.parameters.bt2_base}}.tar.gz"
