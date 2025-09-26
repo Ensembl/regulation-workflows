@@ -1,14 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
-#kind: WorkflowTemplate
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
-  generateName: get-peak-calling-tasks-v2-
+  name: get-peak-calling-tasks-v-0.2.0
 spec:
   entrypoint: get-peak-calling-tasks-dag
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: get-peak-calling-tasks-dag
@@ -63,7 +58,6 @@ spec:
             value: "false"
           - name: production-run
             value: "false"
-          - name: kubeconfig-path
       dag:
         tasks:
           - name: get-peak-calling-tasks-v2-url
@@ -116,56 +110,18 @@ spec:
           - name: execute-get-peak-calling-tasks
             depends: "get-peak-calling-tasks-v2-url"
             templateRef:
-              name: get-request-from-reg-pipelines-api-v1.1-submittable
+              name: get-request-from-reg-pipelines-api-v-0.1.1
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
                 - name: url
                   value: "{{tasks.get-peak-calling-tasks-v2-url.outputs.result}}"
 
-          #          - name: submit-atac-seq-peak-calling-tasks
-          #            depends: "execute-get-peak-calling-tasks"
-          #            when: "{{inputs.parameters.experiment_type}} == 'atac_seq'"
-          #            templateRef:
-          #              name: peak-calling-atac-seq-v1-submittable
-          #              template: peak-calling-atac-seq
-          #            arguments:
-          #              parameters:
-          #                - name: peak_calling_tasks
-          #                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-          #                - name: masked_regions_prefix
-          #                  value: "{{inputs.parameters.masked_regions_prefix}}"
-          #                - name: masked_regions_filename
-          #                  value: "{{inputs.parameters.masked_regions_filename}}"
-          #                - name: overwrite-results
-          #                  value: "{{inputs.parameters.overwrite-results}}"
-          #                - name: kubeconfig-path
-          #                  value: "{{inputs.parameters.kubeconfig-path}}"
-          #
-          #          - name: submit-dnase-seq-peak-calling-tasks
-          #            depends: "execute-get-peak-calling-tasks"
-          #            when: "{{inputs.parameters.experiment_type}} == 'dnase_seq'"
-          #            templateRef:
-          #              name: peak-calling-dnase-seq-v1-submittable
-          #              template: peak-calling-dnase-seq
-          #            arguments:
-          #              parameters:
-          #                - name: peak_calling_tasks
-          #                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-          #                - name: masked_regions_prefix
-          #                  value: "{{inputs.parameters.masked_regions_prefix}}"
-          #                - name: masked_regions_filename
-          #                  value: "{{inputs.parameters.masked_regions_filename}}"
-          #                - name: overwrite-results
-          #                  value: "{{inputs.parameters.overwrite-results}}"
-          #                - name: kubeconfig-path
-          #                  value: "{{inputs.parameters.kubeconfig-path}}"
-
           - name: submit-chip-seq-peak-calling-tasks
             depends: "execute-get-peak-calling-tasks.Succeeded"
             when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
-              name: chip-seq-v2-peaks-v1-submittable
+              name: chip-seq-peaks-v-0.2.0
               template: peak-calling-chip-seq
             arguments:
               parameters:
@@ -179,8 +135,6 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: production-run
                   value: "{{inputs.parameters.production-run}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: submit-open-chromatin-peak-calling-tasks
             depends: "execute-get-peak-calling-tasks.Succeeded"
@@ -188,7 +142,7 @@ spec:
               {{inputs.parameters.experiment_type}} == 'atac_seq' ||
               {{inputs.parameters.experiment_type}} == 'dnase_seq'
             templateRef:
-              name: open-chromatin-v2-peaks-v1-submittable
+              name: open-chromatin-peaks-v-0.2.0
               template: peak-calling-open-chromatin
             arguments:
               parameters:
@@ -200,8 +154,6 @@ spec:
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: production-run
                   value: "{{inputs.parameters.production-run}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: compute-get-peak-calling-tasks-v2-url
       retryStrategy:
@@ -236,7 +188,7 @@ spec:
           - name: skip
           - name: limit
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [ python ]
         source: |
           import sys

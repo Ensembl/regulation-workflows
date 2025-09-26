@@ -7,8 +7,6 @@ resources:
   - peak-calling/chip-seq-se-no-controls.yaml
   - peak-calling/chip-seq.yaml
   - peak-calling/chip-seq-v2.yaml
-  - peak-calling/chip-seq-v2-peaks.yaml
-  - peak-calling/open-chromatin-v2-peaks.yaml
   - peak-calling/chip-seq-ad-hoc.yaml
   - peak-calling/dnase-seq.yaml
   - peak-calling/controls-peak-calling-for-mask-file.yaml
@@ -77,6 +75,7 @@ resources:
   - helpers/delete-pvc-v-0.1.yaml
   - helpers/compute-pvc-size-v-0.1.yaml
   - helpers/check-s3-object-exists-v-0.1.yaml
+  - helpers/check-if-s3-objects-exist-v-0.1.yaml
   - helpers/copy-s3-object-to-pvc-v-0.1.0.yaml
   - helpers/copy-s3-prefix-objects-to-pvc-v-0.1.yaml
   - helpers/copy-from-pvc-to-s3-object-v-0.1.yaml
@@ -94,8 +93,10 @@ resources:
   - helpers/compute-file-metadata-pvc-callable-v-0.1.yaml
   - helpers/analysis-file-post-request-payload-v-0.1.yaml
   - helpers/compress-tgz-pvc-callable-v-0.1.yaml
+  - helpers/decompress-tgz-pvc-callable-v-0.1.yaml
   - helpers/copy-pvc-to-pvc-v-0.1.yaml
   - helpers/check-if-field-present-and-not-empty-v-0.1.yaml
+  - helpers/compute-file-metadata-v-0.1.yaml
 
 
   - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
@@ -112,3 +113,7 @@ resources:
   - peak-calling/genrich-values-cmd.yaml
   - peak-calling/open-chromatin-genrich-values-cmd.yaml
   - peak-calling/chip-seq-genrich-values-cmd.yaml
+
+  - peak-calling/get-peak-calling-tasks-v2.yaml
+  - peak-calling/chip-seq-peaks-v-0.2.yaml
+  - peak-calling/open-chromatin-peaks-v-0.2.yaml
