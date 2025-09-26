@@ -1,0 +1,100 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: analysis-file-post-request-payload-v-0.1.0
+spec:
+  entrypoint: analysis-file-post-request-payload
+
+  templates:
+    - name: analysis-file-post-request-payload
+      retryStrategy:
+        limit: "5"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: basename
+          - name: file-size
+          - name: md5sum
+          - name: experiment-id
+          - name: assembly-id
+          - name: analysis-type
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        workingDir: /mnt/vol
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          import logging
+          
+          def main() -> int:
+          
+            PEAKS_FILE_TYPE = "bed"
+            GENRICH_VALUES_FILE_TYPE = "txt"
+            SIGNAL_FILE_TYPE = "bigwig"
+            PEAKS_EXPORT_FILE_TYPE = "bigbed"
+          
+            map_analysis_type_file_type = {
+              "genrich_pileups": GENRICH_VALUES_FILE_TYPE,
+              "genrich_pq_values": GENRICH_VALUES_FILE_TYPE,
+              "signal": SIGNAL_FILE_TYPE,
+              "atac_seq_peaks": PEAKS_FILE_TYPE,
+              "dnase_seq_peaks": PEAKS_FILE_TYPE,
+              "chip_seq_narrow_peaks": PEAKS_FILE_TYPE,
+              "chip_seq_broad_peaks": PEAKS_FILE_TYPE,
+              "chip_seq_gapped_peaks": PEAKS_FILE_TYPE,
+              "controls_peaks": PEAKS_FILE_TYPE,
+              "peaks": PEAKS_EXPORT_FILE_TYPE,
+            }
+          
+            analysis_type = "{{inputs.parameters.analysis-type}}"
+          
+            try:
+              file_type = map_analysis_type_file_type[analysis_type]
+            except KeyError as e:
+              logging.error(f"Unknown analysis type: {analysis_type}")
+              return 1
+          
+          
+          
+            post_data = {
+              "experiment_id": "{{inputs.parameters.experiment-id}}",
+              "assembly_id": "{{inputs.parameters.assembly-id}}",
+              "analysis_type": "{{inputs.parameters.analysis-type}}",
+              "file": {
+                "file_type": file_type,
+                "basename": "{{inputs.parameters.basename}}",
+                "size": "{{inputs.parameters.file-size}}",
+                "md5sum": "{{inputs.parameters.md5sum}}",
+                "imported": False,
+                "s3_object": {
+                  "key": "{{inputs.parameters.s3-key}}",
+                  "bucket_id": "085c4884-d0d6-4725-bda2-7463deed86eb"
+                }
+              }
+            }
+          
+            print(json.dumps(post_data,  indent=2))
+          
+            with open("{{inputs.parameters.basename}}.json", mode="w") as f:
+              json.dump(post_data, f, indent=2)
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+      outputs:
+        artifacts:
+          - name: analysis-file-post-request-payload
+            path: /mnt/vol/{{inputs.parameters.basename}}.json
+            archive:
+              none: { }
+            s3:
+              key: "post-data/{{inputs.parameters.s3-key}}.json"

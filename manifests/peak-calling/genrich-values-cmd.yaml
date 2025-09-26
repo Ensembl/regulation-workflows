@@ -1,14 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-values-cmd-v1-submittable
-
+  name: genrich-values-cmd-v-0.1.0
 spec:
   entrypoint: dag-genrich-values-cmd
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: dag-genrich-values-cmd
@@ -32,7 +27,7 @@ spec:
           - name: execute-genrich-values-cmd-chip-seq-case
             when: "{{inputs.parameters.experiment-type}} == chip_seq"
             templateRef:
-              name: chip-seq-genrich-values-cmd-v1-submittable
+              name: chip-seq-genrich-values-cmd-v-0.1.0
               template: chip-seq-genrich-values-cmd
             arguments:
               parameters:
@@ -67,7 +62,7 @@ spec:
           - name: save-genrich-logs-chip-seq-case
             depends: execute-genrich-values-cmd-chip-seq-case.Succeeded
             templateRef:
-              name: cp-s3-object-to-s3-v1-submittable
+              name: cp-s3-object-to-s3-v-0.1.0
               template: cp-s3-object-to-s3
             arguments:
               parameters:
@@ -82,7 +77,7 @@ spec:
               ( {{inputs.parameters.experiment-type}} == atac_seq ) ||
               ( {{inputs.parameters.experiment-type}} == dnase_seq )
             templateRef:
-              name: open-chromatin-genrich-values-cmd-v1-submittable
+              name: open-chromatin-genrich-values-cmd-v-0.1.0
               template: open-chromatin-genrich-values-cmd
             arguments:
               parameters:
@@ -110,7 +105,7 @@ spec:
           - name: save-genrich-logs-open-chromatin-case
             depends: execute-genrich-values-cmd-open-chromatin-case.Succeeded
             templateRef:
-              name: cp-s3-object-to-s3-v1-submittable
+              name: cp-s3-object-to-s3-v-0.1.0
               template: cp-s3-object-to-s3
             arguments:
               parameters:

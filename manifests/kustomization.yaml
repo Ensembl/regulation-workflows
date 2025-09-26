@@ -14,11 +14,6 @@ resources:
   - peak-calling/controls-peak-calling-for-mask-file.yaml
   - peak-calling/controls-peak-calling-for-mask-file-with-pileups.yaml
   - peak-calling/genrich-controls-pvc-callable.yaml
-  - peak-calling/genrich-values-cmd.yaml
-  - peak-calling/genrich-values.yaml
-  - peak-calling/genrich-values-v2.yaml
-  - peak-calling/chip-seq-genrich-values-cmd.yaml
-  - peak-calling/open-chromatin-genrich-values-cmd.yaml
   - export-peak/bed-to-bigbed.yaml
   - masked-regions/masked-regions-identification.yaml
   - coverage/experiment-alignments-to-bigwig.yaml
@@ -26,7 +21,6 @@ resources:
   - signal/genrich-pq-values-to-bigwig-pvc-callable.yaml
   - signal/genrich-pq-values-to-bigwig-high-mem-pvc-callable.yaml
   - samtools/samtools-sort-pvc-callable.yaml
-  - samtools/samtools-sort-pvc-callable-v2.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/create-nfs-pvc-kubectl.yaml
   - helpers/delete-file-from-pvc.yaml
@@ -76,21 +70,33 @@ resources:
   - bowtie2/build/build-index-v-0.1.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable-v-0.1.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable-v-0.1.yaml
+  - samtools/samtools-sort-pvc-callable-v-0.2.yaml
 
   ## Helper Modules
   - helpers/create-pvc-v-0.2.yaml
-  - helpers/delete-pvc-v-0.1.0.yaml
+  - helpers/delete-pvc-v-0.1.yaml
   - helpers/compute-pvc-size-v-0.1.yaml
   - helpers/check-s3-object-exists-v-0.1.yaml
+  - helpers/copy-s3-object-to-pvc-v-0.1.0.yaml
   - helpers/copy-s3-prefix-objects-to-pvc-v-0.1.yaml
   - helpers/copy-from-pvc-to-s3-object-v-0.1.yaml
+  - helpers/cp-s3-object-to-s3-v-0.1.yaml
+  - helpers/compute-task-marker-name-v-0.1.yaml
   - helpers/compute-task-marker-name-v-0.2.yaml
   - helpers/resolve-work-avoidance-v-0.1.yaml
-  - helpers/update-task-marker-v-0.2.0.yaml
+  - helpers/update-task-marker-v-0.1.yaml
+  - helpers/update-task-marker-v-0.2.yaml
   - helpers/validate-expected-number-of-files-in-dir-v-0.1.yaml
   - helpers/get-wf-task-payload-by-index-v-0.1.yaml
+  - helpers/get-request-from-reg-pipelines-api-v-0.1.yaml
   - helpers/get-request-from-reg-pipelines-api-v-0.2.yaml
   - helpers/expose-payload-fields-as-params-v-0.1.yaml
+  - helpers/compute-file-metadata-pvc-callable-v-0.1.yaml
+  - helpers/analysis-file-post-request-payload-v-0.1.yaml
+  - helpers/compress-tgz-pvc-callable-v-0.1.yaml
+  - helpers/copy-pvc-to-pvc-v-0.1.yaml
+  - helpers/check-if-field-present-and-not-empty-v-0.1.yaml
+
 
   - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
 
@@ -99,3 +105,10 @@ resources:
   - alignment/rfs-alignment.yaml
   - alignment/run-alignment-pe.yaml
   - alignment/run-alignment-se.yaml
+
+  - peak-calling/get-genrich-tasks.yaml
+  - peak-calling/genrich-values-v-0.2.yaml
+  - peak-calling/genrich-values-v-0.1.yaml
+  - peak-calling/genrich-values-cmd.yaml
+  - peak-calling/open-chromatin-genrich-values-cmd.yaml
+  - peak-calling/chip-seq-genrich-values-cmd.yaml

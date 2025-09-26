@@ -1,0 +1,139 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: s3-object-to-pvc-v-0.1.0
+spec:
+  entrypoint: s3-object-to-pvc
+
+  templates:
+    - name: s3-object-to-pvc
+      inputs:
+        parameters:
+          - name: s3-key
+          - name: filename
+          - name: pvc-name
+      dag:
+        tasks:
+          - name: s3-object-to-pvc
+            template: copy-s3-object-to-pvc-boto3
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{inputs.parameters.s3-key}}"
+                - name: filename
+                  value: "{{inputs.parameters.filename}}"
+                - name: pvc-name
+                  value: "{{inputs.parameters.pvc-name}}"
+
+    - name: copy-s3-object-to-pvc
+      retryStrategy:
+        limit: "7"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          # S3 object location (Source)
+          - name: s3-key
+          # Destination
+          - name: pvc-name
+          - name: filename
+        artifacts:
+          - name: run-alignments
+            path: "/mnt/vol/{{inputs.parameters.filename}}"
+            s3:
+              key: "{{inputs.parameters.s3-key}}"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
+        workingDir: /mnt/vol/
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+
+    - name: copy-s3-object-to-pvc-boto3
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: s3-endpoint
+            value: "https://uk1s3.embassy.ebi.ac.uk"
+          - name: bucket
+            value: "ensembl-regulation-71319003-analysis-pipelines-b1"
+          - name: s3-key
+          - name: filename
+          - name: pvc-name
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: accessKey
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: ensembl-regulation-s3embassy-credentials
+                key: secretKey
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        workingDir: /mnt/vol
+        command: [ python ]
+        source: |
+          import boto3 as boto3 
+          from botocore.client import Config
+
+          from warnings import warn
+          import sys
+          import os
+
+          def _config_s3_client(endpoint):
+            config = Config(
+                read_timeout=5000,
+                connect_timeout=5000, 
+                retries={"max_attempts": 3}
+            )
+            session = boto3.session.Session()
+
+            s3_client = session.client(
+                service_name="s3",
+                endpoint_url=endpoint,
+            )
+            return s3_client
+
+
+          def main() -> int:
+            s3_endpoint = "{{inputs.parameters.s3-endpoint}}"
+
+            s3_client = _config_s3_client(s3_endpoint)
+
+            bucket_name = "{{inputs.parameters.bucket}}"
+            s3_object_key = "{{inputs.parameters.s3-key}}"
+            out_filename = "{{inputs.parameters.filename}}"
+
+            s3_client.download_file(bucket_name, s3_object_key, out_filename)
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol

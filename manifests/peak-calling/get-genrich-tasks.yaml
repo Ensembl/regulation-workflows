@@ -1,0 +1,219 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: get-genrich-tasks-v-0.1.0
+spec:
+  entrypoint: get-genrich-values-tasks-dag
+
+  templates:
+    - name: get-genrich-values-tasks-dag
+      inputs:
+        parameters:
+          - name: species_name
+            value: ""
+          - name: assembly_ensembl_accession
+            value: ""
+          - name: epigenome_group_id
+            value: ""
+
+          - name: experiment_type
+            value: ""
+          - name: target_type
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: experiment_name_contains
+            value: ""
+          - name: target_name_contains
+            value: ""
+          - name: histone_mark_type
+            value: ""
+          - name: min_replicate_count
+            value: ""
+          - name: max_replicate_count
+            value: ""
+          - name: exclude_tasks_missing_control
+            value: ""
+          - name: exclude_controls_from_tasks
+            value: ""
+
+          - name: ad_hoc_playground_prefix
+            value: ""
+          - name: output_prefix_label
+            value: ""
+
+          - name: skip
+            value: "0"
+          - name: limit
+            value: "100"
+
+          - name: chipmentation
+            value: "false"
+          - name: masked-regions-s3-key
+          - name: controls-mapping-threshold
+            value: "0.1"
+
+          - name: overwrite-results
+            value: "false"
+      dag:
+        tasks:
+          - name: get-genrich-values-tasks-url
+            template: compute-get-genrich-values-tasks-url
+            arguments:
+              parameters:
+                - name: svc-name
+                  value: "regulation-pipelines-api-service"
+                - name: namespace
+                  value: "regulation-pipelines-api"
+
+                - name: species_name
+                  value: "{{inputs.parameters.species_name}}"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: epigenome_group_id
+                  value: "{{inputs.parameters.epigenome_group_id}}"
+
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: target_type
+                  value: "{{inputs.parameters.target_type}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: experiment_name_contains
+                  value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: target_name_contains
+                  value: "{{inputs.parameters.target_name_contains}}"
+                - name: histone_mark_type
+                  value: "{{inputs.parameters.histone_mark_type}}"
+                - name: min_replicate_count
+                  value: "{{inputs.parameters.min_replicate_count}}"
+                - name: max_replicate_count
+                  value: "{{inputs.parameters.max_replicate_count}}"
+                - name: exclude_tasks_missing_control
+                  value: "{{inputs.parameters.exclude_tasks_missing_control}}"
+                - name: exclude_controls_from_tasks
+                  value: "{{inputs.parameters.exclude_controls_from_tasks}}"
+
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
+                - name: output_prefix_label
+                  value: "{{inputs.parameters.output_prefix_label}}"
+
+                - name: skip
+                  value: "{{inputs.parameters.skip}}"
+                - name: limit
+                  value: "{{inputs.parameters.limit}}"
+
+
+          - name: execute-get-genrich-values-tasks
+            depends: get-genrich-values-tasks-url.Succeeded
+            templateRef:
+              name: get-request-from-reg-pipelines-api-v-0.1.1
+              template: get-request-from-reg-pipelines-api
+            arguments:
+              parameters:
+                - name: url
+                  value: "{{tasks.get-genrich-values-tasks-url.outputs.result}}"
+
+
+          - name: submit-genrich-values-tasks
+            depends: "execute-get-genrich-values-tasks"
+            templateRef:
+              name: genrich-values-v-0.2.0
+              template: genrich-values
+            arguments:
+              parameters:
+                - name: peak-calling-tasks
+                  value: "{{tasks.execute-get-genrich-values-tasks.outputs.result}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: controls-mapping-threshold
+                  value: "{{inputs.parameters.controls-mapping-threshold}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+
+    - name: compute-get-genrich-values-tasks-url
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: svc-name
+          - name: namespace
+
+          - name: species_name
+          - name: assembly_ensembl_accession
+          - name: epigenome_group_id
+
+          - name: experiment_type
+          - name: target_type
+          - name: epigenome_name_contains
+          - name: experiment_name_contains
+          - name: target_name_contains
+          - name: histone_mark_type
+          - name: min_replicate_count
+          - name: max_replicate_count
+          - name: exclude_tasks_missing_control
+          - name: exclude_controls_from_tasks
+
+          - name: ad_hoc_playground_prefix
+          - name: output_prefix_label
+          - name: skip
+          - name: limit
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import urllib.parse
+
+          def main() -> int:
+          
+            query_params = {
+              "species_name": f"{{inputs.parameters.species_name}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "target_type": f"{{inputs.parameters.target_type}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
+              "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
+              "max_replicate_count": f"{{inputs.parameters.max_replicate_count}}",
+              "exclude_tasks_missing_control": f"{{inputs.parameters.exclude_tasks_missing_control}}",
+              "exclude_controls_from_tasks": f"{{inputs.parameters.exclude_controls_from_tasks}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
+              "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "limit": f"{{inputs.parameters.limit}}",
+            }
+          
+            parsed_query_params = "".join(
+              [
+                f"&{key}={value}" for key, value in query_params.items() 
+                if value
+              ]
+            )
+          
+            url_str = (f"http://{{inputs.parameters.svc-name}}."
+                  f"{{inputs.parameters.namespace}}."
+                  "svc.cluster.local"
+                  ":80"
+                  "/api/v1"
+                  "/genrich_values_tasks"
+                  f"?{parsed_query_params}"         
+            )
+          
+            print(urllib.parse.quote(url_str, safe=":/?=&"))
+          
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())

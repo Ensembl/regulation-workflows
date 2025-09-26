@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: check-if-field-present-and-not-empty-v-0.1.0
+spec:
+  entrypoint: check-if-field-present-and-not-empty
+
+  templates:
+    - name: check-if-field-present-and-not-empty
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: field-name
+          - name: task-payload
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import json
+          from collections import defaultdict
+          from pprint import pprint
+
+          def main() -> int:
+            task_payload_json = """{{inputs.parameters.task-payload}}"""
+            field_name = """{{inputs.parameters.field-name}}"""
+            task_payload_data = json.loads(task_payload_json)
+
+            if field_name in task_payload_data.keys() and len(task_payload_data[field_name]) > 0:
+              res = "true"
+            else:
+              res = "false"
+
+            with open("controls_present.txt", 'w') as f:
+              f.write(res)
+
+            return 0
+
+          if __name__ == '__main__':
+              sys.exit(main())
+      outputs:
+        parameters:
+          - name: controls-present
+            valueFrom:
+              path: controls_present.txt
+

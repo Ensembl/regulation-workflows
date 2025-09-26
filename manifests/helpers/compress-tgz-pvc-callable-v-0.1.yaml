@@ -1,0 +1,60 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compress-tgz-pvc-callable-v-0.1.0
+spec:
+  entrypoint: compress-tgz-pvc-callable-pigz
+
+  templates:
+    - name: compress-tgz-pvc-callable-pigz
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+          - name: out-filename
+          - name: num-threads
+            value: "7"
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
+        workingDir: /mnt/vol
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+                && tar cf - {{inputs.parameters.filename}} | \
+                pigz -p {{inputs.parameters.num-threads}} > {{inputs.parameters.out-filename}} \
+                && echo {{inputs.parameters.out-filename}} > out-filename.txt \
+                && ls -altrh" ]
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+        resources:
+          limits:
+            cpu: 6900m
+            memory: 10Gi
+          requests:
+            cpu: 6700m
+            memory: 5Gi
+      outputs:
+        parameters:
+          - name: out-filename
+            valueFrom:
+              path: out-filename.txt
+#        artifacts:
+#          - name: compressed-tgz
+#            path: /mnt/vol/{{inputs.parameters.filename}}.tgz
+#            archive:
+#              none: { }
+#            s3:
+#              key: '{{inputs.parameters.out-s3-key}}'

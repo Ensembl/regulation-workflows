@@ -140,8 +140,6 @@ spec:
                   value: "{{inputs.parameters.controls-mapping-threshold}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: compute-get-genrich-values-tasks-url
       retryStrategy:

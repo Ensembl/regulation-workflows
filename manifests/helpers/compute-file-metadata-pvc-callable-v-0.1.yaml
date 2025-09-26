@@ -1,0 +1,78 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: compute-file-metadata-pvc-callable-v-0.1.0
+spec:
+  entrypoint: compute-file-metadata-pvc-callable
+
+  templates:
+    - name: compute-file-metadata-pvc-callable
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: pvc-name
+          - name: filename
+      volumes:
+        - name: workdir
+          persistentVolumeClaim:
+            claimName: '{{inputs.parameters.pvc-name}}'
+      script:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        workingDir: /mnt/vol
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
+        command: [ python ]
+        source: |
+          import sys
+          import os
+          import hashlib
+          import json
+          
+          def main() -> int:
+          
+            filename = "{{inputs.parameters.filename}}"
+          
+            file_size = os.path.getsize(filename)
+          
+            with open('file_size.txt', 'w') as f:
+              f.write(str(file_size))
+          
+            CHUNK_SIZE = 8192
+            # Reads the file 8192 (or 2¹³) bytes at a time
+            # instead of all at once with f.read() to use less memory.
+            with open(filename, "rb") as f:
+                file_hash = hashlib.md5()
+                chunk = f.read(CHUNK_SIZE)
+                while chunk:
+                    file_hash.update(chunk)
+                    chunk = f.read(CHUNK_SIZE)
+          
+            md5sum = file_hash.hexdigest()
+          
+            with open('md5sum.txt', 'w') as f:
+              f.write(md5sum)
+          
+            return 0
+          
+          if __name__ == '__main__':
+              sys.exit(main())
+
+        volumeMounts:
+          - name: workdir
+            mountPath: /mnt/vol
+      outputs:
+        parameters:
+          # TODO: change where this files get written
+          # Don't write this info in PVC mounted directory
+          - name: file-size
+            valueFrom:
+              path: file_size.txt
+          - name: md5sum
+            valueFrom:
+              path: md5sum.txt

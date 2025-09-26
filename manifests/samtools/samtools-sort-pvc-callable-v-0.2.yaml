@@ -1,13 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: sort-alignment-by-queryname-pvc-callable-v2-submittable
+  name: sort-alignment-by-queryname-pvc-callable-v-0.2.0
 spec:
   entrypoint: sort-alignment-by-queryname-pvc-callable
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: sort-alignment-by-queryname-pvc-callable
@@ -16,13 +12,12 @@ spec:
           # Bam file as input
           - name: s3-key
           - name: pvc-name
-          - name: kubeconfig-path
 
       dag:
         tasks:
           - name: load-bam-to-pvc
             templateRef:
-              name: s3-object-to-pvc-v1-submittable
+              name: s3-object-to-pvc-v-0.1.0
               template: s3-object-to-pvc
             arguments:
               parameters:
@@ -77,8 +72,11 @@ spec:
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.pvc-name}}"
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/samtools:1.15.1
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
                 && samtools view -@ {{inputs.parameters.num-threads}} -b -h -F 0x004 {{inputs.parameters.filename}} | \
@@ -111,8 +109,11 @@ spec:
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.pvc-name}}"
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
                 && rm -f {{inputs.parameters.filename}} \ 

@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: copy-pvc-to-pvc-v-0.1
+spec:
+  entrypoint: copy-pvc-to-pvc
+
+  templates:
+    - name: copy-pvc-to-pvc
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "OnError"
+      inputs:
+        parameters:
+          - name: recursive
+            value: "false"
+          - name: preserve
+            value: "true"
+          - name: source-pvc
+          - name: source-path
+            value: ""
+          - name: destination-pvc
+          - name: destination-path
+            value: ""
+      volumes:
+        - name: source-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.source-pvc}}"
+        - name: destination-vol
+          persistentVolumeClaim:
+            claimName: "{{inputs.parameters.destination-pvc}}"
+      container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
+        workingDir: /mnt/in_vol/
+        securityContext: 
+          runAsUser: 0
+          runAsNonRoot: false
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "ls -altrh \
+              && CP_ARGS=()
+              && if [[ {{inputs.parameters.recursive}} == true ]]; then CP_ARGS+=( -r ); fi \
+              && if [[ {{inputs.parameters.preserve}} == true ]]; then CP_ARGS+=( -p ); fi \  
+              && cp ${CP_ARGS[@]} \
+              /mnt/in_vol/{{inputs.parameters.source-path}} \
+              /mnt/out_vol/{{inputs.parameters.destination-path}} \
+              && ls -altrh /mnt/out_vol" ]
+        volumeMounts:
+          - name: source-vol
+            mountPath: /mnt/in_vol/
+          - name: destination-vol
+            mountPath: /mnt/out_vol/

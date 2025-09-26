@@ -1,13 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: chip-seq-genrich-values-cmd-v1-submittable
+  name: chip-seq-genrich-values-cmd-v-0.1.0
 spec:
   entrypoint: chip-seq-genrich-values-cmd
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: chip-seq-genrich-values-cmd
@@ -37,8 +33,11 @@ spec:
             s3:
               key: "{{inputs.parameters.masked-regions-s3-key}}"
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/genrich:0.6.1
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -uef, -o, xtrace, -o, pipefail ]
         args: [ "ls -altrh \
                 && rm -f /mnt/vol_pq_values/* /mnt/vol_pileups/* \
