@@ -1,18 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-pq-values-to-bigwig-pvc-callable-v1-submittable
+  name: genrich-pq-values-to-bigwig-pvc-callable-v-0.1.0
   annotations:
     workflows.argoproj.io/description: |
       Generate bigwig file (signal) from genrich pq-values file
 spec:
   entrypoint: genrich-pq-values-to-bigwig-pvc-callable
-  
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: genrich-pq-values-to-bigwig-pvc-callable
@@ -75,7 +69,7 @@ spec:
           - name: remove-intermediate-bed-file-from-pvc
             depends: "convert-bed-to-bigwig.Succeeded"
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -87,7 +81,7 @@ spec:
           - name: remove-intermediate-sorted-bed-file-from-pvc
             depends: "convert-bed-to-bigwig.Succeeded"
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -99,7 +93,7 @@ spec:
           - name: execute-compute-bigwig-file-metadata
             depends: convert-bed-to-bigwig
             templateRef:
-              name: compute-file-metadata-pvc-callable-v1-submittable
+              name: compute-file-metadata-pvc-callable-v-0.1.0
               template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
@@ -111,7 +105,7 @@ spec:
           - name: execute-post-signal-file
             depends: execute-compute-bigwig-file-metadata
             templateRef:
-              name: analysis-file-post-request-payload-v1-submittable
+              name: analysis-file-post-request-payload-v-0.1.0
               template: analysis-file-post-request-payload
             arguments:
               parameters:
@@ -146,8 +140,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedsort:v369
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [
           "ls -altrh \
@@ -195,8 +192,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedgraphtobigwig:2.10.0
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedgraphtobigwig:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [
           "ls -altrh \

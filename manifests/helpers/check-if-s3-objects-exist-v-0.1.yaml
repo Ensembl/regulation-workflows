@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: check-if-s3-objects-exist-v-0.1.0
+spec:
+  entrypoint: check-if-s3-objects-exist
+
+  templates:
+    - name: check-if-s3-objects-exist
+      inputs:
+        parameters:
+          - name: s3-keys
+          # TODO: add logic to support check-types all, any, none
+      #          - name: check-type
+      #            value: "all"
+      outputs:
+        parameters:
+          - name: check-response
+            valueFrom:
+              parameter: "{{tasks.collect-output-params.outputs.parameters.check-response}}"
+      dag:
+        tasks:
+          - name: loop-s3-object-exists
+            templateRef:
+              name: check-s3-object-exists-v-0.1.0
+              template: check-s3-object-exists
+            arguments:
+              parameters:
+                - name: s3-key
+                  value: "{{item}}"
+            withParam: "{{inputs.parameters.s3-keys}}"
+
+          - name: collect-output-params
+            depends: loop-s3-object-exists.Succeeded
+            template: check-all-true
+            arguments:
+              parameters:
+                - name: values
+                  value: "{{tasks.loop-s3-object-exists.outputs.parameters.s3-object-exists}}"
+
+    - name: check-all-true
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+        retryPolicy: "Always"
+      inputs:
+        parameters:
+          - name: values
+      outputs:
+        parameters:
+          - name: check-response
+            value: "{{=all(jsonpath(inputs.parameters['values'], '$'), {# == 'true'})}}"
+      container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
+        command: [ bash, -c, -ue, -o, xtrace ]
+        args: [ "echo {{inputs.parameters.values}}" ]

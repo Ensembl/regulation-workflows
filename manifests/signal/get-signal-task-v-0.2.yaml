@@ -1,21 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
-  generateName: get-signal-tasks-
+  name: get-signal-task-v-0.2-0
   annotations:
     workflows.argoproj.io/description: |
       Generate bigwig files from genrich pq-value files
 spec:
   entrypoint: get-signal-tasks-dag
 
-  imagePullSecrets:
-    - name: ghcr-pull-token
-
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
-
     - name: get-signal-tasks-dag
       inputs:
         parameters:
@@ -53,7 +47,6 @@ spec:
 
           - name: overwrite-results
             value: "false"
-          - name: kubeconfig-path
 
           - name: p-value-based
 
@@ -103,7 +96,7 @@ spec:
           - name: submit-get-request-from-reg-pipelines-api
             depends: "get-signal-tasks-url"
             templateRef:
-              name: get-request-from-reg-pipelines-api-v2-submittable
+              name: get-request-from-reg-pipelines-api-v-0.2.0
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
@@ -119,8 +112,6 @@ spec:
                   value: "{{tasks.submit-get-request-from-reg-pipelines-api.outputs.parameters.count}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: p-value-based
                   value: "{{inputs.parameters.p-value-based}}"
               artifacts:
@@ -148,7 +139,7 @@ spec:
           - name: skip
           - name: limit
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [ python ]
         source: |
           import sys
@@ -203,7 +194,6 @@ spec:
       inputs:
         parameters:
           - name: overwrite-results
-          - name: kubeconfig-path
           - name: p-value-based
           - name: count
         artifacts:
@@ -219,8 +209,6 @@ spec:
                   value: "{{item}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: p-value-based
                   value: "{{inputs.parameters.p-value-based}}"
               artifacts:
@@ -234,7 +222,6 @@ spec:
         parameters:
           - name: index
           - name: p-value-based
-          - name: kubeconfig-path
           - name: overwrite-results
         artifacts:
           - name: items
@@ -243,7 +230,7 @@ spec:
         tasks:
           - name: submit-get-wf-task-payload-by-index
             templateRef:
-              name: get-wf-task-payload-by-index-v1-submittable
+              name: get-wf-task-payload-by-index-v-0.1.0
               template: get-wf-task-payload-by-index
             arguments:
               parameters:
@@ -260,8 +247,6 @@ spec:
               parameters:
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: p-value-based
                   value: "{{inputs.parameters.p-value-based}}"
                 - name: task-payload
@@ -339,7 +324,6 @@ spec:
           - name: pq-values-s3-key
           - name: pq-values-file-size
           - name: pq-values-md5sum
-          - name: kubeconfig-path
           - name: overwrite-results
           - name: p-value-based
           - name: force-update-task-markers
@@ -349,7 +333,7 @@ spec:
         tasks:
           - name: compute-signal-task-marker-name
             templateRef:
-              name: compute-task-marker-name-v1-submittable
+              name: compute-task-marker-name-v-0.1.0
               template: compute-task-marker-name
             arguments:
               parameters:
@@ -361,7 +345,7 @@ spec:
           - name: check-if-task-marker-exists
             depends: compute-signal-task-marker-name
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -370,7 +354,7 @@ spec:
 
           - name: check-if-bigwig-file-already-in-s3-bucket
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -380,7 +364,7 @@ spec:
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-bigwig-file-already-in-s3-bucket"
             templateRef:
-              name: resolve-work-avoidance-v1-submittable
+              name: resolve-work-avoidance-v-0.1.0
               template: resolve-work-avoidance
             arguments:
               parameters:
@@ -395,7 +379,7 @@ spec:
             depends: check-work-avoidance-consistency
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             templateRef:
-              name: compute-pvc-size-v1-submittable
+              name: compute-pvc-size-v-0.1.0
               template: compute-pvc-size
             arguments:
               parameters:
@@ -407,19 +391,17 @@ spec:
           - name: create-signal-pvc
             depends: "get-signal-pvc-size.Succeeded"
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
-              template: create-pvc-kubectl
+              name: create-pvc-v-0.2.0
+              template: create-pvc
             arguments:
               parameters:
                 - name: pvc-size
                   value: "{{tasks.get-signal-pvc-size.outputs.parameters.pvc-size-formatted}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: copy-pq-value-from-s3-to-pvc
             depends: "create-signal-pvc"
             templateRef:
-              name: s3-object-to-pvc-v1-submittable
+              name: s3-object-to-pvc-v-0.1.0
               template: s3-object-to-pvc
             arguments:
               parameters:
@@ -433,7 +415,7 @@ spec:
           - name: unzip-pq-values-file
             depends: copy-pq-value-from-s3-to-pvc
             templateRef:
-              name: decompress-tgz-pvc-callable-v2-submittable
+              name: decompress-tgz-pvc-callable-v-0.2.0
               template: decompress-tgz-pvc-callable
             arguments:
               parameters:
@@ -447,7 +429,7 @@ spec:
           - name: genrich-pq-values-to-bigwig
             depends: unzip-pq-values-file
             templateRef:
-              name: genrich-pq-values-to-bigwig-pvc-callable-v1-submittable
+              name: genrich-pq-values-to-bigwig-pvc-callable-v-0.1.0
               template: genrich-pq-values-to-bigwig-pvc-callable
             arguments:
               parameters:
@@ -473,7 +455,7 @@ spec:
               && {{tasks.check-work-avoidance-consistency.status}} == Failed )
               || {{tasks.genrich-pq-values-to-bigwig.status}} == Succeeded )
             templateRef:
-              name: update-task-marker-v1-submittable
+              name: update-task-marker-v-0.1.0
               template: update-task-marker
             arguments:
               parameters:
@@ -485,12 +467,9 @@ spec:
           - name: delete-signal-pvc
             depends: genrich-pq-values-to-bigwig
             templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
-              template: delete-patch-pvc-kubectl
+              name: delete-pvc-v-0.1.0
+              template: delete-pvc
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-signal-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
-
