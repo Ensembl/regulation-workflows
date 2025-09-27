@@ -1,18 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: bed-to-bigbed-v1-submittable
+  name: bed-to-bigbed-v-0.1.0
   annotations:
     workflows.argoproj.io/description: |
       Generate bigbed file from peak bed file
 spec:
   entrypoint: bed-to-bigbed
-  
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: bed-to-bigbed
@@ -67,7 +61,7 @@ spec:
           - name: execute-post-bigbed-file
             depends: execute-compute-bigbed-file-metadata
             templateRef:
-              name: analysis-file-post-request-payload-v1-submittable
+              name: analysis-file-post-request-payload-v-0.1.0
               template: analysis-file-post-request-payload
             arguments:
               parameters:
@@ -103,8 +97,11 @@ spec:
           - name: sorted-bed
             path: /mnt/vol/{{=sprig.trimSuffix(sprig.ext(inputs.parameters['bed-s3-key']), sprig.base(inputs.parameters['bed-s3-key']))}}.sorted.bed
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedsort:v369
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [
           "ls -altrh \
@@ -131,9 +128,11 @@ spec:
           - name: sorted-bed
             path: /mnt/vol/{{inputs.parameters.bed-basename}}.sorted.bed
       container:
-        imagePullPolicy: Always
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedtobigbed:2.10.0
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bed-to-bigbed:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [
           "ls -altrh \

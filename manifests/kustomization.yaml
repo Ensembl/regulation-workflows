@@ -12,7 +12,6 @@ resources:
   - peak-calling/controls-peak-calling-for-mask-file.yaml
   - peak-calling/controls-peak-calling-for-mask-file-with-pileups.yaml
   - peak-calling/genrich-controls-pvc-callable.yaml
-  - export-peak/bed-to-bigbed.yaml
   - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/create-nfs-pvc-kubectl.yaml
@@ -64,6 +63,7 @@ resources:
   - bowtie2/bowtie2-pe-cmd-pvc-callable-v-0.1.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable-v-0.1.yaml
   - samtools/samtools-sort-pvc-callable-v-0.2.yaml
+  - export-peak/bed-to-bigbed-v-0.1.yaml
 
   ## Helper Modules
   - helpers/create-pvc-v-0.2.yaml
@@ -94,7 +94,6 @@ resources:
   - helpers/check-if-field-present-and-not-empty-v-0.1.yaml
   - helpers/compute-file-metadata-v-0.1.yaml
 
-
   - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
 
   ## Sub-workflows
@@ -120,3 +119,5 @@ resources:
   - motif-mapping/get-motif-mapping-tasks.yaml
 
   - masked-regions/masked-regions-identification-v-0.1.yaml
+
+  - export-peak/get-export-peak-task.yaml

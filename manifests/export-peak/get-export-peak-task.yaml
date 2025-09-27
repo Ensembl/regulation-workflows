@@ -1,18 +1,12 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
-  generateName: get-export-peak-tasks-
+  name: get-export-peak-tasks-v-0.1.0
   annotations:
     workflows.argoproj.io/description: |
       Generate bigbed file from peak bed file
 spec:
   entrypoint: get-export-peak-tasks-dag
-
-  imagePullSecrets:
-    - name: ghcr-pull-token
-
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
 
@@ -49,7 +43,6 @@ spec:
 
           - name: overwrite-results
             value: "false"
-          - name: kubeconfig-path
 
       dag:
         tasks:
@@ -131,7 +124,7 @@ spec:
           - name: skip
           - name: limit
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [ python ]
         source: |
           import sys
@@ -184,7 +177,6 @@ spec:
         parameters:
           - name: export-peak-tasks
           - name: overwrite-results
-          - name: kubeconfig-path
       dag:
         tasks:
           - name: submit-bed-to-bigbed
@@ -209,8 +201,6 @@ spec:
                   value: "{{item.bed_md5sum}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: force-update-task-markers
                   value: "false"
                 - name: bed-type
@@ -230,7 +220,6 @@ spec:
           - name: bed-file-size
           - name: bed-md5sum
           - name: bed-type
-          - name: kubeconfig-path
           - name: overwrite-results
           - name: force-update-task-markers
             value: "false"
@@ -251,7 +240,7 @@ spec:
           - name: check-if-task-marker-exists
             depends: compute-export-peak-task-marker-name
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -260,7 +249,7 @@ spec:
 
           - name: check-if-bigbed-file-already-in-s3-bucket
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -270,7 +259,7 @@ spec:
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-bigbed-file-already-in-s3-bucket"
             templateRef:
-              name: resolve-work-avoidance-v1-submittable
+              name: resolve-work-avoidance-v-0.1.0
               template: resolve-work-avoidance
             arguments:
               parameters:
@@ -284,7 +273,7 @@ spec:
           - name: bed-to-bigbed
             depends: check-work-avoidance-consistency
             templateRef:
-              name: bed-to-bigbed-v1-submittable
+              name: bed-to-bigbed-v-0.1.0
               template: bed-to-bigbed
             arguments:
               parameters:
@@ -308,7 +297,7 @@ spec:
               && {{tasks.check-work-avoidance-consistency.status}} == Failed )
               || {{tasks.bed-to-bigbed.status}} == Succeeded )
             templateRef:
-              name: update-task-marker-v1-submittable
+              name: update-task-marker-v-0.1.0
               template: update-task-marker
             arguments:
               parameters:
