@@ -1,13 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: masked-regions-identification-v1-submittable
+  name: masked-regions-identification-v-0.1.0
 spec:
   entrypoint: masked-regions-identification
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: masked-regions-identification
@@ -63,15 +59,14 @@ spec:
           - name: masked-regions-key
         artifacts:
           - name: gene-build-mask
-            path: /results/{{inputs.parameters.gene-build-mask-filename}}
+            path: /home/ensreg/workdir/{{inputs.parameters.gene-build-mask-filename}}
             s3:
               key: "{{inputs.parameters.gene-build-mask-key}}"
       container:
-        workingDir: "/results/"
-        image: ghcr.io/daugo/ensembl-reg-masked-regions-identification:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/masked-regions-identification:0.1.0
         command: [ bash, -c, -ue, -o ,xtrace, -o, pipefail ]
         args: [ "ls -altrh \
-              && Rscript /usr/local/src/maskedRegionsIdentification.R \
+              && Rscript maskedRegionsIdentification.R \
               {{inputs.parameters.gene-build-mask-filename}} \
               {{inputs.parameters.masked-regions-filename}} \
               && ls -altrh" ]
@@ -85,7 +80,7 @@ spec:
       outputs:
         artifacts:
           - name: final_bed
-            path: /results/{{inputs.parameters.masked-regions-filename}}
+            path: /home/ensreg/workdir/{{inputs.parameters.masked-regions-filename}}
             archive:
               none: { }
             s3:
@@ -107,20 +102,19 @@ spec:
           - name: masked-regions-key
         artifacts:
           - name: gene-build-mask
-            path: /results/{{inputs.parameters.gene-build-mask-filename}}
+            path: /home/ensreg/workdir{{inputs.parameters.gene-build-mask-filename}}
             s3:
               key: "{{inputs.parameters.gene-build-mask-key}}"
           - name: controls-bed-files
-            path: /results/controls-bed-files/
+            path: /home/ensreg/workdircontrols-bed-files/
             s3:
               key: "{{inputs.parameters.controls-bed-files-key}}"
       container:
-        workingDir: "/results/"
-        image: ghcr.io/daugo/ensembl-reg-masked-regions-identification:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/masked-regions-identification:0.1.0
         command: [ bash, -c, -ue, -o ,xtrace, -o, pipefail ]
         args: [ "ls -altrh \
               && ls -altrh controls-bed-files/ \
-              && Rscript /usr/local/src/maskedRegionsIdentification.R \
+              && Rscript maskedRegionsIdentification.R \
               {{inputs.parameters.gene-build-mask-filename}} \
               {{inputs.parameters.masked-regions-filename}} \
               controls-bed-files/ \
@@ -135,7 +129,7 @@ spec:
       outputs:
         artifacts:
           - name: final_bed
-            path: /results/{{inputs.parameters.masked-regions-filename}}
+            path: /home/ensreg/workdir{{inputs.parameters.masked-regions-filename}}
             archive:
               none: { }
             s3:

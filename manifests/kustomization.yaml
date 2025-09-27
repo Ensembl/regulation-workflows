@@ -13,7 +13,6 @@ resources:
   - peak-calling/controls-peak-calling-for-mask-file-with-pileups.yaml
   - peak-calling/genrich-controls-pvc-callable.yaml
   - export-peak/bed-to-bigbed.yaml
-  - masked-regions/masked-regions-identification.yaml
   - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/create-nfs-pvc-kubectl.yaml
@@ -119,3 +118,5 @@ resources:
   - signal/genrich-pq-values-to-bigwig-pvc-callable-v-0.1.yaml
 
   - motif-mapping/get-motif-mapping-tasks.yaml
+
+  - masked-regions/masked-regions-identification-v-0.1.yaml
