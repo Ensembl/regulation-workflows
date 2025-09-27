@@ -1,13 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
-  generateName: get-motif-mapping-tasks-
+  name: get-motif-mapping-tasks-v-0.1.0
 spec:
   entrypoint: get-motif-mapping-tasks-dag
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
+
   templates:
     - name: get-motif-mapping-tasks-dag
       inputs:
@@ -33,7 +30,6 @@ spec:
           - name: overwrite-results
             value: "false"
           - name: pval
-          - name: kubeconfig-path
       dag:
         tasks:
           - name: get-motif-mapping-tasks-url
@@ -66,7 +62,7 @@ spec:
           - name: submit-get-request-from-reg-pipelines-api
             depends: "get-motif-mapping-tasks-url"
             templateRef:
-              name: get-request-from-reg-pipelines-api-v2-submittable
+              name: get-request-from-reg-pipelines-api-v-0.2.0
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
@@ -111,7 +107,7 @@ spec:
           - name: skip
           - name: limit
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [python]
         source: |
           import sys
@@ -160,7 +156,6 @@ spec:
       inputs:
         parameters:
           - name: overwrite-results
-          - name: kubeconfig-path
           - name: pval
           - name: count
         artifacts:
@@ -189,7 +184,6 @@ spec:
       inputs:
         parameters:
           - name: index
-          - name: kubeconfig-path
           - name: overwrite-results
           - name: pval
         artifacts:
@@ -199,7 +193,7 @@ spec:
         tasks:
           - name: submit-get-wf-task-payload-by-index
             templateRef: 
-              name: get-wf-task-payload-by-index-v1-submittable
+              name: get-wf-task-payload-by-index-v-0.1.0
               template: get-wf-task-payload-by-index 
             arguments:
               parameters:
@@ -274,8 +268,6 @@ spec:
                     }}
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: force-update-task-markers
                   value: "false"
                 - name: pval
@@ -292,7 +284,6 @@ spec:
           - name: bm-s3-key
           - name: experiments
           - name: overwrite-results
-          - name: kubeconfig-path 
           - name: pval
           - name: force-update-task-markers
             value: "false"
@@ -300,7 +291,7 @@ spec:
         tasks:
           - name: compute-signal-task-marker-name
             templateRef:
-              name: compute-task-marker-name-v1-submittable
+              name: compute-task-marker-name-v-0.1.0
               template: compute-task-marker-name
             arguments:
               parameters:
@@ -312,7 +303,7 @@ spec:
           - name: check-if-task-marker-exists
             depends: compute-signal-task-marker-name
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -321,7 +312,7 @@ spec:
 
           - name: check-if-bigwig-file-already-in-s3-bucket
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -331,7 +322,7 @@ spec:
           - name: check-work-avoidance-consistency
             depends: "check-if-task-marker-exists && check-if-bigwig-file-already-in-s3-bucket"
             templateRef:
-              name: resolve-work-avoidance-v1-submittable
+              name: resolve-work-avoidance-v-0.1.0
               template: resolve-work-avoidance
             arguments:
               parameters:
@@ -345,7 +336,7 @@ spec:
           - name: get-motif-mapping-pvc-size
             depends: check-work-avoidance-consistency
             templateRef:
-              name: compute-pvc-size-v1-submittable
+              name: compute-pvc-size-v-0.1.0
               template: compute-pvc-size
             arguments:
               parameters:
@@ -357,19 +348,17 @@ spec:
           - name: create-motif-mapping-pvc
             depends: "get-motif-mapping-pvc-size.Succeeded"
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
+              name: create-pvc-v-0.2.0
               template: create-pvc-kubectl
             arguments:
               parameters:
                 - name: pvc-size
                   value: "{{tasks.get-motif-mapping-pvc-size.outputs.parameters.pvc-size-formatted}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: copy-genome-file-from-s3-to-pvc
             depends: create-motif-mapping-pvc
             templateRef:
-              name: s3-object-to-pvc-v1-submittable
+              name: s3-object-to-pvc-v-0.1.0
               template: s3-object-to-pvc
             arguments:
               parameters:
@@ -383,7 +372,7 @@ spec:
           - name: copy-bms-file-from-s3-to-pvc
             depends: create-motif-mapping-pvc
             templateRef:
-              name: s3-object-to-pvc-v1-submittable
+              name: s3-object-to-pvc-v-0.1.0
               template: s3-object-to-pvc
             arguments:
               parameters:
@@ -438,7 +427,7 @@ spec:
           - name: remove-bms-file-from-pvc
             depends: "run-moods.Succeeded"
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -450,7 +439,7 @@ spec:
           - name: remove-compressed-genome-file-from-pvc
             depends: "run-moods.Succeeded"
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -462,7 +451,7 @@ spec:
           - name: remove-genome-file-from-pvc
             depends: "run-moods.Succeeded"
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -490,7 +479,7 @@ spec:
           - name: remove-moods-raw-output-file-from-pvc
             depends: convert-moods-output-to-sorted-bed
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -502,7 +491,7 @@ spec:
           - name: remove-moods-bed-output-file-from-pvc
             depends: convert-moods-output-to-sorted-bed
             templateRef:
-              name: delete-file-from-pvc-v1-submittable
+              name: delete-file-from-pvc-v-0.1.0
               template: delete-file-from-pvc
             arguments:
               parameters:
@@ -566,7 +555,7 @@ spec:
               && {{tasks.check-work-avoidance-consistency.status}} == Failed )
               || {{tasks.convert-moods-output-to-sorted-bed.status}} == Succeeded )
             templateRef:
-              name: update-task-marker-v1-submittable
+              name: update-task-marker-v-0.1.0
               template: update-task-marker
             arguments:
               parameters:
@@ -579,14 +568,12 @@ spec:
             depends: "run-bedtools-intersect || filter-bms-by-target"
             when: "{{tasks.convert-moods-output-to-sorted-bed.status}} == Succeeded || {{tasks.filter-bms-by-target.outputs.result}} == False"
             templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
-              template: delete-patch-pvc-kubectl
+              name: delete-pvc-v-0.1.0
+              template: delete-pvc
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-motif-mapping-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: filter-bms-by-target-cmd
       retryStrategy:
@@ -594,7 +581,6 @@ spec:
         backoff:
           duration: "10s"
           factor: "2"
-        retryPolicy: "Always"
       inputs:
         parameters:
           - name: target-name
@@ -605,7 +591,10 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         volumeMounts:
           - name: workdir
             mountPath: /mnt/vol
@@ -654,9 +643,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
-        imagePullPolicy: Always
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [bash, -c, -ue, -o, xtrace]
         args: ["ls -altrh && gunzip -f -k {{inputs.parameters.filename}} && ls -altrh"]
         volumeMounts:
@@ -681,9 +672,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
-        imagePullPolicy: Always
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/moods:1.9.4.1
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-moods:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [bash, -c, -ue, -o, xtrace]
         volumeMounts:
           - name: workdir
@@ -715,8 +708,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedsort:v369
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [bash, -c, -ue, -o, xtrace]
         args: ["
             ls -altrh \
@@ -734,6 +730,7 @@ spec:
           requests:
             cpu: 2500m
             memory: 20Gi
+
     - name: copy-peaks-from-s3
       inputs:
         parameters:
@@ -770,9 +767,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
-        imagePullPolicy: Always
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bash:5.2.21
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bash:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
                 && rm -f *-peaks-*.bed \
@@ -794,8 +793,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedtools:2.31.0
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedtools:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [bash, -c, -ue, -o, xtrace]
         args: [
             "ls -altrh \
@@ -829,8 +831,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedsort:v369
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedsort:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [bash, -c, -ue, -o, xtrace]
         args: [
             "ls -altrh \
@@ -867,9 +872,11 @@ spec:
           persistentVolumeClaim:
             claimName: '{{inputs.parameters.pvc-name}}'
       container:
-        imagePullPolicy: Always
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/bedtools:2.31.0
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-bedtools:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [bash, -c, -ue, -o, xtrace]
         volumeMounts:
           - name: workdir

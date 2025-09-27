@@ -118,3 +118,4 @@ resources:
   - signal/get-signal-task-v-0.2.yaml
   - signal/genrich-pq-values-to-bigwig-pvc-callable-v-0.1.yaml
 
+  - motif-mapping/get-motif-mapping-tasks.yaml
