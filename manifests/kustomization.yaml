@@ -2,46 +2,6 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - alignment/rfs-alignment-v3.yaml
-  - helpers/create-pvc-kubectl.yaml
-  - helpers/create-nfs-pvc-kubectl.yaml
-  - helpers/delete-file-from-pvc.yaml
-  - helpers/delete-patch-pvc-kubectl.yaml
-  - helpers/delete-s3-object.yaml
-  - helpers/compute-pvc-size.yaml
-  - helpers/check-s3-object-exists.yaml
-  - helpers/check-if-s3-objects-exist.yaml
-  - helpers/compute-file-metadata.yaml
-  - helpers/compute-file-metadata-pvc-callable.yaml
-  - helpers/compute-file-metadata-pvc-callable_v2.yaml
-  - helpers/compress-tgz-pvc-callable_v1.yaml
-  - helpers/decompress-tgz-pvc-callable.yaml
-  - helpers/decompress-tgz-pvc-callable_v2.yaml
-  - helpers/get-request-from-reg-pipelines-api.yaml
-  - helpers/get-request-from-reg-pipelines-api-v1_1.yaml
-  - helpers/get-request-from-reg-pipelines-api-v2.yaml
-  - helpers/get-from-reg-pipelines-api.yaml
-  - helpers/delete-request-from-reg-pipelines-api.yaml
-  - helpers/compute-task-marker-name.yaml
-  - helpers/compute-task-marker-name-v2.yaml
-  - helpers/resolve-work-avoidance.yaml
-  - helpers/update-task-marker.yaml
-  - helpers/update-task-marker-v2.yaml
-  - helpers/copy-s3-prefix-objects-to-pvc.yaml
-  - helpers/copy-s3-object-to-pvc.yaml
-  - helpers/cp-s3-object-to-s3.yaml
-  - helpers/pvc-to-pvc-copy.yaml
-  - helpers/s3-objects-to-pvc.yaml
-  - helpers/copy-from-pvc-to-s3-object.yaml
-  - helpers/validate-expected-number-of-files-in-dir.yaml
-  - helpers/check-if-field-present-and-not-empty.yaml
-  - helpers/delete-task-marker.yaml
-  - helpers/list-objects-under-s3-prefix.yaml
-  - helpers/post-results-to-reg-pipelines-api.yaml
-  - helpers/analysis-file-post-request-payload.yaml
-  - helpers/get-wf-task-payload-by-index.yaml
-  - helpers/get-task-payload-by-index.yaml
-  - helpers/expose-payload-fields-as-params.yaml
   # Versioned workflow templates
 
   ## Tool Modules
@@ -115,3 +75,14 @@ resources:
   - masked-regions/masked-regions-identification-v-0.1.yaml
 
   - export-peak/get-export-peak-task.yaml
+
+
+  # Experimental Workflow Templates
+  - alignment/.experimental/rfs-alignment-v3.yaml
+  - helpers/.experimental/create-nfs-pvc-kubectl.yaml
+  - helpers/.experimental/delete-s3-object.yaml
+  - helpers/.experimental/delete-request-from-reg-pipelines-api.yaml
+  - helpers/.experimental/s3-objects-to-pvc.yaml
+  - helpers/.experimental/delete-task-marker.yaml
+  - helpers/.experimental/list-objects-under-s3-prefix.yaml
+  - helpers/.experimental/post-results-to-reg-pipelines-api.yaml
