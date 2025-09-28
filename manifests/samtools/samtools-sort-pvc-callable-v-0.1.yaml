@@ -1,13 +1,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: sort-alignment-by-queryname-pvc-callable-v1-submittable
+  name: sort-alignment-by-queryname-pvc-callable-v-0.1.0
 spec:
   entrypoint: sort-alignment-by-queryname-pvc-callable
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: sort-alignment-by-queryname-pvc-callable
@@ -18,7 +14,6 @@ spec:
           - name: filename
           - name: s3_key
           - name: pvc-size
-          - name: kubeconfig-path
           # PVC in which to store sorted bam
           - name: out-pvc-name
 
@@ -26,19 +21,17 @@ spec:
         tasks:
           - name: create-samtools-sort-queryname-pvc
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
-              template: create-pvc-kubectl
+              name: create-pvc-v-0.2.0
+              template: create-pvc
             arguments:
               parameters:
                 - name: pvc-size
                   value: "{{inputs.parameters.pvc-size}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: load-bam-to-pvc
             depends: create-samtools-sort-queryname-pvc
             templateRef:
-              name: s3-object-to-pvc-v1-submittable
+              name: s3-object-to-pvc-v-0.1.0
               template: s3-object-to-pvc
             arguments:
               parameters:
@@ -71,14 +64,12 @@ spec:
           - name: delete-samtools-sort-queryname-pvc
             depends: execute-samtools-sort-by-queryname-cmd
             templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
-              template: delete-patch-pvc-kubectl
+              name: delete-pvc-v-0.1.0
+              template: delete-pvc
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-samtools-sort-queryname-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: samtools-sort-by-queryname-cmd
       retryStrategy:
@@ -100,8 +91,11 @@ spec:
           persistentVolumeClaim:
             claimName: "{{inputs.parameters.out-pvc-name}}"
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/samtools:1.15.1
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-samtools:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -uef, -o, xtrace ]
         args: [ "ls -altrh \
                 && ls -altrh /mnt/out_vol/ \

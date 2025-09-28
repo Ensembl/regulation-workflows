@@ -3,16 +3,6 @@ kind: Kustomization
 
 resources:
   - alignment/rfs-alignment-v3.yaml
-  - peak-calling/atac-seq.yaml
-  - peak-calling/chip-seq-se-no-controls.yaml
-  - peak-calling/chip-seq.yaml
-  - peak-calling/chip-seq-v2.yaml
-  - peak-calling/chip-seq-ad-hoc.yaml
-  - peak-calling/dnase-seq.yaml
-  - peak-calling/controls-peak-calling-for-mask-file.yaml
-  - peak-calling/controls-peak-calling-for-mask-file-with-pileups.yaml
-  - peak-calling/genrich-controls-pvc-callable.yaml
-  - samtools/samtools-sort-pvc-callable.yaml
   - helpers/create-pvc-kubectl.yaml
   - helpers/create-nfs-pvc-kubectl.yaml
   - helpers/delete-file-from-pvc.yaml
@@ -62,6 +52,7 @@ resources:
   - bowtie2/build/build-index-v-0.1.yaml
   - bowtie2/bowtie2-pe-cmd-pvc-callable-v-0.1.yaml
   - bowtie2/bowtie2-se-cmd-pvc-callable-v-0.1.yaml
+  - samtools/samtools-sort-pvc-callable-v-0.1.yaml
   - samtools/samtools-sort-pvc-callable-v-0.2.yaml
   - export-peak/bed-to-bigbed-v-0.1.yaml
 
@@ -109,9 +100,12 @@ resources:
   - peak-calling/open-chromatin-genrich-values-cmd.yaml
   - peak-calling/chip-seq-genrich-values-cmd.yaml
 
-  - peak-calling/get-peak-calling-tasks-v2.yaml
+  - peak-calling/get-peak-calling-tasks.yaml
   - peak-calling/chip-seq-peaks-v-0.2.yaml
   - peak-calling/open-chromatin-peaks-v-0.2.yaml
+
+  - peak-calling/controls/get-control-peak-calling-tasks.yaml
+  - peak-calling/controls/control-peak-calling-for-mask-file.yaml
 
   - signal/get-signal-task-v-0.2.yaml
   - signal/genrich-pq-values-to-bigwig-pvc-callable-v-0.1.yaml

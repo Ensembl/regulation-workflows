@@ -1,151 +1,194 @@
 apiVersion: argoproj.io/v1alpha1
-#kind: WorkflowTemplate
-kind: Workflow
+kind: WorkflowTemplate
 metadata:
-  generateName: get-peak-calling-tasks-
+  name: get-peak-calling-tasks-v-0.2.0
 spec:
   entrypoint: get-peak-calling-tasks-dag
-  imagePullSecrets:
-    - name: ghcr-pull-token
-  podGC:
-    strategy: OnPodSuccess
 
   templates:
     - name: get-peak-calling-tasks-dag
       inputs:
         parameters:
-          - name: assembly_ensembl_accession
-            value: ""
-          - name: experiment_type
-            value: ""
           - name: species_name
             value: ""
-          - name: epigenome_name_contains
+          - name: assembly_ensembl_accession
             value: ""
           - name: epigenome_group_id
             value: ""
+
+          - name: experiment_type
+            value: ""
+          - name: target_type
+            value: ""
+          - name: epigenome_name_contains
+            value: ""
+          - name: experiment_name_contains
+            value: ""
+          - name: s3_object_key_contains
+            value: ""
+          - name: target_name_contains
+            value: ""
+          - name: histone_mark_type
+            value: ""
+          - name: min_replicate_count
+            value: ""
+          - name: max_replicate_count
+            value: ""
+          - name: control_filter
+            value: ""
+
+          - name: ad_hoc_playground_prefix
+            value: ""
           - name: output_prefix_label
             value: ""
+
           - name: skip
             value: "0"
           - name: limit
             value: "20"
-          # TODO: this parameter should be part of each task definition when it makes sense to have (i.e. ChIP-seq experiments)
-          - name: chipmentation
-          - name: masked_regions_prefix
-          - name: masked_regions_filename
+
+          - name: genrich-params-narrow
+            value: ""
+          - name: genrich-params-broad
+            value: ""
+          - name: genrich-params
+            value: ""
+
           - name: overwrite-results
             value: "false"
-          - name: kubeconfig-path
+          - name: production-run
+            value: "false"
       dag:
         tasks:
-          - name: get-peak-calling-tasks-url
-            template: compute-get-peak-calling-tasks-url
+          - name: get-peak-calling-tasks-v2-url
+            template: compute-get-peak-calling-tasks-v2-url
             arguments:
               parameters:
                 - name: svc-name
                   value: "regulation-pipelines-api-service"
                 - name: namespace
                   value: "regulation-pipelines-api"
-                - name: assembly_ensembl_accession
-                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
-                - name: experiment_type
-                  value: "{{inputs.parameters.experiment_type}}"
-                - name: epigenome_name_contains
-                  value: "{{inputs.parameters.epigenome_name_contains}}"
+
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
+                - name: assembly_ensembl_accession
+                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
                 - name: epigenome_group_id
                   value: "{{inputs.parameters.epigenome_group_id}}"
+
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
+                - name: target_type
+                  value: "{{inputs.parameters.target_type}}"
+                - name: epigenome_name_contains
+                  value: "{{inputs.parameters.epigenome_name_contains}}"
+                - name: experiment_name_contains
+                  value: "{{inputs.parameters.experiment_name_contains}}"
+                - name: s3_object_key_contains
+                  value: "{{inputs.parameters.s3_object_key_contains}}"
+                - name: target_name_contains
+                  value: "{{inputs.parameters.target_name_contains}}"
+                - name: histone_mark_type
+                  value: "{{inputs.parameters.histone_mark_type}}"
+                - name: min_replicate_count
+                  value: "{{inputs.parameters.min_replicate_count}}"
+                - name: max_replicate_count
+                  value: "{{inputs.parameters.max_replicate_count}}"
+                - name: control_filter
+                  value: "{{inputs.parameters.control_filter}}"
+
+                - name: ad_hoc_playground_prefix
+                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
                 - name: output_prefix_label
                   value: "{{inputs.parameters.output_prefix_label}}"
+
                 - name: skip
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
                   value: "{{inputs.parameters.limit}}"
 
           - name: execute-get-peak-calling-tasks
-            depends: "get-peak-calling-tasks-url"
+            depends: "get-peak-calling-tasks-v2-url"
             templateRef:
-              name: get-request-from-reg-pipelines-api-v1-submittable
+              name: get-request-from-reg-pipelines-api-v-0.1.1
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
                 - name: url
-                  value: "{{tasks.get-peak-calling-tasks-url.outputs.result}}"
-
-          - name: submit-atac-seq-peak-calling-tasks
-            depends: "execute-get-peak-calling-tasks"
-            when: "{{inputs.parameters.experiment_type}} == 'atac_seq'"
-            templateRef:
-              name: peak-calling-atac-seq-v1-submittable
-              template: peak-calling-atac-seq
-            arguments:
-              parameters:
-                - name: peak_calling_tasks
-                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: masked_regions_prefix
-                  value: "{{inputs.parameters.masked_regions_prefix}}"
-                - name: masked_regions_filename
-                  value: "{{inputs.parameters.masked_regions_filename}}"
-                - name: overwrite-results
-                  value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
-
-          - name: submit-dnase-seq-peak-calling-tasks
-            depends: "execute-get-peak-calling-tasks"
-            when: "{{inputs.parameters.experiment_type}} == 'dnase_seq'"
-            templateRef:
-              name: peak-calling-dnase-seq-v1-submittable
-              template: peak-calling-dnase-seq
-            arguments:
-              parameters:
-                - name: peak_calling_tasks
-                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: masked_regions_prefix
-                  value: "{{inputs.parameters.masked_regions_prefix}}"
-                - name: masked_regions_filename
-                  value: "{{inputs.parameters.masked_regions_filename}}"
-                - name: overwrite-results
-                  value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
+                  value: "{{tasks.get-peak-calling-tasks-v2-url.outputs.result}}"
 
           - name: submit-chip-seq-peak-calling-tasks
-            depends: "execute-get-peak-calling-tasks"
+            depends: "execute-get-peak-calling-tasks.Succeeded"
             when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
-              name: peak-calling-chip-seq-v2-submittable
+              name: chip-seq-peaks-v-0.2.0
               template: peak-calling-chip-seq
             arguments:
               parameters:
                 - name: peak-calling-tasks
                   value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: chipmentation
-                  value: "{{inputs.parameters.chipmentation}}"
-                - name: masked-regions-s3-key
-                  value: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
+                - name: genrich-params-narrow
+                  value: "{{inputs.parameters.genrich-params-narrow}}"
+                - name: genrich-params-broad
+                  value: "{{inputs.parameters.genrich-params-broad}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
+                - name: production-run
+                  value: "{{inputs.parameters.production-run}}"
 
-    - name: compute-get-peak-calling-tasks-url
+          - name: submit-open-chromatin-peak-calling-tasks
+            depends: "execute-get-peak-calling-tasks.Succeeded"
+            when: >-
+              {{inputs.parameters.experiment_type}} == 'atac_seq' ||
+              {{inputs.parameters.experiment_type}} == 'dnase_seq'
+            templateRef:
+              name: open-chromatin-peaks-v-0.2.0
+              template: peak-calling-open-chromatin
+            arguments:
+              parameters:
+                - name: peak-calling-tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: genrich-params
+                  value: "{{inputs.parameters.genrich-params}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: production-run
+                  value: "{{inputs.parameters.production-run}}"
+
+    - name: compute-get-peak-calling-tasks-v2-url
+      retryStrategy:
+        limit: "5"
+        backoff:
+          duration: "10s"
+          factor: "2"
+          maxDuration: "12h"
+        retryPolicy: "OnError"
       inputs:
         parameters:
           - name: svc-name
           - name: namespace
-          - name: assembly_ensembl_accession
-          - name: experiment_type
-          - name: epigenome_name_contains
+
           - name: species_name
+          - name: assembly_ensembl_accession
           - name: epigenome_group_id
+
+          - name: experiment_type
+          - name: target_type
+          - name: epigenome_name_contains
+          - name: experiment_name_contains
+          - name: s3_object_key_contains
+          - name: target_name_contains
+          - name: histone_mark_type
+          - name: min_replicate_count
+          - name: max_replicate_count
+          - name: control_filter
+
+          - name: ad_hoc_playground_prefix
           - name: output_prefix_label
           - name: skip
           - name: limit
       script:
-        image: ghcr.io/daugo/ensembl-reg-python:latest
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [ python ]
         source: |
           import sys
@@ -155,14 +198,23 @@ spec:
           def main() -> int:
           
             query_params = {
-              "limit": f"{{inputs.parameters.limit}}",
-              "skip": f"{{inputs.parameters.skip}}",
-              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
-              "experiment_type": f"{{inputs.parameters.experiment_type}}",
-              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "species_name": f"{{inputs.parameters.species_name}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
+              "target_type": f"{{inputs.parameters.target_type}}",
+              "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
+              "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
+              "s3_object_key_contains": f"{{inputs.parameters.s3_object_key_contains}}",
+              "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
+              "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
+              "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
+              "max_replicate_count": f"{{inputs.parameters.max_replicate_count}}",
+              "control_filter": f"{{inputs.parameters.control_filter}}",
+              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
+              "skip": f"{{inputs.parameters.skip}}",
+              "limit": f"{{inputs.parameters.limit}}",
             }
           
             parsed_query_params = "".join(
@@ -177,7 +229,7 @@ spec:
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
-                  "/peak_calling_tasks"
+                  "/peak_calling_tasks_v2"
                   f"?{parsed_query_params}"         
             )
           

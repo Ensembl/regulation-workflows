@@ -1,22 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: controls-peak-calling-for-mask-file-v1-submittable
+  name: control-peak-calling-for-mask-file-v-0.1.0
 spec:
-  entrypoint: controls-peak-calling-for-mask-file
-
-  imagePullSecrets:
-    - name: ghcr-pull-token
+  entrypoint: control-peak-calling-for-mask-file
 
   templates:
-    - name: controls-peak-calling-for-mask-file
+    - name: control-peak-calling-for-mask-file
       parallelism: 15
       inputs:
         parameters:
           - name: peak_calling_tasks
           - name: chipmentation
           - name: overwrite-results
-          - name: kubeconfig-path
       dag:
         tasks:
           - name: execute-peak-calling-task
@@ -39,8 +35,6 @@ spec:
                   value: "{{inputs.parameters.chipmentation}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.peak_calling_tasks}}"
 
 
@@ -54,7 +48,6 @@ spec:
           - name: out_s3_prefix
           - name: alignment_files_total_size
           - name: signals
-          - name: kubeconfig-path
           - name: chipmentation
           - name: overwrite-results
           - name: force-update-task-markers
@@ -64,7 +57,7 @@ spec:
         tasks:
           - name: check-if-bed-file-already-in-s3-bucket
             templateRef:
-              name: check-s3-object-exists-v1-submittable
+              name: check-s3-object-exists-v-0.1.0
               template: check-s3-object-exists
             arguments:
               parameters:
@@ -75,7 +68,7 @@ spec:
             depends: check-if-bed-file-already-in-s3-bucket.Succeeded
             when: "{{tasks.check-if-bed-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false"
             templateRef:
-              name: compute-pvc-size-v1-submittable
+              name: compute-pvc-size-v-0.1.0
               template: compute-pvc-size
             arguments:
               parameters:
@@ -87,14 +80,12 @@ spec:
           - name: create-peak-calling-pvc
             depends: "get-peak-calling-pvc-size.Succeeded"
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
-              template: create-pvc-kubectl
+              name: create-pvc-v-0.2.0
+              template: create-pvc
             arguments:
               parameters:
                 - name: pvc-size
                   value: "{{tasks.get-peak-calling-pvc-size.outputs.parameters.pvc-size-formatted}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: execute-sort-alignments-by-queryname
             depends: create-peak-calling-pvc
@@ -106,14 +97,12 @@ spec:
                 # PVC in which to store so_queryname bams
                 - name: out-pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
             withParam: "{{inputs.parameters.signals}}"
 
           - name: get-genrich-values-pvcs-size
             depends: execute-sort-alignments-by-queryname.Succeeded
             templateRef:
-              name: compute-pvc-size-v1-submittable
+              name: compute-pvc-size-v-0.1.0
               template: compute-pvc-size
             arguments:
               parameters:
@@ -125,19 +114,17 @@ spec:
           - name: create-pq-values-pvc
             depends: get-genrich-values-pvcs-size.Succeeded
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
-              template: create-pvc-kubectl
+              name: create-pvc-v-0.2.0
+              template: create-pvc
             arguments:
               parameters:
                 - name: pvc-size
                   value: "{{tasks.get-genrich-values-pvcs-size.outputs.parameters.pvc-size-formatted}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: create-pileups-pvc
             depends: get-genrich-values-pvcs-size.Succeeded
             templateRef:
-              name: create-pvc-kubectl-v1-submittable
+              name: create-pvc-v-0.2.0
               template: create-pvc-kubectl
             arguments:
               parameters:
@@ -172,14 +159,12 @@ spec:
           - name: delete-peak-calling-pvc
             depends: execute-genrich-controls.Succeeded
             templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
+              name: delete-pvc-v-0.1.0
               template: delete-patch-pvc-kubectl
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-peak-calling-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: output-files-post-processing
             depends: execute-genrich-controls.Succeeded
@@ -209,26 +194,22 @@ spec:
           - name: delete-pq-values-pvc
             depends: output-files-post-processing.Succeeded
             templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
-              template: delete-patch-pvc-kubectl
+              name: delete-pvc-v-0.1.0
+              template: delete-pvc
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-pq-values-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: delete-pileups-pvc
             depends: output-files-post-processing.Succeeded
             templateRef:
-              name: delete-patch-pvc-kubectl-v1-submittable
-              template: delete-patch-pvc-kubectl
+              name: delete-pvc-v-0.1.0
+              template: delete-pvc
             arguments:
               parameters:
                 - name: pvc-name
                   value: "{{tasks.create-pileups-pvc.outputs.parameters.pvc-name}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
 
           - name: output-bed-file-post-processing
             depends: execute-genrich-controls.Succeeded
@@ -250,7 +231,7 @@ spec:
           - name: save-genrich-logs
             depends: execute-genrich-controls.Succeeded
             templateRef:
-              name: cp-s3-object-to-s3-v1-submittable
+              name: cp-s3-object-to-s3-v-0.1.0
               template: cp-s3-object-to-s3
             arguments:
               parameters:
@@ -268,12 +249,11 @@ spec:
           - name: sort_alignment_params
           # PVC in which to store bedgraph
           - name: out-pvc-name
-          - name: kubeconfig-path
       dag:
         tasks:
           - name: get-pvc-size
             templateRef:
-              name: compute-pvc-size-v1-submittable
+              name: compute-pvc-v-0.1.0
               template: compute-pvc-size
             arguments:
               parameters:
@@ -285,7 +265,7 @@ spec:
           - name: execute-sort-alignment-by-queryname
             depends: get-pvc-size
             templateRef:
-              name: sort-alignment-by-queryname-pvc-callable-v1-submittable
+              name: sort-alignment-by-queryname-pvc-callable-v-0.1.0
               template: sort-alignment-by-queryname-pvc-callable
             arguments:
               parameters:
@@ -297,8 +277,6 @@ spec:
                   value: "{{=jsonpath(inputs.parameters.sort_alignment_params, '$.s3_key')}}"
                 - name: pvc-size
                   value: "{{tasks.get-pvc-size.outputs.parameters.pvc-size-formatted}}"
-                - name: kubeconfig-path
-                  value: "{{inputs.parameters.kubeconfig-path}}"
                 - name: out-pvc-name
                   value: "{{inputs.parameters.out-pvc-name}}"
 
@@ -313,7 +291,7 @@ spec:
         tasks:
           - name: compute-output-file-metadata
             templateRef:
-              name: compute-file-metadata-pvc-callable-v1-submittable
+              name: compute-file-metadata-pvc-callable-v-0.1.0
               template: compute-file-metadata-pvc-callable
             arguments:
               parameters:
@@ -327,7 +305,7 @@ spec:
           - name: get-output-file-post-request-payload
             depends: compute-output-file-metadata.Succeeded
             templateRef:
-              name: analysis-file-post-request-payload-v1-submittable
+              name: analysis-file-post-request-payload-v-0.1.0
               template: analysis-file-post-request-payload
             arguments:
               parameters:
@@ -356,7 +334,7 @@ spec:
           - name: compress-file
             depends: compute-output-file-metadata.Succeeded
             templateRef:
-              name: compress-tgz-pvc-callable-v1-submittable
+              name: compress-tgz-pvc-callable-v-0.1.0
               template: compress-tgz-pvc-callable-pigz
             arguments:
               parameters:
@@ -375,7 +353,7 @@ spec:
           - name: save-file-to-s3
             depends: compress-file.Succeeded
             templateRef:
-              name: from-pvc-to-s3-object-v1-submittable
+              name: from-pvc-to-s3-object-v-0.1.0
               template: from-pvc-to-s3-object
             arguments:
               parameters:
@@ -405,7 +383,7 @@ spec:
         tasks:
           - name: compute-output-file-metadata
             templateRef:
-              name: compute-file-metadata-v1-submittable
+              name: compute-file-metadata-v-0.1.0
               template: compute-file-metadata
             arguments:
               parameters:
@@ -422,7 +400,7 @@ spec:
           - name: get-output-file-post-request-payload
             depends: compute-output-file-metadata.Succeeded
             templateRef:
-              name: analysis-file-post-request-payload-v1-submittable
+              name: analysis-file-post-request-payload-v-0.1.0
               template: analysis-file-post-request-payload
             arguments:
               parameters:
@@ -463,8 +441,11 @@ spec:
           - name: pq-values-pvc
           - name: pileups-pvc
       container:
+        image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/genrich:0.6.1
         workingDir: /mnt/vol
-        image: ghcr.io/daugo/ensembl-reg-genrich:latest
+        securityContext:
+          runAsUser: 0
+          runAsNonRoot: false
         command: [ bash, -c, -ue, -o, xtrace ]
         args: [ "ls -altrh \
                 && SIGNAL_BAM_FILES=$(ls -m *.bam | xargs echo | sed 's/ //g') \

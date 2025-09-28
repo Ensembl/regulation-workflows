@@ -2,19 +2,21 @@ apiVersion: argoproj.io/v1alpha1
 #kind: WorkflowTemplate
 kind: Workflow
 metadata:
-  generateName: get-controls-peak-calling-tasks-
+  generateName: get-peak-calling-tasks-
 spec:
-  entrypoint: get-controls-peak-calling-tasks-dag
+  entrypoint: get-peak-calling-tasks-dag
   imagePullSecrets:
     - name: ghcr-pull-token
   podGC:
     strategy: OnPodSuccess
 
   templates:
-    - name: get-controls-peak-calling-tasks-dag
+    - name: get-peak-calling-tasks-dag
       inputs:
         parameters:
           - name: assembly_ensembl_accession
+            value: ""
+          - name: experiment_type
             value: ""
           - name: species_name
             value: ""
@@ -28,12 +30,10 @@ spec:
             value: "0"
           - name: limit
             value: "20"
-          - name: ad_hoc_playground_prefix
-            value: ""
-          - name: group_tasks_by_epigenome_group
-            value: "false"
+          # TODO: this parameter should be part of each task definition when it makes sense to have (i.e. ChIP-seq experiments)
           - name: chipmentation
-            value: "false"
+          - name: masked_regions_prefix
+          - name: masked_regions_filename
           - name: overwrite-results
             value: "false"
           - name: kubeconfig-path
@@ -49,6 +49,8 @@ spec:
                   value: "regulation-pipelines-api"
                 - name: assembly_ensembl_accession
                   value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: experiment_type
+                  value: "{{inputs.parameters.experiment_type}}"
                 - name: epigenome_name_contains
                   value: "{{inputs.parameters.epigenome_name_contains}}"
                 - name: species_name
@@ -61,11 +63,6 @@ spec:
                   value: "{{inputs.parameters.skip}}"
                 - name: limit
                   value: "{{inputs.parameters.limit}}"
-                - name: ad_hoc_playground_prefix
-                  value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
-                - name: group_tasks_by_epigenome_group
-                  value: "{{inputs.parameters.group_tasks_by_epigenome_group}}"
-
 
           - name: execute-get-peak-calling-tasks
             depends: "get-peak-calling-tasks-url"
@@ -77,22 +74,62 @@ spec:
                 - name: url
                   value: "{{tasks.get-peak-calling-tasks-url.outputs.result}}"
 
-          - name: submit-controls-pc-tasks-for-mask-file
+          - name: submit-atac-seq-peak-calling-tasks
             depends: "execute-get-peak-calling-tasks"
+            when: "{{inputs.parameters.experiment_type}} == 'atac_seq'"
             templateRef:
-              name: controls-peak-calling-for-mask-file-v1-submittable
-              template: controls-peak-calling-for-mask-file
+              name: peak-calling-atac-seq-v1-submittable
+              template: peak-calling-atac-seq
             arguments:
               parameters:
                 - name: peak_calling_tasks
                   value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: chipmentation
-                  value: "{{inputs.parameters.chipmentation}}"
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
                 - name: kubeconfig-path
                   value: "{{inputs.parameters.kubeconfig-path}}"
 
+          - name: submit-dnase-seq-peak-calling-tasks
+            depends: "execute-get-peak-calling-tasks"
+            when: "{{inputs.parameters.experiment_type}} == 'dnase_seq'"
+            templateRef:
+              name: peak-calling-dnase-seq-v1-submittable
+              template: peak-calling-dnase-seq
+            arguments:
+              parameters:
+                - name: peak_calling_tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: masked_regions_prefix
+                  value: "{{inputs.parameters.masked_regions_prefix}}"
+                - name: masked_regions_filename
+                  value: "{{inputs.parameters.masked_regions_filename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
+
+          - name: submit-chip-seq-peak-calling-tasks
+            depends: "execute-get-peak-calling-tasks"
+            when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
+            templateRef:
+              name: peak-calling-chip-seq-v2-submittable
+              template: peak-calling-chip-seq
+            arguments:
+              parameters:
+                - name: peak-calling-tasks
+                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked_regions_prefix}}{{inputs.parameters.masked_regions_filename}}"
+                - name: overwrite-results
+                  value: "{{inputs.parameters.overwrite-results}}"
+                - name: kubeconfig-path
+                  value: "{{inputs.parameters.kubeconfig-path}}"
 
     - name: compute-get-peak-calling-tasks-url
       inputs:
@@ -100,14 +137,13 @@ spec:
           - name: svc-name
           - name: namespace
           - name: assembly_ensembl_accession
+          - name: experiment_type
           - name: epigenome_name_contains
           - name: species_name
           - name: epigenome_group_id
           - name: output_prefix_label
           - name: skip
           - name: limit
-          - name: ad_hoc_playground_prefix
-          - name: group_tasks_by_epigenome_group
       script:
         image: ghcr.io/daugo/ensembl-reg-python:latest
         command: [ python ]
@@ -122,12 +158,11 @@ spec:
               "limit": f"{{inputs.parameters.limit}}",
               "skip": f"{{inputs.parameters.skip}}",
               "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "species_name": f"{{inputs.parameters.species_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
-              "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
-              "group_tasks_by_epigenome_group": f"{{inputs.parameters.group_tasks_by_epigenome_group}}",
             }
           
             parsed_query_params = "".join(
@@ -142,7 +177,7 @@ spec:
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
-                  "/controls_peak_calling_tasks"
+                  "/peak_calling_tasks"
                   f"?{parsed_query_params}"         
             )
           
