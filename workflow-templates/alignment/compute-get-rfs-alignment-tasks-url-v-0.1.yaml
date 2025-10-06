@@ -17,7 +17,7 @@ spec:
         parameters:
           - name: svc-name
           - name: namespace
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
           - name: experiment_type
           - name: species_name
           - name: epigenome_name_contains
@@ -42,7 +42,7 @@ spec:
             query_params = {
               "limit": f"{{inputs.parameters.limit}}",
               "skip": f"{{inputs.parameters.skip}}",
-              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_name}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "species_name": f"{{inputs.parameters.species_name}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",

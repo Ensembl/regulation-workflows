@@ -9,7 +9,7 @@ spec:
     - name: get-rfs-alignment-tasks-dag
       inputs:
         parameters:
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
             value: ""
           - name: experiment_type
             value: ""
@@ -47,8 +47,8 @@ spec:
                   value: "regulation-pipelines-api-service"
                 - name: namespace
                   value: "regulation-pipelines-api"
-                - name: assembly_ensembl_accession
-                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: assembly_ensembl_name
+                  value: "{{inputs.parameters.assembly_ensembl_name}}"
                 - name: experiment_type
                   value: "{{inputs.parameters.experiment_type}}"
                 - name: species_name
