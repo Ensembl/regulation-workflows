@@ -1,5 +1,41 @@
 # Alignment workflow
 
+
+## Submitting the workflow
+
+To submit the workflow, use the following command:
+
+```
+argo submit \
+--namespace argo \
+--serviceaccount ensreg \
+--from workflowtemplate/get-alignment-tasks-v-0.2.2
+--parameter-file <JSON or YAML file with parameters>
+```
+
+Parameter file example (YAML):
+```yaml
+species_name: "Bos taurus"
+experiment_type: "atac_seq"
+skip: "0"
+limit: "20"
+```
+
+
+- `assembly_ensembl_name`: 
+- `experiment_type`
+- `species_name`
+- `epigenome_name_contains`
+- `experiment_name_contains`
+- `target_type`
+- `epigenome_group_id`
+- `skip`
+- `limit`
+- `overwrite-results`
+- `exclude_tasks_with_registered_results`
+- `group_by_run_type`
+
+
 ```mermaid
 graph TD
 
