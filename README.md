@@ -1,10 +1,44 @@
 <div style="text-align: justify">
 
-# Ensembl Regulation Workflows
+# Ensembl Regulation primary processing workflows
 
 Cloud-native approach to orchestrate the data processing of sequencing reads from genomic assays (ATAC-seq,
-DNase-seq, and ChIP-seq) and generate peaks and signal files that summarise the enriched regions across a genome. We
-use the results of our primary processing as input to identify/annotate potential regulatory regions.
+DNase-seq, and ChIP-seq) and generate peaks and signal files that summarise the enriched regions across a genome. 
+
+The results of this primary analysis are used to produce our final annotation of regulatory features 
+([Regulatory build](https://regulation.ensembl.org/help/regulatory_build))
+
+## Primary Processing pipeline overview
+
+![PipelineDataFlow](pipeline_data_flow.png)
+
+
+### Entry-point workflows
+
+Each workflow has a different resource usage profile. Separating them allows us to scale independently and better control the resources allocated when
+submitting work in batches. For example, in OpenStack, we can allocate a Kubernetes node group with the execution
+profile that best fits the requirements for each workflow type.
+
+Splitting the work in these modules allows us to iterate and deliver faster. For example, we can start
+processing the data and generate alignment files from the short-read-mapping workflow while still defining the
+best set of parameters for peak-calling when introducing a species/dataset.
+
+Bellow we describe the main workflows that we have implemented so far.
+ 
+- **Pre-processing and Alignment** [[Submit instructions](workflow-templates/alignment/README.md/); [Data Flow Diagram](workflow-templates/alignment/README.md)]
+- **Genrich p/q values generation**
+- **Peak-calling**
+- **Signal generation**
+- **Motif mapping**
+
+### Auxiliary Workflows
+
+#### Genome Index Build
+
+#### Genome mask generation
+
+#### Export peaks
+
 
 ## Architecture Overview
 
@@ -25,21 +59,22 @@ e.g., [Workflow](https://argo-workflows.readthedocs.io/en/latest/workflow-concep
 [WorkflowTemplate](https://argo-workflows.readthedocs.io/en/latest/workflow-templates/)).
 A-Wfs' CRDs enable the definition of complex/robust data flows in a declarative way while providing
 workflow-engine-expected features (e.g., [retry strategies](https://argo-workflows.readthedocs.io/en/latest/retries/),
-[conditional execution](https://argo-workflows.readthedocs.io/en/latest/walk-through/conditionals/), parallelisation and
+[conditional execution](https://argo-workflows.readthedocs.io/en/latest/walk-through/conditionals/), parallelisation, and
 resource allocation control). All our primary analysis data processing is designed and implemented to take advantage
 of [A-Wfs cloud-native design principles](https://argo-workflows.readthedocs.io/en/latest/architecture/) and the
 distributed computing architecture that k8s enables.
 
-![architecture_overview.png](architecture_overview.png)
+![ArchitectureOverview](architecture_overview.png)
 
 We use sequencing data as input to our workflows; this data comes from different external archives (ENA, FAANG portal,
 ENCODE). Before kicking off processing, we structure the relevant metadata and references to the input data files in a
 relational database, called [Regulation Data Registry (RDR)](https://gitlab.ebi.ac.uk/ensreg/rdr). We use this database
-to structure consistently all metadata
-supporting different types of assays (currently, ATAC-seq; DNase-seq; ChIP-seq) and different species (10 species so
-far). We use RDR to parametrize the workflow execution, select batches of data (based on metadata dimensions and to
-respond to team-wise priorities), and link results-worth-persisting to relevant metadata (e.g., peaks to assays, and
-alignments to replicates).
+to structure consistently all metadata supporting different types of assays 
+(currently, ATAC-seq; DNase-seq; ChIP-seq) and different species. 
+
+We use RDR to parametrize the workflow execution.
+We can select batches of data based on metadata dimensions and generate task definitions to instantiate the corresponding workflows. 
+We also use RDR to register the results of our primary analysis(e.g., peaks to assays, and alignments to replicates).
 
 To register the initial sequencing data and its corresponding metadata, we have implemented a client responsible for
 requesting the information from each external archive web-API, and submitting it to an internally maintained rdr-API.
@@ -55,18 +90,21 @@ dedicated endpoints in rdr-API to retrieve a list of job definitions that match 
 choose to get all alignment job definitions for all _'Mus musculus'_ _'ATAC-seq'_ assays (more specific filters
 involving other metadata dimensions are available).
 
-To automate job execution from job definitions that we get from rdr-API, we have set up entry-point workflows (main
-workflows). These entry-point workflows include a task that requests from a rdr-API endpoint job definitions of a
-certain type (e.g., peak-calling jobs). The call to rdr-API retrieves the list of job definitions matching the query
-parameters passed by a user/operator as parameters to the entry-point workflow. With these job definitions, the workflow
-fans out and starts the subsequent work necessary to fulfil each job definition. As the workflow execution progresses,
+To trigger job execution of data registered in RDR, we use rdr-API. 
+We have set up entry-point workflows, 
+which include an initial task that will request the set of input parameters for datasets involved in a query of interest. 
+These requests are done via rdr-API endpoints, one end point per type of job (e.g., alignment jobs).
+
+The call to rdr-API retrieves the list of job definitions matching the query parameters passed by a user/operator as parameters to the entry-point workflow. 
+With these job definitions, the workflow fans out and starts the subsequent work necessary to fulfil each job definition. 
+As the workflow execution progresses,
 intermediate files shared between tasks are temporarily kept in dynamically allocated k8s Persistent Volume Claims,
 inputs from upstream workflows are fetched from S3, and outputs worth persisting go to an S3 bucket. Once the main
 workflow runs successfully, the output metadata is registered in RDR via rdr-API.
 
 We have implemented our primary analysis workflows to follow a modular approach. This modular approach has allowed us to
-group tasks with a specific concern and execution profile. For example, two of the main workflows are short-read-mapping
-and a peak-calling. The short-read mapping workflow includes tasks that benefit from multithreading while having a
+group tasks with a specific concern and execution profile. For example, two of the main workflows are alignment (short-read
+mapping) and a peak-calling. The short-read mapping workflow includes tasks that benefit from multithreading while having a
 relatively small memory footprint that is mainly dependent on the reference genome used (common node flavors for these
 tasks involve 12-16 vCPUs and 32 GB of memory). In contrast, the peak-calling
 workflow includes tasks that are more memory-intensive. The memory required for a
@@ -95,50 +133,34 @@ or days to complete and handle large files (> 10GB).
 The next sections will describe in more detail the logic involved in the main workflows, implementation details, and
 design patterns we have found useful when orchestrating the processing of our primary data.
 
-For more details about the components that integrate with our workflows, please refer to the documentation in their
-respective repositories:
+[//]: # (For more details about the components that integrate with our workflows, please refer to the documentation in their)
 
-- [workflows](https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates) (You are here; README in progress)
-- [workflow-containers](https://gitlab.ebi.ac.uk/ensreg/workflows/container-images) (Update of image definitions:
-  pending)
-- [RDR](https://gitlab.ebi.ac.uk/ensreg/rdr)
-- [registration-client](https://gitlab.ebi.ac.uk/ensreg/regulation-registration-client)
-- [rdr-api](https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines) (README Out of Date; pending deletion of code/config
-  that has been moved to other repositories)
-- [k8s-config](https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines-cd) (README, recently updated; more updates in
-  progress)
-- [release-handover](https://gitlab.ebi.ac.uk/ensreg/handover)
+[//]: # (respective repositories:)
 
-*Note: There are plans to move, rename, and change the visibility of some of these repositories.*
+[//]: # ()
+[//]: # (- [workflows]&#40;https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates&#41; &#40;You are here; README in progress&#41;)
 
-## Primary Analysis Workflows
+[//]: # (- [workflow-containers]&#40;https://gitlab.ebi.ac.uk/ensreg/workflows/container-images&#41; &#40;Update of image definitions:)
 
-### Main Workflows
+[//]: # (  pending&#41;)
 
-These workflows are the main entry-points to the compute-intensive part of the process. Each workflow has a different
-resource usage profile. Separating them allows us to scale independently and better control the resources allocated when
-submitting work in batches. For example, in OpenStack, we can allocate a Kubernetes node group with the execution
-profile that best fits the requirements for each workflow type.
+[//]: # (- [RDR]&#40;https://gitlab.ebi.ac.uk/ensreg/rdr&#41;)
 
-Splitting the work in these modules allows us to iterate and deliver faster. For example, we can start
-processing the data and generate alignment files from the short-read-mapping workflow while still defining the
-best set of parameters for peak-calling when introducing a species/dataset.
+[//]: # (- [registration-client]&#40;https://gitlab.ebi.ac.uk/ensreg/regulation-registration-client&#41;)
 
-Bellow we describe the main workflows that we have implemented so far.
+[//]: # (- [rdr-api]&#40;https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines&#41; &#40;README Out of Date; pending deletion of code/config)
 
-#### Short-read Mapping
+[//]: # (  that has been moved to other repositories&#41;)
 
-#### Peak-calling
+[//]: # (- [k8s-config]&#40;https://gitlab.ebi.ac.uk/ensreg/regulation-pipelines-cd&#41; &#40;README, recently updated; more updates in)
 
-#### Signal Track Generation
+[//]: # (  progress&#41;)
 
-### Auxiliary Workflows
+[//]: # (- [release-handover]&#40;https://gitlab.ebi.ac.uk/ensreg/handover&#41;)
 
-#### Genome Assembly Index Build
+[//]: # ()
+[//]: # (*Note: There are plans to move, rename, and change the visibility of some of these repositories.*)
 
-#### Assembly mask generation
-
-####
 
 ## Design Principles
 
@@ -149,6 +171,8 @@ Bellow we describe the main workflows that we have implemented so far.
 #### Well-documented patterns
 
 #### Patterns specific to our use case
+
+
 
 </div>
 
