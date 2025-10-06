@@ -1,6 +1,4 @@
-# Ensembl Regulation Primary Processing 
-
-## Alignment Data Flow
+# Alignment workflow
 
 ```mermaid
 graph TD
