@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-signal-task-v-0.2-0
+  name: get-signal-tasks-v-0.2-0
   annotations:
     workflows.argoproj.io/description: |
       Generate bigwig files from genrich pq-value files
