@@ -21,13 +21,13 @@ The results of this primary analysis are used to produce our final annotation of
 - **Peak-calling** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-peak-calling-jobs); [Data Flow diagram](workflow-templates/peak-calling/README.md#data-flow-peak-calling)]
 - **Signal generation** [[Submit instructions](workflow-templates/signal/README.md#submitting-signal-generation-jobs); [Data Flow diagram](workflow-templates/signal/README.md#data-flow)]
 - **Export peaks** [[Submit instructions](workflow-templates/export-peak/README.md#submitting-export-peaks-jobs); [Data Flow diagram](workflow-templates/export-peak/README.md#data-flow)]
-- **Motif mapping** [[Submit instructions](workflow-templates/motif-mapping/); [Data Flow diagram](workflow-templates/motif-mapping/README.md#data-flow)]
+- **Motif mapping** [[Submit instructions](workflow-templates/motif-mapping/README.md#submitting-motif-mapping-jobs); [Data Flow diagram](workflow-templates/motif-mapping/README.md#data-flow)]
 
 #### Auxiliary Workflows
 
 - Genome Index Build
-
 - Genome mask generation
+- Alignment archival
 
 Each workflow has a distinct resource usage profile. 
 Separating them in this way allows us to scale independently and manage resource allocation more effectively when submitting work in batches.
@@ -126,8 +126,9 @@ configuration files. To successfully and efficiently run the more critical tasks
 necessary to modify Argo Workflows default configuration. This is to enable long-running tasks that take multiple hours
 or days to complete and handle large files (> 10GB).
 
-The next sections will describe in more detail the logic involved in the main workflows, implementation details, and
-design patterns we have found useful when orchestrating the processing of our primary data.
+[//]: # (The next sections will describe in more detail the logic involved in the main workflows, implementation details, and)
+
+[//]: # (design patterns we have found useful when orchestrating the processing of our primary data.)
 
 [//]: # (For more details about the components that integrate with our workflows, please refer to the documentation in their)
 
