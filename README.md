@@ -175,7 +175,7 @@ design patterns we have found useful when orchestrating the processing of our pr
 [//]: # ()
 [//]: # ()
 [//]: # ()
-[//]: # (</div>)
+</div>
 
 [//]: # ()
 
