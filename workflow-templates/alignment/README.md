@@ -1,7 +1,7 @@
-# Alignment workflow
+# Pre-processing and Alignment workflow
 
 
-## Submitting the workflow
+## Submitting Pre-processing and Alignment jobs
 
 To submit the workflow, use the following command:
 
@@ -13,7 +13,7 @@ argo submit \
 --parameter-file <JSON or YAML file with parameters>
 ```
 
-Parameter file example (YAML):
+### Parameter file example (YAML):
 ```yaml
 species_name: "Bos taurus"
 experiment_type: "atac_seq"
@@ -21,7 +21,7 @@ skip: "0"
 limit: "20"
 ```
 
-
+### Available parameters:
 - `assembly_ensembl_name`: 
 - `experiment_type`
 - `species_name`
@@ -36,6 +36,7 @@ limit: "20"
 - `group_by_run_type`
 
 
+## Data Flow
 ```mermaid
 graph TD
 
