@@ -1,4 +1,28 @@
 # Genrich p/q values workflow
+
+## Submitting Genrich p/q values jobs
+
+To submit the workflow, use the following command:
+
+```
+argo submit \
+--namespace argo \
+--serviceaccount ensreg \
+--from workflowtemplate/get-genrich-tasks-v-0.1.0
+--parameter-file <JSON or YAML file with parameters>
+```
+
+### Parameter file example (YAML):
+```yaml
+species_name: "Bos taurus"
+experiment_type: "atac_seq"
+output_prefix_label: "r114"
+masked-regions-s3-key: "masked-regions/Bos_taurus/ARS-UCD1.3/bos_taurus_core_111_13_repeats_r113.bed"
+skip: "0"
+limit: "20"
+```
+
+## Data Flow (Genrich p/q values)
 ```mermaid
 graph TD
     %% Entry Point
@@ -145,6 +169,37 @@ graph TD
 
 # Peak calling workflow
 
+## Submitting peak-calling jobs
+
+To submit the workflow, use the following command:
+
+```
+argo submit \
+--namespace argo \
+--serviceaccount ensreg \
+--from workflowtemplate/get-peak-calling-tasks-v-0.2.0
+--parameter-file <JSON or YAML file with parameters>
+```
+
+Parameter file example (YAML):
+```yaml
+species_name: "Bos taurus"
+assembly_ensembl_accession: "GCA_002263795.4"
+experiment_type: "atac_seq"
+output_prefix_label: "r114"
+min_replicate_count: 2
+skip: "0"
+limit: "20"
+genrich-params: |
+  {
+    "a": null,
+    "q_val": 0.1,
+    "p_val": null,
+    "g": null
+  }
+```
+
+## Data Flow (Peak-calling)
 ```mermaid
 graph TD
     %% Entry Point
