@@ -11,7 +11,7 @@ The results of this primary analysis are used to produce our final annotation of
 
 ## Overview
 
-![PipelineDataFlow](pipeline_data_flow.png)
+![PipelineDataFlow](docs/assets/pipeline_data_flow.png)
 
 
 ### Entry-point workflows
@@ -60,7 +60,7 @@ resource allocation control). All our primary analysis data processing is design
 of [A-Wfs cloud-native design principles](https://argo-workflows.readthedocs.io/en/latest/architecture/) and the
 distributed computing architecture that k8s enables.
 
-![ArchitectureOverview](architecture_overview.png)
+![ArchitectureOverview](docs/assets/architecture_overview.png)
 
 We use sequencing data as input to our workflows; this data comes from different external archives (ENA, FAANG portal,
 ENCODE). Before kicking off processing, we structure the relevant metadata and references to the input data files in a
