@@ -2,43 +2,39 @@
 
 # Ensembl Regulation primary processing workflows
 
-Cloud-native approach to orchestrate the data processing of sequencing reads from genomic assays (ATAC-seq,
-DNase-seq, and ChIP-seq) and generate peaks and signal files that summarise the enriched regions across a genome. 
+Cloud-native approach to process sequencing reads (fastq files) from ATAC-seq, DNase-seq, and ChIP-seq assays, 
+to produce signal (bigWig) and peaks (bed) that summarise enriched genome regions.
+
 
 The results of this primary analysis are used to produce our final annotation of regulatory features 
 ([Regulatory build](https://regulation.ensembl.org/help/regulatory_build))
 
-## Primary Processing pipeline overview
+## Overview
 
 ![PipelineDataFlow](pipeline_data_flow.png)
 
 
 ### Entry-point workflows
 
-Each workflow has a different resource usage profile. Separating them allows us to scale independently and better control the resources allocated when
-submitting work in batches. For example, in OpenStack, we can allocate a Kubernetes node group with the execution
-profile that best fits the requirements for each workflow type.
+- **Pre-processing and Alignment** [[Submit instructions](workflow-templates/alignment/README.md#submitting-pre-processing-and-alignment-jobs); [Data Flow diagram](workflow-templates/alignment/README.md#data-flow)]
+- **Genrich p/q values** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-genrich-pq-values-jobs); [Data Flow diagram](workflow-templates/peak-calling/README.md#data-flow-genrich-pq-values)]
+- **Peak-calling** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-peak-calling-jobs); [Data Flow diagram](workflow-templates/peak-calling/README.md#data-flow-peak-calling)]
+- **Signal generation** [[Submit instructions](workflow-templates/signal/README.md#submitting-signal-generation-jobs); [Data Flow diagram](workflow-templates/signal/README.md#data-flow)]
+- **Export peaks** [[Submit instructions](workflow-templates/export-peak/README.md#submitting-export-peaks-jobs); [Data Flow diagram](workflow-templates/export-peak/README.md#data-flow)]
+- **Motif mapping** [[Submit instructions](workflow-templates/motif-mapping/); [Data Flow diagram](workflow-templates/motif-mapping/README.md#data-flow)]
 
-Splitting the work in these modules allows us to iterate and deliver faster. For example, we can start
-processing the data and generate alignment files from the short-read-mapping workflow while still defining the
-best set of parameters for peak-calling when introducing a species/dataset.
+#### Auxiliary Workflows
 
-Bellow we describe the main workflows that we have implemented so far.
- 
-- **Pre-processing and Alignment** [[Submit instructions](workflow-templates/alignment/README.md/); [Data Flow Diagram](workflow-templates/alignment/README.md)]
-- **Genrich p/q values generation**
-- **Peak-calling**
-- **Signal generation**
-- **Motif mapping**
+- Genome Index Build
 
-### Auxiliary Workflows
+- Genome mask generation
 
-#### Genome Index Build
+Each workflow has a distinct resource usage profile. 
+Separating them in this way allows us to scale independently and manage resource allocation more effectively when submitting work in batches.
+For example, in OpenStack, we can assign a Kubernetes node group with an execution profile that best suits each workflow type.
 
-#### Genome mask generation
-
-#### Export peaks
-
+Dividing the work into these modules enables us to iterate and deliver more quickly. 
+For instance, we can begin with the generation alignment files while still refining and iterating to identify the best set of parameters for peak-calling when introducing a new species or dataset.
 
 ## Architecture Overview
 
@@ -162,18 +158,24 @@ design patterns we have found useful when orchestrating the processing of our pr
 [//]: # (*Note: There are plans to move, rename, and change the visibility of some of these repositories.*)
 
 
-## Design Principles
+[//]: # (## Design Principles)
 
-### Core concepts
+[//]: # ()
+[//]: # (### Core concepts)
 
-### Workflow Design Patterns
+[//]: # ()
+[//]: # (### Workflow Design Patterns)
 
-#### Well-documented patterns
+[//]: # ()
+[//]: # (#### Well-documented patterns)
 
-#### Patterns specific to our use case
+[//]: # ()
+[//]: # (#### Patterns specific to our use case)
 
+[//]: # ()
+[//]: # ()
+[//]: # ()
+[//]: # (</div>)
 
-
-</div>
-
+[//]: # ()
 
