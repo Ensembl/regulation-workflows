@@ -16,12 +16,12 @@ The results of this primary analysis are used to produce our final annotation of
 
 ### Entry-point workflows
 
-- **Pre-processing and Alignment** [[Submit instructions](workflow-templates/alignment/README.md#submitting-pre-processing-and-alignment-jobs); [Data Flow diagram](workflow-templates/alignment/README.md#data-flow)]
-- **Genrich p/q values** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-genrich-pq-values-jobs); [Data Flow diagram](workflow-templates/peak-calling/README.md#data-flow-genrich-pq-values)]
-- **Peak-calling** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-peak-calling-jobs); [Data Flow diagram](workflow-templates/peak-calling/README.md#data-flow-peak-calling)]
-- **Signal generation** [[Submit instructions](workflow-templates/signal/README.md#submitting-signal-generation-jobs); [Data Flow diagram](workflow-templates/signal/README.md#data-flow)]
-- **Export peaks** [[Submit instructions](workflow-templates/export-peak/README.md#submitting-export-peaks-jobs); [Data Flow diagram](workflow-templates/export-peak/README.md#data-flow)]
-- **Motif mapping** [[Submit instructions](workflow-templates/motif-mapping/README.md#submitting-motif-mapping-jobs); [Data Flow diagram](workflow-templates/motif-mapping/README.md#data-flow)]
+- **Pre-processing and Alignment** [[Submit instructions](workflow-templates/alignment/README.md#submitting-pre-processing-and-alignment-jobs); [Data Flow](workflow-templates/alignment/README.md#data-flow)]
+- **Genrich p/q values** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-genrich-pq-values-jobs); [Data Flow](workflow-templates/peak-calling/README.md#data-flow-genrich-pq-values)]
+- **Peak-calling** [[Submit instructions](workflow-templates/peak-calling/README.md#submitting-peak-calling-jobs); [Data Flow](workflow-templates/peak-calling/README.md#data-flow-peak-calling)]
+- **Signal generation** [[Submit instructions](workflow-templates/signal/README.md#submitting-signal-generation-jobs); [Data Flow](workflow-templates/signal/README.md#data-flow)]
+- **Export peaks** [[Submit instructions](workflow-templates/export-peak/README.md#submitting-export-peaks-jobs); [Data Flow](workflow-templates/export-peak/README.md#data-flow)]
+- **Motif mapping** [[Submit instructions](workflow-templates/motif-mapping/README.md#submitting-motif-mapping-jobs); [Data Flow](workflow-templates/motif-mapping/README.md#data-flow)]
 
 #### Auxiliary Workflows
 
