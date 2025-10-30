@@ -8,17 +8,21 @@ To submit the workflow, use the following command:
 argo submit \
 --namespace argo \
 --serviceaccount ensreg \
---from workflowtemplate/get-motif-mapping-tasks-v-0.1.0
---parameter-file <JSON or YAML file with parameters>
+--from workflowtemplate/motif-mapping-tasks-v-0.1.1
+--parameter-file <YAML or JSON file with parameters>
 ```
 
-Parameter file example (YAML):
-```yaml
-species_name: "Bos taurus"
-experiment_type: "atac_seq"
-skip: "0"
-limit: "20"
-```
+### Available parameters
+
+- *species_name*: `str | null`
+- *assembly_ensembl_name*: `str | null`
+- *epigenome_group_id*: `UUID | null`
+- *epigenome_name_contains*: `str | null`
+- *target_name_contains*: `str | null`
+- *output_prefix_label*: `str | null`
+- *skip*: `int` = 0
+- *limit*: `int` = 100
+
 
 ## Data flow
 ```mermaid

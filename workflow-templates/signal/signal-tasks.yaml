@@ -15,21 +15,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-signal-tasks-v-0.2-0
+  name: signal-tasks-v-0.2.1
   annotations:
     workflows.argoproj.io/description: |
       Generate bigwig files from genrich pq-value files
 spec:
-  entrypoint: get-signal-tasks-dag
+  entrypoint: signal-tasks-dag
 
 
   templates:
-    - name: get-signal-tasks-dag
+    - name: signal-tasks-dag
       inputs:
         parameters:
           - name: species_name
             value: ""
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
             value: ""
           - name: epigenome_group_id
             value: ""
@@ -77,8 +77,8 @@ spec:
 
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
-                - name: assembly_ensembl_accession
-                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: assembly_ensembl_name
+                  value: "{{inputs.parameters.assembly_ensembl_name}}"
                 - name: epigenome_group_id
                   value: "{{inputs.parameters.epigenome_group_id}}"
 
@@ -139,7 +139,7 @@ spec:
           - name: svc-name
           - name: namespace
           - name: species_name
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
           - name: epigenome_group_id
           - name: experiment_type
           - name: epigenome_name_contains
@@ -164,7 +164,7 @@ spec:
 
             query_params = {
               "species_name": f"{{inputs.parameters.species_name}}",
-              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",

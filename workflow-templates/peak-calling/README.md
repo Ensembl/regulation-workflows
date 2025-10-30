@@ -8,8 +8,8 @@ To submit the workflow, use the following command:
 argo submit \
 --namespace argo \
 --serviceaccount ensreg \
---from workflowtemplate/get-genrich-tasks-v-0.1.0
---parameter-file <JSON or YAML file with parameters>
+--from workflowtemplate/genrich-tasks-v-0.1.0
+--parameter-file <YAML or JSON file with parameters>
 ```
 
 ### Parameter file example (YAML):
@@ -17,10 +17,29 @@ argo submit \
 species_name: "Bos taurus"
 experiment_type: "atac_seq"
 output_prefix_label: "r114"
-masked-regions-s3-key: "masked-regions/Bos_taurus/ARS-UCD1.3/bos_taurus_core_111_13_repeats_r113.bed"
-skip: "0"
-limit: "20"
+masked-regions-s3-key: "masked-regions/Bos_taurus/GCA_002263795.4/bos_taurus_GCA_002263795.4_repeats_r114.bed"
+skip: 0
+limit: 20
 ```
+
+### Available parameters:
+- *species_name*: `str | null`
+- *assembly_ensembl_name*: `str | null`
+- *experiment_type*: `(atac_seq | dnase_seq | chip_seq) | null`
+- *target_type*: `(histone | tf) | null`
+- *epigenome_group_id*: `UUID | null`
+- *epigenome_name_contains*: `str | null`
+- *experiment_name_contains*: `str | null`
+- *target_name_contains*: `str | null`
+- *histone_mark_type*: `broad | narrow`
+- *min_replicate_count*: `int | null` 
+- *max_replicate_count*: `int | null`
+- *exclude_tasks_missing_control*: `bool` = false
+- *exclude_controls_from_tasks*: `bool` = false
+- *output_prefix_label*: `str | null`
+- *skip*: `int` = 0
+- *limit*: `int` = 100
+
 
 ## Data Flow (Genrich p/q values)
 ```mermaid
@@ -177,19 +196,18 @@ To submit the workflow, use the following command:
 argo submit \
 --namespace argo \
 --serviceaccount ensreg \
---from workflowtemplate/get-peak-calling-tasks-v-0.2.0
---parameter-file <JSON or YAML file with parameters>
+--from workflowtemplate/peak-calling-tasks-v-0.2.0
+--parameter-file <YAML or JSON file with parameters>
 ```
 
-Parameter file example (YAML):
+### Parameter file example (YAML):
 ```yaml
 species_name: "Bos taurus"
-assembly_ensembl_accession: "GCA_002263795.4"
 experiment_type: "atac_seq"
 output_prefix_label: "r114"
 min_replicate_count: 2
-skip: "0"
-limit: "20"
+skip: 0
+limit: 20
 genrich-params: |
   {
     "a": null,
@@ -198,6 +216,26 @@ genrich-params: |
     "g": null
   }
 ```
+
+### Available parameters:
+
+- *species_name*: `str | null`
+- *assembly_ensembl_name*: `str | null`
+- *experiment_type*: `(atac_seq | dnase_seq | chip_seq) | null`
+- *target_type*: `(histone | tf) | null`
+- *epigenome_group_id*: `UUID | null`
+- *epigenome_name_contains*: `str | null`
+- *experiment_name_contains*: `str | null`
+- *target_name_contains*: `str | null`
+- *histone_mark_type*: `broad | narrow`
+- *min_replicate_count*: `int | null` 
+- *max_replicate_count*: `int | null`
+- *control_filter*: `(exclude_with_controls | exclude_without_controls) | null`
+- *output_prefix_label*: `str | null`
+- *genrich_params*: `GenrichParams` 
+- *skip*: `int` = 0
+- *limit*: `int` = 100
+
 
 ## Data Flow (Peak-calling)
 ```mermaid

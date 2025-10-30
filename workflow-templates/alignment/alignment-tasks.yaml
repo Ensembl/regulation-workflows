@@ -15,12 +15,12 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-alignment-tasks-v-0.2.2
+  name: alignment-tasks-v-0.2.2
 spec:
-  entrypoint: get-rfs-alignment-tasks-dag
+  entrypoint: rfs-alignment-tasks-dag
 
   templates:
-    - name: get-rfs-alignment-tasks-dag
+    - name: rfs-alignment-tasks-dag
       inputs:
         parameters:
           - name: assembly_ensembl_name

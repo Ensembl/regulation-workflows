@@ -15,17 +15,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-peak-calling-tasks-v-0.2.0
+  name: genrich-tasks-v-0.1.0
 spec:
-  entrypoint: get-peak-calling-tasks-dag
+  entrypoint: genrich-values-tasks-dag
 
   templates:
-    - name: get-peak-calling-tasks-dag
+    - name: genrich-values-tasks-dag
       inputs:
         parameters:
           - name: species_name
             value: ""
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
             value: ""
           - name: epigenome_group_id
             value: ""
@@ -38,8 +38,6 @@ spec:
             value: ""
           - name: experiment_name_contains
             value: ""
-          - name: s3_object_key_contains
-            value: ""
           - name: target_name_contains
             value: ""
           - name: histone_mark_type
@@ -48,7 +46,9 @@ spec:
             value: ""
           - name: max_replicate_count
             value: ""
-          - name: control_filter
+          - name: exclude_tasks_missing_control
+            value: ""
+          - name: exclude_controls_from_tasks
             value: ""
 
           - name: ad_hoc_playground_prefix
@@ -59,23 +59,20 @@ spec:
           - name: skip
             value: "0"
           - name: limit
-            value: "20"
+            value: "100"
 
-          - name: genrich-params-narrow
-            value: ""
-          - name: genrich-params-broad
-            value: ""
-          - name: genrich-params
-            value: ""
+          - name: chipmentation
+            value: "false"
+          - name: masked-regions-s3-key
+          - name: controls-mapping-threshold
+            value: "0.1"
 
           - name: overwrite-results
             value: "false"
-          - name: production-run
-            value: "false"
       dag:
         tasks:
-          - name: get-peak-calling-tasks-v2-url
-            template: compute-get-peak-calling-tasks-v2-url
+          - name: get-genrich-values-tasks-url
+            template: compute-get-genrich-values-tasks-url
             arguments:
               parameters:
                 - name: svc-name
@@ -85,8 +82,8 @@ spec:
 
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
-                - name: assembly_ensembl_accession
-                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: assembly_ensembl_name
+                  value: "{{inputs.parameters.assembly_ensembl_name}}"
                 - name: epigenome_group_id
                   value: "{{inputs.parameters.epigenome_group_id}}"
 
@@ -98,8 +95,6 @@ spec:
                   value: "{{inputs.parameters.epigenome_name_contains}}"
                 - name: experiment_name_contains
                   value: "{{inputs.parameters.experiment_name_contains}}"
-                - name: s3_object_key_contains
-                  value: "{{inputs.parameters.s3_object_key_contains}}"
                 - name: target_name_contains
                   value: "{{inputs.parameters.target_name_contains}}"
                 - name: histone_mark_type
@@ -108,8 +103,10 @@ spec:
                   value: "{{inputs.parameters.min_replicate_count}}"
                 - name: max_replicate_count
                   value: "{{inputs.parameters.max_replicate_count}}"
-                - name: control_filter
-                  value: "{{inputs.parameters.control_filter}}"
+                - name: exclude_tasks_missing_control
+                  value: "{{inputs.parameters.exclude_tasks_missing_control}}"
+                - name: exclude_controls_from_tasks
+                  value: "{{inputs.parameters.exclude_controls_from_tasks}}"
 
                 - name: ad_hoc_playground_prefix
                   value: "{{inputs.parameters.ad_hoc_playground_prefix}}"
@@ -121,61 +118,42 @@ spec:
                 - name: limit
                   value: "{{inputs.parameters.limit}}"
 
-          - name: execute-get-peak-calling-tasks
-            depends: "get-peak-calling-tasks-v2-url"
+
+          - name: execute-get-genrich-values-tasks
+            depends: get-genrich-values-tasks-url.Succeeded
             templateRef:
               name: get-request-from-reg-pipelines-api-v-0.1.1
               template: get-request-from-reg-pipelines-api
             arguments:
               parameters:
                 - name: url
-                  value: "{{tasks.get-peak-calling-tasks-v2-url.outputs.result}}"
+                  value: "{{tasks.get-genrich-values-tasks-url.outputs.result}}"
 
-          - name: submit-chip-seq-peak-calling-tasks
-            depends: "execute-get-peak-calling-tasks.Succeeded"
-            when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
+
+          - name: submit-genrich-values-tasks
+            depends: "execute-get-genrich-values-tasks"
             templateRef:
-              name: chip-seq-peaks-v-0.2.0
-              template: peak-calling-chip-seq
+              name: genrich-values-v-0.2.0
+              template: genrich-values
             arguments:
               parameters:
                 - name: peak-calling-tasks
-                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: genrich-params-narrow
-                  value: "{{inputs.parameters.genrich-params-narrow}}"
-                - name: genrich-params-broad
-                  value: "{{inputs.parameters.genrich-params-broad}}"
+                  value: "{{tasks.execute-get-genrich-values-tasks.outputs.result}}"
+                - name: masked-regions-s3-key
+                  value: "{{inputs.parameters.masked-regions-s3-key}}"
+                - name: chipmentation
+                  value: "{{inputs.parameters.chipmentation}}"
+                - name: controls-mapping-threshold
+                  value: "{{inputs.parameters.controls-mapping-threshold}}"
                 - name: overwrite-results
                   value: "{{inputs.parameters.overwrite-results}}"
-                - name: production-run
-                  value: "{{inputs.parameters.production-run}}"
 
-          - name: submit-open-chromatin-peak-calling-tasks
-            depends: "execute-get-peak-calling-tasks.Succeeded"
-            when: >-
-              {{inputs.parameters.experiment_type}} == 'atac_seq' ||
-              {{inputs.parameters.experiment_type}} == 'dnase_seq'
-            templateRef:
-              name: open-chromatin-peaks-v-0.2.0
-              template: peak-calling-open-chromatin
-            arguments:
-              parameters:
-                - name: peak-calling-tasks
-                  value: "{{tasks.execute-get-peak-calling-tasks.outputs.result}}"
-                - name: genrich-params
-                  value: "{{inputs.parameters.genrich-params}}"
-                - name: overwrite-results
-                  value: "{{inputs.parameters.overwrite-results}}"
-                - name: production-run
-                  value: "{{inputs.parameters.production-run}}"
-
-    - name: compute-get-peak-calling-tasks-v2-url
+    - name: compute-get-genrich-values-tasks-url
       retryStrategy:
         limit: "5"
         backoff:
           duration: "10s"
           factor: "2"
-          maxDuration: "12h"
         retryPolicy: "OnError"
       inputs:
         parameters:
@@ -183,19 +161,19 @@ spec:
           - name: namespace
 
           - name: species_name
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
           - name: epigenome_group_id
 
           - name: experiment_type
           - name: target_type
           - name: epigenome_name_contains
           - name: experiment_name_contains
-          - name: s3_object_key_contains
           - name: target_name_contains
           - name: histone_mark_type
           - name: min_replicate_count
           - name: max_replicate_count
-          - name: control_filter
+          - name: exclude_tasks_missing_control
+          - name: exclude_controls_from_tasks
 
           - name: ad_hoc_playground_prefix
           - name: output_prefix_label
@@ -213,18 +191,18 @@ spec:
           
             query_params = {
               "species_name": f"{{inputs.parameters.species_name}}",
-              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "target_type": f"{{inputs.parameters.target_type}}",
               "epigenome_name_contains": f"{{inputs.parameters.epigenome_name_contains}}",
               "experiment_name_contains": f"{{inputs.parameters.experiment_name_contains}}",
-              "s3_object_key_contains": f"{{inputs.parameters.s3_object_key_contains}}",
               "target_name_contains": f"{{inputs.parameters.target_name_contains}}",
               "histone_mark_type": f"{{inputs.parameters.histone_mark_type}}",
               "min_replicate_count": f"{{inputs.parameters.min_replicate_count}}",
               "max_replicate_count": f"{{inputs.parameters.max_replicate_count}}",
-              "control_filter": f"{{inputs.parameters.control_filter}}",
+              "exclude_tasks_missing_control": f"{{inputs.parameters.exclude_tasks_missing_control}}",
+              "exclude_controls_from_tasks": f"{{inputs.parameters.exclude_controls_from_tasks}}",
               "ad_hoc_playground_prefix": f"{{inputs.parameters.ad_hoc_playground_prefix}}",
               "output_prefix_label": f"{{inputs.parameters.output_prefix_label}}",
               "skip": f"{{inputs.parameters.skip}}",
@@ -243,7 +221,7 @@ spec:
                   "svc.cluster.local"
                   ":80"
                   "/api/v1"
-                  "/peak_calling_tasks_v2"
+                  "/genrich_values_tasks"
                   f"?{parsed_query_params}"         
             )
           

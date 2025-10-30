@@ -9,31 +9,31 @@ To submit the workflow, use the following command:
 argo submit \
 --namespace argo \
 --serviceaccount ensreg \
---from workflowtemplate/get-alignment-tasks-v-0.2.2
---parameter-file <JSON or YAML file with parameters>
+--from workflowtemplate/alignment-tasks-v-0.2.2
+--parameter-file <YAML or JSON file with parameters>
 ```
 
 ### Parameter file example (YAML):
 ```yaml
 species_name: "Bos taurus"
 experiment_type: "atac_seq"
-skip: "0"
-limit: "20"
+skip: 0
+limit: 20
 ```
 
 ### Available parameters:
-- `assembly_ensembl_name`: 
-- `experiment_type`
-- `species_name`
-- `epigenome_name_contains`
-- `experiment_name_contains`
-- `target_type`
-- `epigenome_group_id`
-- `skip`
-- `limit`
-- `overwrite-results`
-- `exclude_tasks_with_registered_results`
-- `group_by_run_type`
+- *species_name*: `str | null`
+- *assembly_ensembl_name*: `str | null`
+- *experiment_type*: `(atac_seq | dnase_seq | chip_seq) | null`
+- *target_type*: `(histone | tf) | null`
+- *epigenome_group_id*: `UUID | null`
+- *epigenome_name_contains*: `str | null`
+- *experiment_name_contains*: `str | null`
+- *skip*: `int` = 0
+- *limit*: `int` = 100
+- *overwrite results*: `bool` = false
+- *exclude_tasks_with_registered_results*: `bool` = false
+- *group_by_run_type*: `bool` = false
 
 
 ## Data Flow
@@ -150,18 +150,4 @@ graph TD
     class Z decision
     class G,H,I,J,BB,CC,DD,EE,QQ,RR,SS,TT workAvoidance
     class M,N,O,P,R,T,W,FF,GG,HH,UU,VV,WW,KK,ZZ,NN,OO,CCC,DDD storage
-    
-    %% Hyperlinks to workflow templates
-    click A "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/alignment/get-alignment-tasks.yaml" "Main alignment tasks workflow" _top
-    click F "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/alignment/rfs-alignment.yaml" "RFS alignment pipeline" _top
-    click AA "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/alignment/run-alignment-pe.yaml" "Paired-end alignment workflow" _top
-    click PP "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/alignment/run-alignment-se.yaml" "Single-end alignment workflow" _top
-    click MM "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests//bowtie2/bowtie2-pe-cmd-pvc-callable-v-0.1.yaml" "Bowtie2 PE alignment template" _top
-    click BBB "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/bowtie2/bowtie2-se-cmd-pvc-callable-v-0.1.yaml" "Bowtie2 SE alignment template" _top
-    click II "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/fastqc/fastqc-pe-cmd-pvc-callable-v-0.1.yaml" "FastQC PE template" _top
-    click LL "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/fastqc/fastqc-pe-cmd-pvc-callable-v-0.1.yaml" "FastQC PE template" _top
-    click XX "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/fastqc/fastqc-se-cmd-pvc-callable-v-0.1.yaml" "FastQC SE template" _top
-    click AAA "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/fastqc/fastqc-se-cmd-pvc-callable-v-0.1.yaml" "FastQC SE template" _top
-    click JJ "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/ngmerge/ngmerge-cmd-pvc-callable-v-0.1.yaml" "NGmerge adapter removal template" _top
-    click YY "https://gitlab.ebi.ac.uk/ensreg/workflows/workflow-templates/-/blob/main/manifests/fastp/fastp-se-cmd-pvc-callable-v-0.1.yaml" "fastp quality control template" _top
 ```

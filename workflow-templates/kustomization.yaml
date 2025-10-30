@@ -48,33 +48,33 @@ resources:
   - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
 
   ## Sub-workflows
-  - alignment/get-alignment-tasks.yaml
+  - alignment/alignment-tasks.yaml
   - alignment/rfs-alignment.yaml
   - alignment/run-alignment-pe.yaml
   - alignment/run-alignment-se.yaml
 
-  - peak-calling/get-genrich-tasks.yaml
+  - peak-calling/genrich-tasks.yaml
   - peak-calling/genrich-values-v-0.2.yaml
   - peak-calling/genrich-values-v-0.1.yaml
   - peak-calling/genrich-values-cmd.yaml
   - peak-calling/open-chromatin-genrich-values-cmd.yaml
   - peak-calling/chip-seq-genrich-values-cmd.yaml
 
-  - peak-calling/get-peak-calling-tasks.yaml
+  - peak-calling/peak-calling-tasks.yaml
   - peak-calling/chip-seq-peaks-v-0.2.yaml
   - peak-calling/open-chromatin-peaks-v-0.2.yaml
 
   - peak-calling/controls/get-control-peak-calling-tasks.yaml
   - peak-calling/controls/control-peak-calling-for-mask-file.yaml
 
-  - signal/get-signal-tasks-v-0.2.yaml
+  - signal/signal-tasks.yaml
   - signal/genrich-pq-values-to-bigwig-pvc-callable-v-0.1.yaml
 
-  - motif-mapping/get-motif-mapping-tasks.yaml
+  - motif-mapping/motif-mapping-tasks.yaml
 
   - masked-regions/masked-regions-identification-v-0.1.yaml
 
-  - export-peak/get-export-peak-task.yaml
+  - export-peak/export-peak-tasks.yaml
 
 
   # Experimental Workflow Templates
