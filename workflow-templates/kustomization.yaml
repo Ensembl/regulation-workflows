@@ -67,7 +67,7 @@ resources:
   - peak-calling/controls/get-control-peak-calling-tasks.yaml
   - peak-calling/controls/control-peak-calling-for-mask-file.yaml
 
-  - signal/get-signal-tasks-v-0.2.yaml
+  - signal/signal-tasks.yaml
   - signal/genrich-pq-values-to-bigwig-pvc-callable-v-0.1.yaml
 
   - motif-mapping/get-motif-mapping-tasks.yaml
