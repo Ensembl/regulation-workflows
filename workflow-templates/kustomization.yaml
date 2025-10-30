@@ -53,7 +53,7 @@ resources:
   - alignment/run-alignment-pe.yaml
   - alignment/run-alignment-se.yaml
 
-  - peak-calling/get-genrich-tasks.yaml
+  - peak-calling/genrich-tasks.yaml
   - peak-calling/genrich-values-v-0.2.yaml
   - peak-calling/genrich-values-v-0.1.yaml
   - peak-calling/genrich-values-cmd.yaml
