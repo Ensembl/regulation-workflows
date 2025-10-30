@@ -60,7 +60,7 @@ resources:
   - peak-calling/open-chromatin-genrich-values-cmd.yaml
   - peak-calling/chip-seq-genrich-values-cmd.yaml
 
-  - peak-calling/get-peak-calling-tasks.yaml
+  - peak-calling/peak-calling-tasks.yaml
   - peak-calling/chip-seq-peaks-v-0.2.yaml
   - peak-calling/open-chromatin-peaks-v-0.2.yaml
 

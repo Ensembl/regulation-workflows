@@ -15,17 +15,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: get-peak-calling-tasks-v-0.2.0
+  name: peak-calling-tasks-v-0.2.0
 spec:
-  entrypoint: get-peak-calling-tasks-dag
+  entrypoint: peak-calling-tasks-dag
 
   templates:
-    - name: get-peak-calling-tasks-dag
+    - name: peak-calling-tasks-dag
       inputs:
         parameters:
           - name: species_name
             value: ""
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
             value: ""
           - name: epigenome_group_id
             value: ""
@@ -85,8 +85,8 @@ spec:
 
                 - name: species_name
                   value: "{{inputs.parameters.species_name}}"
-                - name: assembly_ensembl_accession
-                  value: "{{inputs.parameters.assembly_ensembl_accession}}"
+                - name: assembly_ensembl_name
+                  value: "{{inputs.parameters.assembly_ensembl_name}}"
                 - name: epigenome_group_id
                   value: "{{inputs.parameters.epigenome_group_id}}"
 
@@ -183,7 +183,7 @@ spec:
           - name: namespace
 
           - name: species_name
-          - name: assembly_ensembl_accession
+          - name: assembly_ensembl_name
           - name: epigenome_group_id
 
           - name: experiment_type
@@ -213,7 +213,7 @@ spec:
           
             query_params = {
               "species_name": f"{{inputs.parameters.species_name}}",
-              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_accession}}",
+              "assembly_ensembl_accession": f"{{inputs.parameters.assembly_ensembl_name}}",
               "epigenome_group_id": f"{{inputs.parameters.epigenome_group_id}}",
               "experiment_type": f"{{inputs.parameters.experiment_type}}",
               "target_type": f"{{inputs.parameters.target_type}}",
