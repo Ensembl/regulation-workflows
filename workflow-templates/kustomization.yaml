@@ -70,7 +70,7 @@ resources:
   - signal/signal-tasks.yaml
   - signal/genrich-pq-values-to-bigwig-pvc-callable-v-0.1.yaml
 
-  - motif-mapping/get-motif-mapping-tasks.yaml
+  - motif-mapping/motif-mapping-tasks.yaml
 
   - masked-regions/masked-regions-identification-v-0.1.yaml
 
