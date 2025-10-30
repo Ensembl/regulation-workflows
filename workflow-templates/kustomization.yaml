@@ -74,7 +74,7 @@ resources:
 
   - masked-regions/masked-regions-identification-v-0.1.yaml
 
-  - export-peak/get-export-peak-task.yaml
+  - export-peak/export-peak-tasks.yaml
 
 
   # Experimental Workflow Templates

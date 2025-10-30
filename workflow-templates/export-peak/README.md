@@ -8,17 +8,33 @@ To submit the workflow, use the following command:
 argo submit \
 --namespace argo \
 --serviceaccount ensreg \
---from workflowtemplate/get-export-peak-tasks-v-0.1.0
---parameter-file <JSON or YAML file with parameters>
+--from workflowtemplate/export-peak-tasks-v-0.1.1
+--parameter-file <YAML or JSON file with parameters>
 ```
 
-Parameter file example (YAML):
+### Parameter file example (YAML):
 ```yaml
 species_name: "Bos taurus"
 experiment_type: "atac_seq"
-skip: "0"
-limit: "20"
+skip: 0
+limit: 20
 ```
+
+### Available parameters
+
+- *species_name*: `str | null`
+- *assembly_ensembl_name*: `str | null`
+- *experiment_type*: `(atac_seq | dnase_seq | chip_seq) | null`
+- *target_type*: `(histone | tf) | null`
+- *epigenome_group_id*: `UUID | null`
+- *epigenome_name_contains*: `str | null`
+- *experiment_name_contains*: `str | null`
+- *target_name_contains*: `str | null`
+- *histone_mark_type*: `broad | narrow`
+- *output_prefix_label*: `str | null`
+- *skip*: `int` = 0
+- *limit*: `int` = 100
+
 
 ## Data flow
 
