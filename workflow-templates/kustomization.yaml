@@ -48,7 +48,7 @@ resources:
   - alignment/compute-get-rfs-alignment-tasks-url-v-0.1.yaml
 
   ## Sub-workflows
-  - alignment/get-alignment-tasks.yaml
+  - alignment/alignment-tasks.yaml
   - alignment/rfs-alignment.yaml
   - alignment/run-alignment-pe.yaml
   - alignment/run-alignment-se.yaml
