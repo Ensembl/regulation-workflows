@@ -20,6 +20,7 @@ argo submit \
 - *epigenome_name_contains*: `str | null`
 - *target_name_contains*: `str | null`
 - *output_prefix_label*: `str | null`
+- *pval*: `float`
 - *skip*: `int` = 0
 - *limit*: `int` = 100
 

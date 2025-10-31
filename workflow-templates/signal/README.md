@@ -32,8 +32,10 @@ limit: 20
 - *target_name_contains*: `str | null`
 - *histone_mark_type*: `broad | narrow`
 - *output_prefix_label*: `str | null`
+- *p-value-based*: `bool`
 - *skip*: `int` = 0
 - *limit*: `int` = 100
+
 
 ## Data flow
 
