@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: motif-mapping-tasks-v-0.1.1
+  name: motif-mapping-tasks-v-0.1.2
 spec:
   entrypoint: motif-mapping-tasks-dag
 
@@ -350,7 +350,7 @@ spec:
           - name: get-motif-mapping-pvc-size
             depends: check-work-avoidance-consistency
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:

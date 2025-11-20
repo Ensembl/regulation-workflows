@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: signal-tasks-v-0.2.1
+  name: signal-tasks-v-0.2.2
   annotations:
     workflows.argoproj.io/description: |
       Generate bigwig files from genrich pq-value files
@@ -393,7 +393,7 @@ spec:
             depends: check-work-avoidance-consistency
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:

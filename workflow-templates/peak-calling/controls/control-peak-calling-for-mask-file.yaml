@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: control-peak-calling-for-mask-file-v-0.1.0
+  name: control-peak-calling-for-mask-file-v-0.1.1
 spec:
   entrypoint: control-peak-calling-for-mask-file
 
@@ -82,7 +82,7 @@ spec:
             depends: check-if-bed-file-already-in-s3-bucket.Succeeded
             when: "{{tasks.check-if-bed-file-already-in-s3-bucket.outputs.parameters.s3-object-exists}} == false"
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:
@@ -116,7 +116,7 @@ spec:
           - name: get-genrich-values-pvcs-size
             depends: execute-sort-alignments-by-queryname.Succeeded
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:

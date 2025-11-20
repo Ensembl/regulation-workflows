@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-tasks-v-0.1.0
+  name: genrich-tasks-v-0.1.1
 spec:
   entrypoint: genrich-values-tasks-dag
 
@@ -133,7 +133,7 @@ spec:
           - name: submit-genrich-values-tasks
             depends: "execute-get-genrich-values-tasks"
             templateRef:
-              name: genrich-values-v-0.2.0
+              name: genrich-values-v-0.2.1
               template: genrich-values
             arguments:
               parameters:

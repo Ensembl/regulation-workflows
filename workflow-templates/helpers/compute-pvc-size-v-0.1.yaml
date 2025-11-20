@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: compute-pvc-size-v-0.1.0
+  name: compute-pvc-size-v-0.1.1
 spec:
   entrypoint: compute-pvc-size
 
@@ -32,7 +32,6 @@ spec:
           - name: associated_files_size
           - name: size_factor
       script:
-        workingDir: /mnt/vol
         image: dockerhub.ebi.ac.uk/ensreg/workflows/container-images/python-wf-helper:3.11.7_0.1.0
         command: [ python ]
         source: |
