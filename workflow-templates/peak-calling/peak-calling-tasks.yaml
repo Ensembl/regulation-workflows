@@ -135,7 +135,7 @@ spec:
             depends: "execute-get-peak-calling-tasks.Succeeded"
             when: "{{inputs.parameters.experiment_type}} == 'chip_seq'"
             templateRef:
-              name: chip-seq-peaks-v-0.2.0
+              name: chip-seq-peaks-v-0.2.1
               template: peak-calling-chip-seq
             arguments:
               parameters:
@@ -156,7 +156,7 @@ spec:
               {{inputs.parameters.experiment_type}} == 'atac_seq' ||
               {{inputs.parameters.experiment_type}} == 'dnase_seq'
             templateRef:
-              name: open-chromatin-peaks-v-0.2.0
+              name: open-chromatin-peaks-v-0.2.1
               template: peak-calling-open-chromatin
             arguments:
               parameters:

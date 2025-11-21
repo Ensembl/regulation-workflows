@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: genrich-values-v-0.2.0
+  name: genrich-values-v-0.2.1
 
 spec:
   entrypoint: genrich-values
@@ -269,7 +269,7 @@ spec:
               && 
               ( execute-dag-merge-controls || execute-controls-samtools-sort-tasks.Skipped )
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:
@@ -589,7 +589,7 @@ spec:
         tasks:
           - name: get-pvc-size
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:

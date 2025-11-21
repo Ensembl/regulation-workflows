@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: open-chromatin-peaks-v-0.2.0
+  name: open-chromatin-peaks-v-0.2.1
   annotations:
     workflows.argoproj.io/description: |
       Genrich re-runs from Genrich pq_values to generate peaks tracks for ATAC-seq and DNase-seq experiments.
@@ -92,7 +92,7 @@ spec:
             depends: check-if-outputs-exist.Succeeded
             when: "{{tasks.check-if-outputs-exist.outputs.parameters.s3-object-exists}} == false"
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc
             arguments:
               parameters:

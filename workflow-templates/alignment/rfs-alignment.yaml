@@ -15,7 +15,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: rfs-alignment-v-0.2.1
+  name: rfs-alignment-v-0.2.2
 spec:
   entrypoint: rfs-alignment
 
@@ -119,7 +119,7 @@ spec:
             depends: execute-runs-alignment
             when: "{{tasks.check-work-avoidance-consistency.outputs.parameters.avoid-work}} == false"
             templateRef:
-              name: compute-pvc-size-v-0.1.0
+              name: compute-pvc-size-v-0.1.1
               template: compute-pvc-size
             arguments:
               parameters:
@@ -295,7 +295,7 @@ spec:
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
             when: "true == {{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.paired') == true}}"
             templateRef:
-              name: run-alignment-pe-v-0.2.0
+              name: run-alignment-pe-v-0.2.1
               template: run-alignment
             arguments:
               parameters:
@@ -340,7 +340,7 @@ spec:
             # Based on this discussion: https://github.com/argoproj/argo-workflows/issues/7576
             when: "true == {{=jsonpath(tasks['expose-run-payload-fields-as-params'].outputs.parameters.payload, '$.paired') == false}}"
             templateRef:
-              name: run-alignment-se-v-0.2.0
+              name: run-alignment-se-v-0.2.1
               template: run-alignment
             arguments:
               parameters:
